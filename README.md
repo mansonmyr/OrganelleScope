@@ -64,7 +64,7 @@ Synthetic tests cover basic import/calibration correctness and profile regressio
 
 ## Packaging
 
-`npm run package` builds the UI and a PyInstaller backend, then packages with Electron Builder. Install PyInstaller in the selected Python environment first. Initial targets are macOS ARM64 and Windows x64; Windows ARM and native GPU support require further evaluation. The manual GitHub packaging workflow generates unsigned development artifacts, not a complete production release. No LLM or restoration weights are bundled at this stage.
+`npm run package` builds the UI and a PyInstaller backend, then packages with Electron Builder. Install PyInstaller in the selected Python environment first. Initial targets are macOS ARM64 and Windows x64; Windows ARM and native GPU support require further evaluation. The GitHub packaging workflow runs manually or on explicit `v*-dev*` tags and generates unsigned development artifacts, not a complete production release. No LLM or restoration weights are bundled at this stage.
 
 ## Sources and license status
 

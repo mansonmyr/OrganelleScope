@@ -43,6 +43,7 @@ def test_print_dpi_is_not_automatically_specimen_calibration(tmp_path):
     assert info.calibration["X"].candidates["TIFF resolution"] == pytest.approx(25400/300)
     confirmed = inspect_tiff(path, spacing_override={"X": .1, "Y": .1})
     assert confirmed.calibrated()
+    assert not any("print DPI" in w for w in confirmed.warnings)
 
 
 def test_ambiguous_pages_require_confirmation(tmp_path):

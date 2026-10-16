@@ -174,6 +174,7 @@ def inspect_tiff(path: Path, series_index: int = 0, axes_override: str | None = 
                 raise ImageError("Spacing overrides must be positive finite values in µm for X, Y or Z.")
             calibration[a] = CalibrationValue(value_um=v, source="user confirmed",
                                               candidates=calibration[a].candidates)
+            warnings = [w for w in warnings if not w.startswith((f"{a} spacing is missing", f"Conflicting {a} spacing", f"{a} has only generic"))]
         return ImageInfo(filename=path.name, series_index=series_index, series_count=len(tf.series),
                          source_axes=source_axes, axes=axes, shape=list(series.shape),
                          dtype=str(series.dtype), bit_depth=series.dtype.itemsize * 8,
