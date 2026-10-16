@@ -2,7 +2,7 @@
 
 A desktop microscopy workbench in development, bringing together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Current milestone: metadata, calibrated viewing, and source line profiles. This is a development build, not a validated scientific release.**
+**Current milestone: metadata, calibrated viewing, source line profiles, and per-plane ROI statistics. This is a development build, not a validated scientific release.**
 
 ## Available now
 
@@ -11,6 +11,10 @@ A desktop microscopy workbench in development, bringing together the Probabilist
 - Conflicting physical-scale metadata blocks physical interpretation until corrected.
 - Page-wise viewing of supported uint8/uint16 layouts, up to four channels.
 - Native-intensity line profiles on a selected XY plane, calibrated for unequal X/Y spacing.
+- Circular (center-to-edge drag) and polygonal (click vertices, finish explicitly) ROIs, attached to individual Z planes.
+- Per-ROI Pearson, Spearman, Manders overlap, raw/thresholded Manders fractions, channel intensities and standardized multichannel regression.
+- Zero, manual per-channel and Costes-style automatic thresholds; explicit unavailable cases.
+- Locally saved ROI analyses, restored with their imported image and exported with source identity and settings.
 - Corrected FWHM coordinate conversion, tested against a Gaussian reference at multiple sampling intervals.
 - A single-channel, calibrated, downsampled 3D volume preview. Display downsampling does not alter source pixels.
 - Local, persistent import records with UUID identity and SHA-256 source digest.
@@ -18,7 +22,7 @@ A desktop microscopy workbench in development, bringing together the Probabilist
 
 ## Not implemented yet
 
-Validated colocalization and spatial null models; volumetric segmentation and organelle measurements; preprocessing and deconvolution; learned super-resolution; Bayesian/MLE workflows; experiment comparisons; the molecular-evidence APIs; the Qwen local agent; reopenable full analysis projects; the marketing website; and full offline installers with models. See [the development plan](docs/DEVELOPMENT_PLAN.md).
+Biological validation of colocalization, spatial null models, and calibrated significance; volumetric segmentation and organelle measurements; preprocessing and deconvolution; learned super-resolution; Bayesian/MLE workflows; experiment comparisons; the molecular-evidence APIs; the Qwen local agent; reopenable full analysis projects; the marketing website; and full offline installers with models. See [the development plan](docs/DEVELOPMENT_PLAN.md).
 
 There is no claim that the 3D preview or current profile converts conventional images into experimentally acquired super-resolution data. Legacy mock classifications and the PCE discovery score have not been adopted as validated measurements.
 
@@ -71,3 +75,9 @@ Synthetic tests cover basic import/calibration correctness and profile regressio
 The original repositories remain independent and have been backed up outside this repository. See [migration notes](docs/MIGRATION.md) and [third-party notices](third_party/NOTICE.md). The original projects use PolyForm Noncommercial 1.0.0. A final license for newly written OrganelleScope code has not been chosen; public availability alone does not grant an additional license.
 
 No experimental TIFFs, credentials, model weights, or local environments belong in this repository.
+
+## ROI statistics
+
+Choose Circular ROI or Polygonal ROI from the drawing tool, draw one or more regions, select the threshold method, and press **Calculate ROI statistics**. The line profiler remains a separate drawing tool. ROIs use pixel-center coordinates; circular masks are circular in XY pixel coordinates. Measurements use native intensities, independently for each ROI on its recorded Z plane. ROI area uses confirmed X/Y scale. Deleting or adding an ROI or changing analysis settings clears the displayed results until recalculation. The last successfully calculated analysis is restored when reopening a saved import. Unsaved edits do not replace it.
+
+See [ROI measurement definitions](docs/ROI_STATISTICS.md) for formulas and limitations. No probability of molecular binding, calibrated significance or nanoscale resolution is inferred from these descriptive measurements.

@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import type { ChangeEvent, PointerEvent } from "react";
+import { useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
 import { json, request, type ImageRecord } from "./api";
 import { SignalChart } from "./components/SignalChart";
 import type { LineRoi } from "./types";
 import { sampleTrace, buildChannelMetrics } from "./workers/analysisCore";
 import { VolumeView } from "./VolumeView";
+
+import { RoiOverlay, type AreaROI, type DrawTool } from "./RoiOverlay";
+import { StatisticsPanel, type AnalysisResult } from "./StatisticsPanel";
 
 const colors = ["#ff4969", "#31d6a0", "#629aff", "#dddddf"];
 type Profile = { distances: number[]; unit: string; traces: { label: string; color: string; values: number[] }[]; widths: (number | null)[] };
@@ -29,8 +32,13 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [roi, setRoi] = useState<LineRoi | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const overlay = useRef<SVGSVGElement>(null);
-  const dragging = useRef(false);
+  const [loadingSaved, setLoadingSaved] = useState(false);
+  const [tool, setTool] = useState<DrawTool>("line");
+  const [areas, setAreas] = useState<AreaROI[]>([]);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [thresholdMode, setThresholdMode] = useState<'zero'|'manual'|'costes'>('costes');
+  const [thresholds, setThresholds] = useState<number[]>([0,0,0,0]);
+  const [target, setTarget] = useState(0);
   const info = image?.info;
   const available = !!info && !info.needs_axis_confirmation && info.dimensions.T === 1;
 
@@ -39,7 +47,7 @@ export default function App() {
   function accept(record: ImageRecord) {
     setImage(record); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
     setSpacing(Object.fromEntries("XYZ".split("").map(a => [a, String(record.info.calibration[a].value_um ?? "")])));
-    setRoi(null); setProfile(null); setMode("slice"); setVolumeChannel(0);
+    setRoi(null); setAreas([]); setAnalysis(null); setTarget(0); setProfile(null); setMode("slice"); setVolumeChannel(0);
     setRecent(records => [record, ...records.filter(r => r.id !== record.id)].slice(0,20));
   }
   async function importImage(event: ChangeEvent<HTMLInputElement>) {
@@ -74,7 +82,7 @@ export default function App() {
 
   useEffect(() => {
     setProfile(null);
-    if (!image || !roi || !available || dragging.current) return;
+    if (!image || !roi || !available) return;
     const selected = roi;
     const abort = new AbortController();
     const timer = setTimeout(async () => {
@@ -100,14 +108,25 @@ export default function App() {
     return () => { abort.abort(); clearTimeout(timer); };
   }, [image, roi, z, available]);
 
-  function point(event: PointerEvent<SVGSVGElement>) {
-    const p = overlay.current!.createSVGPoint(); p.x = event.clientX; p.y = event.clientY;
-    const c = p.matrixTransform(overlay.current!.getScreenCTM()!.inverse());
-    return { x: Math.max(0, Math.min(info!.dimensions.X-1, c.x)), y: Math.max(0, Math.min(info!.dimensions.Y-1, c.y)) };
+  useEffect(() => {
+    if (!image) return;
+    const abort = new AbortController();
+    setLoadingSaved(true);
+    json<AnalysisResult>(`/api/images/${image.id}/analysis`, {signal:abort.signal}).then(saved=>{
+      if(abort.signal.aborted)return;
+      setAreas(saved.request.rois);setTarget(saved.request.target_channel);setThresholdMode(saved.request.threshold_mode);
+      setThresholds(saved.request.thresholds.length?saved.request.thresholds:[0,0,0,0]);setAnalysis(saved);
+    }).catch(()=>{/* No saved analysis for a new import or revised settings. */}).finally(()=>{if(!abort.signal.aborted)setLoadingSaved(false);});
+    return ()=>abort.abort();
+  }, [image]);
+  async function calculate() {
+    if(!image)return;setBusy(true);setError("");setAnalysis(null);
+    try { setAnalysis(await json<AnalysisResult>(`/api/images/${image.id}/analysis`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})})); }
+    catch(e){setError(String(e));}finally{setBusy(false);}
   }
   return <div className="shell">
     <header><div className="brand"><span className="brand-icon">◎</span><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
-      <span className="badge">Development build · Import & calibration</span><span className="local"><i /> Local processing</span></header>
+      <span className="badge">Development build · ROI statistics</span><span className="local"><i /> Local processing</span></header>
     <div className="workspace"><aside>
       <p className="eyebrow">WORKSPACE / 01</p><h2>Your image, in context.</h2><p className="muted">Inspect the source. Confirm the scale. Explore the volume.</p>
       <label className={`import-button ${busy ? "disabled" : ""}`}><input type="file" accept=".tif,.tiff" disabled={busy} onChange={importImage} />{busy ? "Working…" : "+ Open TIFF / OME-TIFF"}</label>
@@ -125,20 +144,27 @@ export default function App() {
           <button disabled={busy} onClick={confirmImport}>Apply import settings</button><p className="hint">Spacing calibrates coordinates; it does not establish optical resolution.</p>
         </section>
         <section><p className="eyebrow">CHANNELS</p>{info.channel_labels.map((name,i)=><div className="channel" key={i}><i style={{background:colors[i]}}/>{name}</div>)}</section>
-        <button className="secondary" onClick={()=>download({...image,selected_z:z,roi,profile},"OrganelleScope-inspection.json")}>Export inspection & profile</button>
+        <button className="secondary" onClick={()=>download({...image,selected_z:z,roi,profile,area_rois:areas,analysis},"OrganelleScope-inspection.json")}>Export measurements & ROIs</button>
       </> : <section className="muted"><p>Original 8/16-bit intensities are preserved.</p><p>Ambiguous axes and missing calibration are shown for review.</p><p>Images stay on this computer.</p></section>}
     </aside><main>
       {error && <div role="alert" className="error">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}
       {info?.warnings.length ? <details className="review" open><summary>Import notes · {info.warnings.length}</summary>{info.warnings.map((w,i)=><p key={i}>{w}</p>)}</details> : null}
       <section className="viewer panel"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
       {!info ? <div className="empty"><div className="empty-symbol">◎</div><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel}/> : <>
-        <div className="slice-toolbar"><label>Z plane <strong>{z+1} / {info.dimensions.Z}</strong><input aria-label="Z plane" type="range" min={0} max={info.dimensions.Z-1} value={z} onChange={e=>setZ(Number(e.target.value))}/></label><span>{info.calibration.Z.value_um != null ? `${(z*info.calibration.Z.value_um).toFixed(3)} µm from first plane` : "Z spacing unknown"}</span></div>
+        <div className="slice-toolbar"><label>Z plane <strong>{z+1} / {info.dimensions.Z}</strong><input aria-label="Z plane" type="range" min={0} max={info.dimensions.Z-1} value={z} onChange={e=>{setZ(Number(e.target.value));setRoi(null);}}/></label><span>{info.calibration.Z.value_um != null ? `${(z*info.calibration.Z.value_um).toFixed(3)} µm from first plane` : "Z spacing unknown"}</span></div>
+        <div className="roi-tools"><label>Drawing tool<select aria-label="Drawing tool" disabled={busy} value={tool} onChange={e=>setTool(e.target.value as DrawTool)}><option value="line">Line profiler</option><option value="circle">Circular ROI</option><option value="polygon">Polygonal ROI</option></select></label><span>{tool==='polygon'?'Click vertices, then finish the polygon.':tool==='circle'?'Drag from the center to the circle edge.':'Drag to sample a line.'}</span></div>
         <div className="image-stage" style={{aspectRatio:`${info.dimensions.X}/${info.dimensions.Y}`}}>{preview ? <img src={preview} alt={`Composite Z plane ${z+1}`}/> : <p>Loading source plane…</p>}
-          <svg ref={overlay} viewBox={`0 0 ${info.dimensions.X} ${info.dimensions.Y}`} onPointerDown={e=>{const p=point(e);dragging.current=true;e.currentTarget.setPointerCapture(e.pointerId);setProfile(null);setRoi({start:p,end:p,sampleSpacingPx:1});}} onPointerMove={e=>{if(dragging.current){const p=point(e);setRoi(r=>r?{...r,end:p}:r);}}} onPointerUp={e=>{if(dragging.current){dragging.current=false;const p=point(e);setRoi(r=>r?{...r,end:p}:r);if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}} onPointerCancel={()=>{dragging.current=false;setRoi(null);}}>
-            {roi && <line x1={roi.start.x} y1={roi.start.y} x2={roi.end.x} y2={roi.end.y} stroke="#fff" strokeWidth={Math.max(1,info.dimensions.X/400)} />}
-          </svg>
-        </div><p className="hint viewer-note">Drag to sample a line on this plane. Display contrast is adjusted per channel; measurements use original values.</p>
+          <RoiOverlay disabled={busy || loadingSaved} key={`${image!.id}-${z}-${tool}`} width={info.dimensions.X} height={info.dimensions.Y} z={z} tool={tool} rois={areas} line={roi} onLine={setRoi} onAdd={r=>{if(busy)return;setAreas(a=>[...a,r]);setAnalysis(null);}}/>
+
+        </div><p className="hint viewer-note">ROIs belong to their selected Z plane. Display contrast is adjusted per channel; measurements use original values.</p>
       </>}</section>
+      {image && available && <section className="panel statistics"><p className="eyebrow">AREA ANALYSIS</p><h2>ROI measurements</h2><p className="hint">Draw circular or polygonal ROIs above. Each region is measured separately on its own plane.</p>
+        <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} <button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>
+        <div className="roi-tools"><label>Threshold method<select disabled={busy} value={thresholdMode} onChange={e=>{setThresholdMode(e.target.value as typeof thresholdMode);setAnalysis(null);}}><option value="costes">Costes-style automatic</option><option value="manual">Manual per channel</option><option value="zero">Zero (native intensities)</option></select></label><label>Regression target<select disabled={busy} value={target} onChange={e=>{setTarget(Number(e.target.value));setAnalysis(null);}}>{info!.channel_labels.map((l,i)=><option key={i} value={i}>{l}</option>)}</select></label></div>
+        {thresholdMode==='manual' && info!.channel_labels.map((l,i)=><label key={i}>{l} threshold<input disabled={busy} type="number" min="0" max={2**info!.bit_depth-1} value={thresholds[i]??0} onChange={e=>{setThresholds(t=>Array.from({length:info!.dimensions.C},(_,j)=>j===i?Number(e.target.value):t[j]??0));setAnalysis(null);}}/></label>)}
+        <button disabled={busy || loadingSaved || !areas.length || info!.dimensions.C<2} onClick={calculate}>{busy?'Calculating…':'Calculate ROI statistics'}</button><p className="hint">At least two channels are needed. Results and ROI coordinates are saved locally after calculation and included in the export.</p>
+      </section>}
+      {analysis && <StatisticsPanel analysis={analysis}/>}
       {profile && <><SignalChart title="Source intensity profile" subtitle="Native intensity values · approximate 3 px smoothing for peak widths only" distances={profile.distances} xUnit={profile.unit} yLabel="Source gray value" traces={profile.traces}/><div className="widths">{profile.widths.map((w,i)=><span key={i}>{info!.channel_labels[i]} · single-peak FWHM: {w==null?"not available":`${w.toFixed(3)} ${profile.unit}`}</span>)}</div></>}
       <footer><span>Foundation milestone · Quantitative reconstruction and molecular agent are in development.</span><span>Source → calibration → measurement</span></footer>
     </main></div></div>;

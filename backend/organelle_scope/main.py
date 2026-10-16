@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import math
 import json
 import os
 import secrets
@@ -18,6 +19,7 @@ from fastapi.responses import Response
 from PIL import Image
 from pydantic import BaseModel, Field
 
+from organelle_scope.roi_analysis import AnalysisRequest, analyze_roi
 from organelle_scope import __version__
 from organelle_scope.image_io import ImageError, ImageInfo, inspect_tiff, read_plane
 
@@ -127,6 +129,47 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             record.update(info=info.model_dump(), options=options.model_dump())
             save_record(folder, record)
             return record
+
+    @app.get("/api/images/{image_id}/analysis", dependencies=[Depends(authorized)])
+    def saved_analysis(image_id: str) -> dict:
+        folder, record, _ = stored(image_id)
+        path = folder / "analysis.json"
+        if not path.exists():
+            raise HTTPException(404, "No saved ROI analysis yet.")
+        result = json.loads(path.read_text())
+        if result["source_sha256"] != record["sha256"] or result["image_info"] != record["info"]:
+            raise HTTPException(409, "Image settings changed; run the ROI analysis again.")
+        return result
+
+    @app.post("/api/images/{image_id}/analysis", dependencies=[Depends(authorized)])
+    def measure(image_id: str, options: AnalysisRequest) -> dict:
+        with lock:
+            folder, record, info = stored(image_id)
+            count = info.dimensions["C"]
+            if count < 2 or options.target_channel >= count:
+                raise HTTPException(422, "Select an image with at least two channels and a valid target channel.")
+            if len({r.id for r in options.rois}) != len(options.rois):
+                raise HTTPException(422, "ROI identifiers must be unique.")
+            thresholds = options.thresholds if options.threshold_mode == "manual" else [0.] * count
+            if len(thresholds) != count or any(not math.isfinite(t) or t < 0 or t > 2**info.bit_depth-1 for t in thresholds):
+                raise HTTPException(422, "Provide one finite threshold per channel within the source intensity range.")
+            results = []
+            try:
+                for z in sorted({r.z for r in options.rois}):
+                    channels = [read_plane(folder / "source.tiff", info, c, z) for c in range(count)]
+                    for roi in options.rois:
+                        if roi.z == z:
+                            results.append(analyze_roi(channels, roi, info.channel_labels, options.target_channel,
+                                options.threshold_mode, thresholds, (info.calibration["X"].value_um, info.calibration["Y"].value_um)))
+            except (ImageError, ValueError) as exc:
+                raise HTTPException(422, str(exc)) from exc
+            result = {"algorithm_version": "roi-1", "image_id": image_id, "source_sha256": record["sha256"],
+                      "image_info": record["info"], "request": options.model_dump(), "results": results,
+                      "scope": "Separate XY-plane ROIs; native source intensities; no 3D or pooled biological inference."}
+            temp = folder / "analysis.tmp"
+            temp.write_text(json.dumps(result, indent=2, allow_nan=False))
+            temp.replace(folder / "analysis.json")
+            return result
 
     @app.get("/api/images/{image_id}/plane", dependencies=[Depends(authorized)])
     def plane(image_id: str, z: int = 0, channel: int = 0) -> Response:

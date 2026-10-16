@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "numpy>=1.26,<3",
   "tifffile>=2025.10.4,<2027", "pillow>=10,<13", "python-multipart>=0.0.18,<1",
-  "pydantic>=2.10,<3", "imagecodecs>=2025.3.30,<2027"
+  "pydantic>=2.10,<3", "imagecodecs>=2025.3.30,<2027", "scipy>=1.13,<2"
 ]
 
 [project.optional-dependencies]
