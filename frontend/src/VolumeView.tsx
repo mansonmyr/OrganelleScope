@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ImageRecord } from "./api";
 import { request } from "./api";
-import { interleaveChannels } from "./volumeData";
+import { interleaveChannels, volumeSampleDistance } from "./volumeData";
 
 type Controls = { cutoff: number; opacity: number; stretch: number };
 const colors = [[1,.2,.35],[.15,1,.65],[.3,.5,1],[.9,.9,.9]];
@@ -59,7 +59,8 @@ export function VolumeView({ image, channel, onChannelChange }: {
         const scalars=dataArray.default.newInstance({name:'Native channels',values,numberOfComponents:payloads.length});
         source.getPointData().setScalars(scalars);
         const mapper=volumeMapper.default.newInstance();mapper.setInputData(source);
-        mapper.setSampleDistance(Math.min(...spacing)/2);
+        mapper.setSampleDistance(volumeSampleDistance(shape,spacing,settings.current.stretch));
+        mapper.setMaximumSamplesPerRay(1000);
         const actor=volume.default.newInstance();actor.setMapper(mapper);
         actor.getProperty().setIndependentComponents(true);
         actor.getProperty().setInterpolationTypeToLinear();actor.getProperty().setShade(false);
@@ -92,6 +93,7 @@ export function VolumeView({ image, channel, onChannelChange }: {
             op.removeAllPoints();op.addPoint(0,0);op.addPoint(high*cutoff/100,0);op.addPoint(high,opacity/100);
           }
           actor.setScale(1,1,stretch);
+          mapper.setSampleDistance(volumeSampleDistance(shape,spacing,stretch));
           if(stretch!==previousStretch){previousStretch=stretch;frame();}
           else window.getRenderWindow().render();
         };

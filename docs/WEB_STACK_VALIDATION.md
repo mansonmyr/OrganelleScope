@@ -25,8 +25,10 @@ The two public RGB files store interleaved colour samples (ZYXS). For this rende
 ## Checks
 
 - 32 backend tests pass, including escaped and literal micro-unit variants, explicit uncalibrated voxel rendering, downsampled geometry, preserved unknown source scale, and rejection of unknown unit modes.
-- 20 interface tests pass, including four-channel voxel interleaving and the calibration popup.
+- 21 interface tests pass, including four-channel voxel interleaving and the calibration popup.
 - Frontend type checking and production build pass.
-- Browser verification observes the popup and all-channel 3D volumes; a four→one→four channel switch renders without recorded browser errors. Display Z stretch shows its warning.
+- Browser verification observes the popup and all-channel 3D volumes; a four→one→four channel switch renders without recorded browser errors. Display Z stretch shows its warning. Adaptive ray sampling keeps anisotropic and stretched volumes within the renderer step limit.
 
 The display is bounded at roughly 128 × 128 × 64 per channel. Rendering quality is therefore a preview, not a full-resolution 3D analysis result. Larger datasets and native Windows GPU testing remain separate validation work.
+
+Fiji’s Info window can report “Uncalibrated” for intensity-value calibration even while physical spatial scale is present, as shown in [ImageJ ImageInfo](https://github.com/imagej/ImageJ/blob/master/ij/plugin/ImageInfo.java). This does not negate the voxel-size metadata.
