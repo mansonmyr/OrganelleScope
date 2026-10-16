@@ -1,6 +1,9 @@
 name: Unsigned development installers
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*-dev*'
 permissions:
   contents: read
 jobs:
