@@ -87,7 +87,7 @@ def inspect_tiff(path: Path, series_index: int = 0, axes_override: str | None = 
             raise ImageError(f"Expected uint8 or uint16 pixels; found {series.dtype}.")
         source_axes = series.axes
         axes = (axes_override or source_axes).upper()
-        if len(axes) != len(series.shape) or len(set(axes)) != len(axes):
+        if len(axes) != len(series.shape) or (axes_override and len(set(axes)) != len(axes)):
             raise ImageError("Axis order must contain one unique letter per dimension.")
         if "Y" not in axes or "X" not in axes:
             raise ImageError("TIFF must contain X and Y image axes.")

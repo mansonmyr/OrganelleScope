@@ -100,3 +100,23 @@ def test_channel_first_storage_and_bounds(tmp_path):
     np.testing.assert_array_equal(read_plane(path, info, channel=3, z=2), a[3, 2])
     with pytest.raises(ImageError):
         read_plane(path, info, channel=4)
+
+
+def test_multiple_unspecified_axes_can_be_reviewed(tmp_path):
+    path = tmp_path / "unknown.tif"
+    a = np.arange(2 * 3 * 8 * 9, dtype=np.uint16).reshape(2, 3, 8, 9)
+    tifffile.imwrite(path, a, photometric="minisblack", metadata={"axes": "QQYX"})
+    info = inspect_tiff(path)
+    assert info.needs_axis_confirmation
+    corrected = inspect_tiff(path, axes_override="CZYX")
+    np.testing.assert_array_equal(read_plane(path, corrected, channel=1, z=2), a[1, 2])
+
+
+@pytest.mark.parametrize("compression", ["deflate", "lzw"])
+def test_compressed_stack_big_endian_preserves_values(tmp_path, compression):
+    pytest.importorskip("imagecodecs")
+    path = tmp_path / "compressed.ome.tif"
+    a = np.arange(3 * 2 * 8 * 9, dtype=">u2").reshape(3, 2, 8, 9)
+    tifffile.imwrite(path, a, ome=True, photometric="minisblack", byteorder=">", compression=compression, metadata={"axes": "ZCYX"})
+    info = inspect_tiff(path)
+    np.testing.assert_array_equal(read_plane(path, info, channel=1, z=2), a[2, 1])
