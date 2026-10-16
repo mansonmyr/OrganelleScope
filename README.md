@@ -84,3 +84,11 @@ No experimental TIFFs, credentials, model weights, or local environments belong 
 Choose Circular ROI or Polygonal ROI from the drawing tool, draw one or more regions, select the threshold method, and press **Calculate ROI statistics**. The line profiler remains a separate drawing tool. ROIs use pixel-center coordinates; circular masks are circular in XY pixel coordinates. Measurements use native intensities, independently for each ROI on its recorded Z plane. ROI area uses confirmed X/Y scale. Deleting or adding an ROI or changing analysis settings clears the displayed results until recalculation. The last successfully calculated analysis is restored when reopening a saved import. Unsaved edits do not replace it.
 
 See [ROI measurement definitions](docs/ROI_STATISTICS.md) for formulas and limitations. No probability of molecular binding, calibrated significance or nanoscale resolution is inferred from these descriptive measurements.
+
+## macOS development installation
+
+Version 0.1.2 adds explicit ad-hoc development signing of the Mac app and its bundled analysis executable, plus strict signature checks before producing an installer. This is not Apple Developer ID signing or notarization. Mac development builds may still require an app-specific approval in **System Settings → Privacy & Security → Open Anyway** after attempting to open the app. See [Apple's instructions](https://support.apple.com/en-us/102445). A successful signature check is not a malware or scientific-validation certificate.
+
+If a 0.1.1 installer reports that the app is damaged, replace it with the rebuilt 0.1.2 app rather than disabling Gatekeeper globally. Drag OrganelleScope from the new DMG into Applications and choose Replace. Imported images and analyses are stored separately in the app's user-data directory. The signing hooks clean only FinderInfo/ResourceFork metadata in generated build output and do not remove quarantine from installed apps.
+
+A local packaging run writes installers into `release/` (excluded from Git). CI installers remain available as Actions artifacts until attached to a GitHub Release. Publication-ready Mac distribution requires a Developer ID certificate and notarization configured separately; these credentials are not present in the project.
