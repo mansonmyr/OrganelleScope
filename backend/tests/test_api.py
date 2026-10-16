@@ -1,4 +1,5 @@
 import io
+import json
 
 import numpy as np
 import tifffile
@@ -53,3 +54,18 @@ def test_volume_has_calibrated_geometry_and_requires_scale(tmp_path):
         assert response.headers["X-Volume-Shape"] == "[3, 8, 9]"
         assert response.headers["X-Volume-Spacing"] == "[0.1, 0.2, 0.3]"
         np.testing.assert_array_equal(np.frombuffer(response.content, "<u2").reshape(source.shape), source)
+
+
+def test_old_import_records_are_reinspected_without_reusing_implicit_scale(tmp_path):
+    headers = {"X-Session-Token": "token"}
+    with TestClient(create_app(tmp_path, "token")) as client:
+        buf = io.BytesIO()
+        tifffile.imwrite(buf, np.zeros((8, 9), np.uint16), resolution=(300, 300), resolutionunit="INCH")
+        record = client.post("/api/images", headers=headers, files={"file": ("dpi.tif", buf.getvalue())}).json()
+        record.pop("import_schema")
+        record["info"]["calibration"]["X"]["value_um"] = 25400/300
+        path = tmp_path / record["id"] / "metadata.json"
+        path.write_text(json.dumps(record))
+        revised = client.get("/api/images", headers=headers).json()[0]
+        assert revised["import_schema"] == 1
+        assert revised["info"]["calibration"]["X"]["value_um"] is None
