@@ -104,3 +104,30 @@ def test_roi_api_native_z_plane_persistence_and_validation(tmp_path):
         assert client.get(url,headers=h).json()==response.json()
         client.post(f'/api/images/{iid}/inspect',headers=h,json={'spacing_um':{'X':.3}})
         assert client.get(url,headers=h).status_code==409
+
+
+def test_correlations_match_independent_scipy_reference_across_intensity_ranges():
+    from scipy.stats import pearsonr, spearmanr
+    rng=np.random.default_rng(29841)
+    for maximum in (255,65535):
+        for relation in ('independent','positive','negative','ties'):
+            a=rng.integers(0,maximum+1,4096,dtype=np.uint16).astype(float)
+            if relation=='independent': b=rng.integers(0,maximum+1,4096).astype(float)
+            elif relation=='positive': b=np.clip(.8*a+rng.normal(0,maximum*.1,len(a)),0,maximum)
+            elif relation=='negative': b=maximum-a
+            else: a=np.floor(a/(maximum/10));b=np.floor(a/2)
+            measured=pair_metrics(a,b,'manual',maximum*.2,maximum*.3)
+            assert measured['pcc']==pytest.approx(pearsonr(a,b).statistic,abs=1e-12)
+            assert measured['spearman']==pytest.approx(spearmanr(a,b).statistic,abs=1e-12)
+
+
+def test_multichannel_regression_recovers_known_standardized_coefficients():
+    # Orthogonal predictors with known contributions, independent of least-squares implementation.
+    a=np.array([-1,-1,1,1,-1,-1,1,1],dtype=float)
+    b=np.array([-1,1,-1,1,-1,1,-1,1],dtype=float)
+    y=3*a-2*b+20
+    measured=regression([y,a+5,b+5],0,['Target','A','B'])
+    assert measured['r_squared']==pytest.approx(1,abs=1e-12)
+    assert measured['betas'][0]['value']==pytest.approx(3/np.sqrt(13),abs=1e-12)
+    assert measured['betas'][1]['value']==pytest.approx(-2/np.sqrt(13),abs=1e-12)
+    assert measured['coefficient_ratio']==pytest.approx(1.5,abs=1e-12)

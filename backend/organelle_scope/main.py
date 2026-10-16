@@ -165,6 +165,11 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
                 raise HTTPException(422, str(exc)) from exc
             result = {"algorithm_version": "roi-1", "image_id": image_id, "source_sha256": record["sha256"],
                       "image_info": record["info"], "request": options.model_dump(), "results": results,
+                      "validation": {"status": "engineering-tested; biological validation pending",
+                                     "publication_ready": False,
+                                     "limitations": ["No spatially calibrated significance or experiment-level inference.",
+                                                     "Independent microscopy-software and real-control benchmarks pending."],
+                                     "methods_document": "docs/ROI_STATISTICS.md"},
                       "scope": "Separate XY-plane ROIs; native source intensities; no 3D or pooled biological inference."}
             temp = folder / "analysis.tmp"
             temp.write_text(json.dumps(result, indent=2, allow_nan=False))
