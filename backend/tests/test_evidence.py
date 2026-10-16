@@ -86,3 +86,40 @@ def test_exact_kegg_symbol_is_not_hidden_by_candidate_cap(tmp_path,monkeypatch):
         result=client.post('/api/evidence/query',headers={'X-Session-Token':'token'},json={'provider':'kegg','operation':'map','identifiers':['TP53'],'academic_use':True}).json()
         assert result['rows'][0]['id']=='hsa:7157'
         assert result['provider_row_count']==31 and result['truncated'] and len(result['rows'])==25
+
+
+def test_pathway_png_is_validated_cached_and_academic_gated(tmp_path,monkeypatch):
+    import io,base64
+    from PIL import Image
+    buf=io.BytesIO();Image.new('RGB',(120,80),'white').save(buf,format='PNG');payload=buf.getvalue()
+    calls=[]
+    class Response:
+        url='https://rest.kegg.jp/get/hsa04115/image'
+        def __enter__(self):return self
+        def __exit__(self,*args):pass
+        def read(self,n):return payload
+    monkeypatch.setattr('urllib.request.urlopen',lambda req,timeout,context:(calls.append(req.full_url) or Response()))
+    with TestClient(create_app(tmp_path/'images','token')) as client:
+        path='/api/evidence/kegg/pathway-image';h={'X-Session-Token':'token'};body={'pathway_id':'hsa04115','academic_use':True}
+        assert client.post(path,json=body).status_code==401
+        assert client.post(path,headers=h,json={**body,'academic_use':False}).status_code==422
+        assert client.post(path,headers=h,json={**body,'pathway_id':'../../evil'}).status_code==422
+        result=client.post(path,headers=h,json=body).json()
+        assert (result['width'],result['height'])==(120,80)
+        assert base64.b64decode(result['image_data_url'].split(',')[1])==payload
+        assert not result['source']['cached'] and 'image_base64' not in result['source']
+        cached=client.post(path,headers=h,json={**body,'offline_only':True}).json()
+        assert cached['source']['cached'] and cached['image_data_url']==result['image_data_url']
+        assert len(calls)==1
+        assert client.post(path,headers=h,json={**body,'pathway_id':'hsa04010','offline_only':True}).status_code==422
+
+
+def test_pathway_response_cannot_be_html(tmp_path,monkeypatch):
+    class Response:
+        url='https://rest.kegg.jp/get/hsa04115/image'
+        def __enter__(self):return self
+        def __exit__(self,*args):pass
+        def read(self,n):return b'<html>service unavailable</html>'
+    monkeypatch.setattr('urllib.request.urlopen',lambda req,timeout,context:Response())
+    with pytest.raises(ValueError,match='PNG'):EvidenceClient(tmp_path).fetch(Response.url,binary=True)
+    assert list(tmp_path.glob('*.json'))==[]

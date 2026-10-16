@@ -1,5 +1,8 @@
 """Small on-demand public identifier lookups. No images or measurements accepted."""
 import hashlib
+import base64
+import io
+from PIL import Image
 import json
 import re
 import ssl
@@ -50,19 +53,27 @@ def query_urls(options):
     raise ValueError('Unsupported lookup. KEGG accepts one human gene at a time.')
 
 
+class PathwayImageRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    pathway_id: str = Field(pattern=r'^hsa[0-9]{5}$')
+    academic_use: bool = False
+    offline_only: bool = False
+
+
 class EvidenceClient:
     def __init__(self,folder:Path):
         self.folder=folder;folder.mkdir(parents=True,exist_ok=True)
         self.lock=Lock();self.last_request=0.
 
-    def fetch(self,url,offline=False):
+    def fetch(self,url,offline=False,binary=False):
         key=hashlib.sha256(url.encode()).hexdigest();path=self.folder/(key+'.json')
         with self.lock:
             cached=None
             if path.exists():
                 try:
                     cached=json.loads(path.read_text())
-                    if cached['source_url']!=url or not isinstance(cached['retrieved_unix'],(int,float)) or hashlib.sha256(cached['text'].encode()).hexdigest()!=cached['response_sha256']:
+                    payload=base64.b64decode(cached['image_base64'],validate=True) if binary else cached['text'].encode()
+                    if cached['source_url']!=url or not isinstance(cached['retrieved_unix'],(int,float)) or hashlib.sha256(payload).hexdigest()!=cached['response_sha256']:
                         cached=None
                 except (ValueError,OSError,KeyError,TypeError):cached=None
             if cached and (offline or time.time()-cached['retrieved_unix']<7*86400):
@@ -70,18 +81,26 @@ class EvidenceClient:
             if offline:raise ValueError('No saved evidence for this exact query. Switch off offline-only mode to fetch it.')
             time.sleep(max(0,1.05-(time.monotonic()-self.last_request)))
             self.last_request=time.monotonic()
-            req=urllib.request.Request(url,headers={'User-Agent':'OrganelleScope-academic/0.1.5','Accept':'application/json,text/plain'})
+            req=urllib.request.Request(url,headers={'User-Agent':'OrganelleScope-academic/0.1.6','Accept':'image/png' if binary else 'application/json,text/plain'})
             try:
                 with urllib.request.urlopen(req,timeout=15,context=ssl.create_default_context(cafile=certifi.where())) as response:
                     if urllib.parse.urlsplit(response.url).hostname!=urllib.parse.urlsplit(url).hostname:
                         raise ValueError('The evidence provider redirected to a different host.')
-                    raw=response.read(1024*1024+1)
-                    if len(raw)>1024*1024:raise ValueError('Evidence response exceeds the 1 MiB query limit.')
-                    text=raw.decode('utf-8')
-            except (urllib.error.URLError,TimeoutError,OSError) as exc:
+                    limit=(4 if binary else 1)*1024*1024
+                    raw=response.read(limit+1)
+                    if len(raw)>limit:raise ValueError('Evidence response exceeds the bounded query size limit.')
+                    if binary:
+                        if not raw.startswith(b'\x89PNG\r\n\x1a\n'):raise ValueError('KEGG did not return a PNG pathway diagram.')
+                        with Image.open(io.BytesIO(raw)) as image:
+                            width,height=image.size
+                            if width*height>16_000_000:raise ValueError('The pathway diagram exceeds the 16 megapixel display limit.')
+                            image.verify()
+                    else:text=raw.decode('utf-8')
+            except (urllib.error.URLError,TimeoutError,OSError,Image.DecompressionBombError) as exc:
                 raise ValueError('Evidence service unavailable. Check the connection or use a previously cached query in offline-only mode.') from exc
             record={'source_url':url,'retrieved_utc':datetime.now(timezone.utc).isoformat(),'retrieved_unix':time.time(),
-                    'response_sha256':hashlib.sha256(raw).hexdigest(),'text':text}
+                    'response_sha256':hashlib.sha256(raw).hexdigest()}
+            record.update({'image_base64':base64.b64encode(raw).decode('ascii'),'width':width,'height':height} if binary else {'text':text})
             temp=self.folder/(key+'.'+str(uuid4())+'.tmp');temp.write_text(json.dumps(record,ensure_ascii=False));temp.replace(path)
             # Bound actual cache storage, including JSON overhead; no bulk database download.
             files=sorted(self.folder.glob('*.json'),key=lambda p:p.stat().st_mtime,reverse=True)
@@ -94,6 +113,19 @@ class EvidenceClient:
 
 def register_evidence(app,data_dir,authorized):
     client=EvidenceClient(data_dir.parent/'evidence-cache')
+
+    @app.post('/api/evidence/kegg/pathway-image',dependencies=[Depends(authorized)])
+    def pathway_image(options:PathwayImageRequest):
+        try:
+            if not options.academic_use:raise ValueError('KEGG diagrams are enabled for academic research use only.')
+            record=client.fetch(KEGG+'/get/'+options.pathway_id+'/image',options.offline_only,binary=True)
+            return {'pathway_id':options.pathway_id,'image_data_url':'data:image/png;base64,'+record['image_base64'],
+                    'width':record['width'],'height':record['height'],
+                    'source':{k:v for k,v in record.items() if k!='image_base64'},
+                    'pathway_url':'https://www.kegg.jp/pathway/'+options.pathway_id,
+                    'terms_url':'https://www.kegg.jp/kegg/rest/',
+                    'interpretation':'KEGG reference diagram for this human pathway. Displayed colours are KEGG annotations, not measured activity or a knockdown prediction.'}
+        except (ValueError,KeyError,TypeError) as exc:raise HTTPException(422,str(exc)) from exc
 
     @app.post('/api/evidence/query',dependencies=[Depends(authorized)])
     def query(options:EvidenceRequest):

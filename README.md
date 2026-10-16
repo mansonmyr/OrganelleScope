@@ -1,33 +1,62 @@
 # OrganelleScope
 
-A desktop microscopy workbench in development, bringing together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
+A desktop microscopy workbench bringing together the Probabilistic Colocalization Estimator and Quick IF Line Profiler, with image measurements, processing sensitivity, calibrated 3D inspection and molecular evidence in one local workflow.
 
-**Current milestone: metadata, calibrated viewing, source line profiles, and per-plane ROI statistics. This is a development build, not a validated scientific release.**
+**Source milestone 0.1.6 — research software in development. Numerical checks and working features do not constitute biological or publication validation. Installed binaries may lag the source; this milestone does not publish a new installer.**
 
-## Available now
+## Current functionality
 
-- TIFF, OME-TIFF and ImageJ TIFF inspection with source bit depth, channel names, shape, axis order and calibration provenance.
-- Explicit correction of ambiguous axes; no automatic disposal of Z planes or time points.
-- An information popup explaining physical calibration, Z step, sampling and optical resolution.
-- Fiji escaped micrometre units are recognized automatically, and existing imports are refreshed.
-- An explicitly labeled voxel-space preview is available when physical spacing is unknown.
-- Conflicting physical-scale metadata blocks physical interpretation until corrected.
-- Page-wise viewing of supported uint8/uint16 layouts, up to four channels.
-- Native-intensity line profiles on a selected XY plane, calibrated for unequal X/Y spacing.
-- Circular (center-to-edge drag) and polygonal (click vertices, finish explicitly) ROIs, attached to individual Z planes.
-- Per-ROI Pearson, Spearman, Manders overlap, raw/thresholded Manders fractions, channel intensities and standardized multichannel regression.
-- Zero, manual per-channel and Costes-style automatic thresholds; explicit unavailable cases.
-- Locally saved ROI analyses, restored with their imported image and exported with source identity and settings.
-- Corrected FWHM coordinate conversion, tested against a Gaussian reference at multiple sampling intervals.
-- A calibrated, downsampled 3D volume preview with all-channel compositing or individual channel selection, an oblique starting view, display opacity/cutoff controls and labeled Z stretching. Display downsampling does not alter source pixels.
-- Local, persistent import records with UUID identity and SHA-256 source digest.
-- An Electron launcher, local-session authentication, and initial build/CI configuration.
+| Area | Implemented | Current boundary |
+| --- | --- | --- |
+| Image import | TIFF, OME-TIFF and ImageJ TIFF; 8/16-bit; up to four channels; axes/calibration provenance and manual correction | Static images/stacks; unsupported layouts fail explicitly; no time-lapse analysis |
+| ROI and profiles | Circular/polygonal XY ROIs per Z plane; calibrated line profiles and single-peak FWHM | Full reopenable projects and batch workflows are pending |
+| Colocalization | Pearson, Spearman, overlap and Manders measures; per-channel summaries and standardized regression | No molecular-binding probability; formulas/threshold conventions must be matched before comparing software |
+| Preprocessing | Constant per-channel or square-opening background subtraction; optional Gaussian smoothing; raw/processed measurement selection and matched-contrast comparison | Noise2Void, deconvolution and learned reconstruction are pending |
+| Statistical controls | Independent numeric references, processing sensitivity and seeded whole-plane toroidal shifts for one ROI/channel pair | Stationarity-dependent, unadjusted spatial control; no experiment-level inference or general significance certification |
+| 3D inspection | All-channel volume rendering, physical/voxel-space labeling, linked XY/XZ/YZ sections and display-only Z stretch | Downsampled rendering is separate from measurement; no claim of super-resolution |
+| 3D measurement | Inclusive full-resolution cuboid summaries, calibrated region volume and channel associations | Up to 500,000 voxels per region; cuboid volume is not segmented organelle volume |
+| Molecular evidence | Human STRING identifier selection/association networks and academic KEGG gene/pathway lookup; on-demand KEGG pathway diagrams with zoom and provenance | Identifier/species queries only; reference maps do not show experimentally inferred activation or knockdown effects |
+| Reproducibility | Source SHA-256, calibration, processing recipes/versions, ROI requests, seeds, evidence dates/hashes and JSON reports | Only last successful XY ROI analysis is restored automatically; other reports must be exported |
+| Desktop distribution | Electron/local Python service; macOS ARM64 and Windows x64 packaging configuration | Development distribution; no Developer ID notarization, production certification or bundled LLM |
 
-## Not implemented yet
+Methods: [ROI statistics](docs/ROI_STATISTICS.md), [preprocessing](docs/PREPROCESSING.md), [research workspaces and evidence](docs/RESEARCH_WORKSPACES.md), [validation status](docs/VALIDATION.md).
 
-Biological validation of colocalization, spatial null models, and calibrated significance; volumetric segmentation and organelle measurements; preprocessing and deconvolution; learned super-resolution; Bayesian/MLE workflows; experiment comparisons; the molecular-evidence APIs; the Qwen local agent; reopenable full analysis projects; the marketing website; and full offline installers with models. See [the development plan](docs/DEVELOPMENT_PLAN.md).
+## Functional comparison with other applications
 
-There is no claim that the 3D preview or current profile converts conventional images into experimentally acquired super-resolution data. Legacy mock classifications and the PCE discovery score have not been adopted as validated measurements.
+Reviewed **16 October 2026** against the primary documentation linked below. This is a capability and workflow comparison, not an accuracy, speed or usability benchmark. Host applications, bundled modules and optional plugins are identified separately. A feature not described in the reviewed sources is not proof that no extension can provide it. Versions, enabled plugins and commercial packages matter.
+
+| Application / component | Main workflow | Colocalization and quantitative analysis | 3D and object analysis | Automation / reproducibility | Fit relative to OrganelleScope |
+| --- | --- | --- | --- | --- | --- |
+| **OrganelleScope 0.1.6 source** | Guided local fluorescence inspection, measurements and biological context | Built-in XY/cuboid intensity metrics, profiles, processing sensitivity and a conditional translation control | Volume preview, linked sections and cuboids; organelle segmentation pending | Source/recipe/seed/evidence records; full projects and batch jobs pending | Combines these steps in one interface; scientific and production validation remain incomplete |
+| **[napari](https://napari.org/stable/getting_started/quick_start.html)** | Extensible multidimensional image viewer and annotation platform | Analysis supplied through Python and domain-specific plugins; capabilities depend on the selected tools | Native n-dimensional layers, 3D visualization and annotations | Python API and plugins | Stronger general-purpose viewer ecosystem; compare a specified plugin configuration rather than treating the viewer as a fixed colocalization package |
+| **[QuPath](https://github.com/qupath/qupath/blob/main/README.md)** / [multiplex analysis](https://qupath.readthedocs.io/en/latest/docs/tutorials/multiplex_analysis.html) | Large-image, whole-slide, tissue/cell and multiplex analysis | Cell/object intensity measurements and classification; custom workflows through scripting/extensions | Rich tissue/object workflows; the reviewed documentation focuses on these rather than a confocal volume-rendering suite | Projects, scripting and extensibility | Stronger established tissue-analysis and project workflows; different primary focus from subcellular stack colocalization |
+| **[CellProfiler](https://cellprofiler.org/introduction)** / [MeasureColocalization](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.2.8/modules/measurement.html#measurecolocalization) | Reusable image-analysis pipelines and high-content measurements | Dedicated image/object colocalization module, including 2D and 3D support | Segmentation and object measurements; module-specific dimensional support | Configurable pipelines and export workflows | Stronger established automated analysis; assess the chosen modules/settings rather than assuming all metrics are equivalent |
+| **Fiji/ImageJ + [JaCoP](https://imagej.net/imaging/colocalization-analysis)** | Dedicated colocalization plugin within ImageJ | Pearson, Manders/overlap, Li/Van Steensel approaches, Costes tools and object-based options | Stack/object capabilities depend on the JaCoP variant and settings; host supplies additional tools | ImageJ workflows; reproducibility depends on recording plugin version, masks and parameters | A broader established colocalization toolbox; classic JaCoP and BIOP variants must be distinguished in benchmarks |
+| **Fiji/ImageJ + [Coloc 2](https://imagej.net/plugins/coloc-2)** | Pixel-intensity colocalization with scatterplots and reports | Pearson, Manders, Costes, Li, automatic thresholds and significance testing | Z-stack support; Coloc 2 explicitly does not provide object-based colocalization | Host workflows and numerical/report output | A priority independent benchmark. OrganelleScope's Costes-style thresholds and toroidal test are not claimed to reproduce Coloc 2 |
+| **[Icy](https://icy.bioimageanalysis.org/)** + [ColocalizationStudio protocol](https://icy.bioimageanalysis.org/protocol/spot-detection-and-colocalization-object-analysis/) | Extensible bioimage processing with reusable protocols | Documented spot-detection/object-colocalization workflow; additional analysis depends on plugins/protocols | Detection/ROI workflows depend on the chosen components | Visual protocols, plugins and scripts | A relevant comparator for future object/spot analysis; matching methods and segmentation settings is essential |
+| **[Imaris Essentials / Coloc](https://imaris.oxinst.com/products/imaris-essentials)** | Commercial interactive 3D microscopy visualization and analysis | Colocalization/co-distribution analysis within the Imaris product ecosystem | Volume/surface rendering, object distances and overlaps | Package-dependent analysis workflows and reporting | A stronger established 3D-analysis comparator; current OrganelleScope cuboids do not replace surface segmentation or object-distance workflows |
+
+OrganelleScope's present emphasis is the connection between calibrated images, explicit measurement/processing choices and traceable STRING/KEGG context. This is an integration goal, not a claim that individual methods are unique or outperform existing tools. No exhaustive plugin-market survey or head-to-head validation has been performed. See the [detailed comparison and release-readiness criteria](docs/SOFTWARE_COMPARISON.md).
+
+## KEGG pathway diagrams
+
+1. Open **Molecular evidence**, select **KEGG**, and indicate academic research use.
+2. Enter a human gene symbol (for example `TP53`), find candidates, and explicitly select the correct gene.
+3. Retrieve its pathway memberships, then choose **View diagram** beside a pathway.
+4. The official human KEGG PNG opens in a zoomable, scrollable dialog. The interactive KEGG website remains available through a source link.
+
+Diagrams download only when requested. They share the bounded local evidence cache and can be reopened in **Offline only** mode after a successful fetch. No KEGG diagrams or database dumps are included in the repository/installer. Retrieval time, source URL and image hash accompany the evidence export; image colours are KEGG reference annotations, not measured signalling activity. Access requires an available provider or a matching cached result. [KEGG API documentation and academic-use restriction](https://www.kegg.jp/kegg/rest/), [image endpoint](https://www.kegg.jp/kegg/rest/keggapi.html).
+
+## Next development priorities
+
+1. **Reopenable projects and batch execution:** retain all ROIs, 3D regions, settings, validation reports and evidence selections, with cancellation and recovery.
+2. **Independent scientific benchmarking:** matched JaCoP/Coloc 2/CellProfiler masks and threshold conventions; known controls, channel-registration sensitivity and false-positive calibration.
+3. **Organelle segmentation and spatial measurements:** inspectable 3D masks, surfaces, enrichment and distances with explicit calibration/resolution limitations.
+4. **Experiment-level inference:** condition/cell/experiment identifiers, effect sizes, confidence intervals and appropriate multiplicity control.
+5. **Noise2Void/restoration, then local agent:** validated model loading, residual/measurement-bias checks; evidence-grounded tool use after the analysis workflow is dependable.
+6. **Release hardening:** native platform/large-stack tests, signing/notarization when credentials are available, installer releases and the marketing site.
+
+These are planned capabilities, not functioning features. No conversion of conventional microscopy into experimentally verified super-resolution data or inferred molecular binding is claimed. See the [development plan](docs/DEVELOPMENT_PLAN.md).
 
 ## Development setup
 
@@ -81,7 +110,7 @@ No experimental TIFFs, credentials, model weights, or local environments belong 
 
 ## ROI statistics
 
-Choose Circular ROI or Polygonal ROI from the drawing tool, draw one or more regions, select the threshold method, and press **Calculate ROI statistics**. The line profiler remains a separate drawing tool. ROIs use pixel-center coordinates; circular masks are circular in XY pixel coordinates. Measurements use native intensities, independently for each ROI on its recorded Z plane. ROI area uses confirmed X/Y scale. Deleting or adding an ROI or changing analysis settings clears the displayed results until recalculation. The last successfully calculated analysis is restored when reopening a saved import. Unsaved edits do not replace it.
+Choose Circular ROI or Polygonal ROI from the drawing tool, draw one or more regions, select the threshold method, and press **Calculate ROI statistics**. The line profiler remains a separate drawing tool. ROIs use pixel-center coordinates; circular masks are circular in XY pixel coordinates. Measurements use the explicitly selected raw or processed intensities, independently for each ROI on its recorded Z plane; raw is the default. ROI area uses confirmed X/Y scale. Deleting or adding an ROI or changing analysis settings clears the displayed results until recalculation. The last successfully calculated analysis is restored when reopening a saved import. Unsaved edits do not replace it.
 
 See [ROI measurement definitions](docs/ROI_STATISTICS.md) for formulas and limitations. No probability of molecular binding, calibrated significance or nanoscale resolution is inferred from these descriptive measurements.
 
@@ -92,15 +121,3 @@ Version 0.1.2 adds explicit ad-hoc development signing of the Mac app and its bu
 If a 0.1.1 installer reports that the app is damaged, replace it with the rebuilt 0.1.2 app rather than disabling Gatekeeper globally. Drag OrganelleScope from the new DMG into Applications and choose Replace. Imported images and analyses are stored separately in the app's user-data directory. The signing hooks clean only FinderInfo/ResourceFork metadata in generated build output and do not remove quarantine from installed apps.
 
 A local packaging run writes installers into `release/` (excluded from Git). CI installers remain available as Actions artifacts until attached to a GitHub Release. Publication-ready Mac distribution requires a Developer ID certificate and notarization configured separately; these credentials are not present in the project.
-
-### Background correction and smoothing
-
-The image preparation panel compares raw and processed planes using matched contrast. Apply a background recipe, then explicitly choose raw or processed intensities for line profiles and ROI statistics. Raw TIFF pixels remain unchanged. Exports include settings, algorithm/dependency versions and recipe/source hashes. See [preprocessing methods and limitations](docs/PREPROCESSING.md). Noise2Void and biological validation remain in development.
-
-### Research workspaces (0.1.5 source milestone)
-
-- Numerical reference checks, raw/processed ROI sensitivity and a seeded single-pair spatial translation control with explicit assumptions and exports.
-- Linked XY/XZ/YZ sections and full-resolution 3D cuboid summaries (up to 500,000 source voxels per region), separate from the volume preview.
-- Optional academic human-protein STRING mapping/association queries and KEGG gene/pathway lookups, with explicit candidate selection, bounded offline caches and source provenance. These lookups require no API key and never accept images or measurements.
-
-See [research methods and limitations](docs/RESEARCH_WORKSPACES.md). Biological and independent Fiji validation, segmentation, experiment-level inference and the local LLM agent remain in development. These are source features; no new installer is implied by this milestone.
