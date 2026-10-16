@@ -1,3 +1,4 @@
+import {useProjectState} from './ProjectContext';
 import {useEffect,useRef,useState} from 'react';
 import {json,type ImageRecord} from './api';
 import type {AreaROI} from './RoiOverlay';
@@ -5,11 +6,11 @@ import type {ProcessingConfig} from './ProcessingPanel';
 import {downloadReport,formatMetric as fmt} from './reportDownload';
 type Report=Record<string,any>;
 export function ValidationPanel({image,rois,processing,measurementProcessing,thresholds,thresholdMode,target}:{image:ImageRecord;rois:AreaROI[];processing:ProcessingConfig;measurementProcessing:ProcessingConfig;thresholds:number[];thresholdMode:string;target:number}){
- const [selected,setSelected]=useState(''),[a,setA]=useState(0),[b,setB]=useState(1),[iterations,setIterations]=useState(199),[seed,setSeed]=useState(1729),[ack,setAck]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
- const [sensitivity,setSensitivity]=useState<Report>(),[spatial,setSpatial]=useState<Report>(),[reference,setReference]=useState<Report>();
- const active=useRef<AbortController>();
+ const [selected,setSelected]=useProjectState('ValidationPanel.selected',''),[a,setA]=useProjectState('ValidationPanel.a',0),[b,setB]=useProjectState('ValidationPanel.b',1),[iterations,setIterations]=useProjectState('ValidationPanel.iterations',199),[seed,setSeed]=useProjectState('ValidationPanel.seed',1729),[ack,setAck]=useProjectState('ValidationPanel.ack',false),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [sensitivity,setSensitivity]=useProjectState<Report>('ValidationPanel.sensitivity',),[spatial,setSpatial]=useProjectState<Report>('ValidationPanel.spatial',),[reference,setReference]=useProjectState<Report>('ValidationPanel.reference',);
+ const active=useRef<AbortController>();const previousInputs=useRef([image,rois,processing,measurementProcessing,thresholds,thresholdMode,target,a,b,selected,iterations,seed]);
  const roi=rois.find(r=>r.id===selected)??rois[0];
- useEffect(()=>{active.current?.abort();setBusy(false);setSensitivity(undefined);setSpatial(undefined);return()=>active.current?.abort();},[image,rois,processing,measurementProcessing,thresholds,thresholdMode,target,a,b,selected,iterations,seed]);
+ useEffect(()=>{active.current?.abort();setBusy(false);const next=[image,rois,processing,measurementProcessing,thresholds,thresholdMode,target,a,b,selected,iterations,seed];if(next.some((value,index)=>value!==previousInputs.current[index])){setSensitivity(undefined);setSpatial(undefined);}previousInputs.current=next;return()=>active.current?.abort();},[image,rois,processing,measurementProcessing,thresholds,thresholdMode,target,a,b,selected,iterations,seed]);
  async function run(kind:'reference'|'sensitivity'|'spatial'){
   active.current?.abort();const abort=new AbortController();active.current=abort;setBusy(true);setError('');
   try{

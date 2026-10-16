@@ -1,3 +1,4 @@
+import {useProjectState} from './ProjectContext';
 import { useEffect, useRef, useState } from "react";
 import type { ImageRecord } from "./api";
 import { request } from "./api";
@@ -14,9 +15,9 @@ export function VolumeView({ image, channel, onChannelChange }: {
   const resetCamera = useRef<(() => void) | null>(null);
   const [message, setMessage] = useState("Loading 3D volume…");
   const [geometry, setGeometry] = useState("");
-  const [cutoff, setCutoff] = useState(10);
-  const [opacity, setOpacity] = useState(35);
-  const [stretch, setStretch] = useState(1);
+  const [cutoff, setCutoff] = useProjectState('VolumeView.cutoff',10);
+  const [opacity, setOpacity] = useProjectState('VolumeView.opacity',35);
+  const [stretch, setStretch] = useProjectState('VolumeView.stretch',1);
   const settings = useRef<Controls>({cutoff,opacity,stretch});
   settings.current={cutoff,opacity,stretch};
   const physical = ['X','Y','Z'].every(a=>image.info.calibration[a].value_um!=null);

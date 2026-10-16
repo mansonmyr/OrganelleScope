@@ -167,3 +167,5 @@ def register_evidence(app,data_dir,authorized):
                     'terms_url':'https://string-db.org/cgi/access?footer_active_subpage=licensing' if options.provider=='string' else 'https://www.kegg.jp/kegg/rest/',
                     'interpretation':'Database evidence is context, not measured binding, localization, causation or a knockdown prediction. Missing results do not establish absence of association.'}
         except (ValueError,KeyError,TypeError) as exc:raise HTTPException(422,str(exc)) from exc
+
+    return query

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { ChangeEvent } from "react";
 import { json, request, type ImageRecord } from "./api";
 import { SignalChart } from "./components/SignalChart";
@@ -9,11 +9,15 @@ import { ProcessingPanel, rawProcessing, isProcessed, type ProcessingConfig } fr
 import { ValidationPanel } from "./ValidationPanel";
 import { OrthogonalWorkspace } from "./OrthogonalWorkspace";
 import { EvidencePanel } from "./EvidencePanel";
+import {ProjectStateProvider,type WorkspaceData} from './ProjectContext';
+import {AssistantPanel} from './AssistantPanel';
 import { VolumeView } from "./VolumeView";
 
 import { RoiOverlay, type AreaROI, type DrawTool } from "./RoiOverlay";
 import { StatisticsPanel, type AnalysisResult } from "./StatisticsPanel";
 
+type ProjectRecord={id:string;name:string;revision:number;image:ImageRecord|null;state:{core:Record<string,any>;workspaces:WorkspaceData}};
+type ProjectSummary={id:string;name:string;revision:number;updated_utc:string};
 const colors = ["#ff4969", "#31d6a0", "#629aff", "#dddddf"];
 type Profile = { distances: number[]; unit: string; traces: { label: string; color: string; values: number[] }[]; widths: (number | null)[] };
 
@@ -24,10 +28,13 @@ function download(value: unknown, name: string) {
 }
 
 export default function App() {
+  const [projectData,setProjectData]=useState<WorkspaceData>({});
+  const [project,setProject]=useState<ProjectRecord|null>(null),[projects,setProjects]=useState<ProjectSummary[]>([]),[projectName,setProjectName]=useState('Untitled project'),[projectBusy,setProjectBusy]=useState(false),[generation,setGeneration]=useState(0),[projectMessage,setProjectMessage]=useState('');
+  const skipSaved=useRef<string>();
   const [image, setImage] = useState<ImageRecord | null>(null);
   const [recent, setRecent] = useState<ImageRecord[]>([]);
   const [z, setZ] = useState(0);
-  const [workspace,setWorkspace]=useState<"images"|"validation"|"evidence">("images");
+  const [workspace,setWorkspace]=useState<"images"|"validation"|"evidence"|"assistant">("images");
   const [mode, setMode] = useState<"slice" | "volume">("slice");
   const [volumeChannel, setVolumeChannel] = useState(-1);
   const [axes, setAxes] = useState("");
@@ -54,7 +61,9 @@ export default function App() {
 
   useEffect(() => { json<ImageRecord[]>("/api/images").then(setRecent).catch(e => setError(String(e))); }, []);
 
-  function accept(record: ImageRecord) {
+  function accept(record: ImageRecord, restoring=false) {
+    skipSaved.current=restoring?record.id:undefined;
+    setProject(null);setProjectName(record.info.filename.replace(/\.ome\.tiff?$|\.tiff?$/i,''));setProjectData({});setGeneration(g=>g+1);setProjectMessage('New unsaved project. Save before opening another image.');
     setWorkspace("images");setImage(record); setProcessing({...rawProcessing});setMeasurementSource("raw"); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
     setSpacing(Object.fromEntries("XYZ".split("").map(a => [a, String(record.info.calibration[a].value_um ?? "")])));
     setRoi(null); setAreas([]); setAnalysis(null); setTarget(0); setProfile(null); setMode("slice"); setVolumeChannel(-1);
@@ -62,6 +71,7 @@ export default function App() {
   }
   async function importImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]; if (!file) return;
+    if((image||Object.keys(projectData).length>0)&&!window.confirm('Opening another image starts a new project. Save first if you want to keep current changes. Continue?')){event.target.value='';return;}
     setBusy(true); setError("");
     try { const form = new FormData(); form.append("file", file); accept(await json<ImageRecord>("/api/images", { method: "POST", body: form })); }
     catch (e) { setError(String(e)); } finally { setBusy(false); event.target.value = ""; }
@@ -120,7 +130,7 @@ export default function App() {
   }, [image, roi, z, available, processing, measurementSource]);
 
   useEffect(() => {
-    if (!image) return;
+    if (!image || skipSaved.current===image.id) return;
     const abort = new AbortController();
     setLoadingSaved(true);
     json<AnalysisResult>(`/api/images/${image.id}/analysis`, {signal:abort.signal}).then(saved=>{
@@ -131,6 +141,24 @@ export default function App() {
     }).catch(()=>{/* No saved analysis for a new import or revised settings. */}).finally(()=>{if(!abort.signal.aborted)setLoadingSaved(false);});
     return ()=>abort.abort();
   }, [image]);
+
+  useEffect(()=>{json<ProjectSummary[]>('/api/projects').then(setProjects).catch(e=>setError(String(e)));},[]);
+  function snapshot(){return {core:{z,workspace,mode,volumeChannel,roi,areas,analysis,thresholdMode,thresholds,target,processing,measurementSource,tool},workspaces:projectData};}
+  async function saveProject(asNew=false){
+    setProjectBusy(true);setError('');
+    try{const saved=await json<ProjectRecord>(`/api/projects${project&&!asNew?'/'+project.id:''}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:projectName,image_id:image?.id??null,expected_image_info:image?.info??null,state:snapshot(),expected_revision:project&&!asNew?project.revision:null})});setProject(saved);setProjectMessage(`Saved revision ${saved.revision} on this computer.`);setProjects(await json<ProjectSummary[]>('/api/projects'));return saved;}
+    catch(e){setError(String(e));}finally{setProjectBusy(false);}
+  }
+  async function openProject(id:string){
+    if(!id)return;
+    if((image||Object.keys(projectData).length)&&!window.confirm('Open the saved project? Any changes since your last save will be discarded.'))return;
+    setProjectBusy(true);setError('');
+    try{const saved=await json<ProjectRecord>('/api/projects/'+id);const c=saved.state.core??{};
+      if(saved.image){accept(saved.image,true);}else{setImage(null);}
+      setProject(saved);setProjectName(saved.name);setProjectData(saved.state.workspaces??{});setGeneration(g=>g+1);
+      setZ(c.z??0);setWorkspace(c.workspace??'images');setMode(c.mode??'slice');setVolumeChannel(c.volumeChannel??-1);setRoi(c.roi??null);setAreas(c.areas??[]);setAnalysis(c.analysis??null);setThresholdMode(c.thresholdMode??'costes');setThresholds(c.thresholds??[0,0,0,0]);setTarget(c.target??0);setProcessing(c.processing??{...rawProcessing});setMeasurementSource(c.measurementSource??'raw');setTool(c.tool??'line');setLoadingSaved(false);setProjectMessage(`Opened revision ${saved.revision}; ${saved.image?'source SHA-256 verified.':'evidence-only project.'}`);
+    }catch(e){setError(String(e));}finally{setProjectBusy(false);}
+  }
   async function exportInspection() {
     if(!image)return;setBusy(true);setError("");
     try {
@@ -143,13 +171,14 @@ export default function App() {
     try { setAnalysis(await json<AnalysisResult>(`/api/images/${image.id}/analysis`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({processing:selectedProcessing,rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})})); }
     catch(e){setError(String(e));}finally{setBusy(false);}
   }
-  return <div className="shell">
+  return <ProjectStateProvider key={generation} data={projectData} setData={setProjectData}><div className="shell">
     <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
       <span className="badge">Development build · ROI statistics</span><span className="local"><i /> Local processing</span></header>
+    <div className="project-bar" aria-label="Project controls"><label>Project name<input aria-label="Project name" value={projectName} maxLength={120} onChange={e=>setProjectName(e.target.value)}/></label><button disabled={projectBusy||busy||loadingSaved||!projectName.trim()} onClick={()=>saveProject()}>{projectBusy?'Working…':'Save project'}</button><button className="secondary" disabled={projectBusy||busy||loadingSaved} onClick={()=>saveProject(true)}>Save as new</button><label>Open saved project<select aria-label="Open saved project" disabled={projectBusy||busy} value={project?.id??''} onChange={e=>openProject(e.target.value)}><option value="">Select project</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name} · r{p.revision}</option>)}</select></label><span className="hint" role="status">{project&&JSON.stringify(snapshot())!==JSON.stringify(project.state)?`Unsaved changes · assistant reads saved revision ${project.revision}.`:projectMessage||'Projects keep the imported image and analysis on this computer. Save before switching images.'}</span></div>
     <div className="workspace"><aside>
       <p className="eyebrow">WORKSPACE / 01</p><h2>Your image, in context.</h2><p className="muted">Inspect the source. Confirm the scale. Explore the volume.</p>
-      <label className={`import-button ${busy ? "disabled" : ""}`}><input type="file" accept=".tif,.tiff" disabled={busy} onChange={importImage} />{busy ? "Working…" : "+ Open TIFF / OME-TIFF"}</label>
-      {recent.length > 0 && <label>Recent imports<select aria-label="Recent imports" value={image?.id ?? ""} disabled={busy} onChange={e => { const record = recent.find(r=>r.id===e.target.value); if (record) accept(record); }}><option value="" disabled>Select a saved import</option>{recent.map(r=><option value={r.id} key={r.id}>{r.info.filename} · {r.id.slice(0,6)}</option>)}</select></label>}
+      <label className={`import-button ${busy ? "disabled" : ""}`}><input type="file" accept=".tif,.tiff" disabled={busy||projectBusy} onChange={importImage} />{busy ? "Working…" : "+ Open TIFF / OME-TIFF"}</label>
+      {recent.length > 0 && <label>Recent imports<select aria-label="Recent imports" value={image?.id ?? ""} disabled={busy||projectBusy} onChange={e => { const record = recent.find(r=>r.id===e.target.value); if (record&&(!image&&!Object.keys(projectData).length||window.confirm('Open this import as a new project? Save current changes first.'))) accept(record); }}><option value="" disabled>Select a saved import</option>{recent.map(r=><option value={r.id} key={r.id}>{r.info.filename} · {r.id.slice(0,6)}</option>)}</select></label>}
       {info ? <>
         <section><p className="eyebrow">SOURCE IMAGE</p><h3>{info.filename}</h3>
           <dl><dt>Storage</dt><dd>{info.bit_depth}-bit · {info.dtype}</dd><dt>Dimensions</dt><dd>{info.shape.join(" × ")}</dd><dt>Axes in file</dt><dd>{info.source_axes}</dd><dt>Decoded size</dt><dd>{(info.decoded_bytes/1024**2).toFixed(1)} MiB</dd></dl>
@@ -166,7 +195,7 @@ export default function App() {
         <button className="secondary" disabled={busy||loadingSaved} onClick={exportInspection}>Export measurements & ROIs</button>
       </> : <section className="muted"><p>Original 8/16-bit intensities are preserved.</p><p>Ambiguous axes and missing calibration are shown for review.</p><p>Images stay on this computer.</p></section>}
     </aside><main>
-      <nav className="workspace-nav" aria-label="Workspaces"><button aria-pressed={workspace==='images'&&mode==='slice'} onClick={()=>{setWorkspace('images');setMode('slice');}}>Image & ROI</button><button disabled={!available||!info||info.dimensions.Z<2} aria-pressed={workspace==='images'&&mode==='volume'} onClick={()=>{setWorkspace('images');setMode('volume');}}>3D workspace</button><button disabled={!available} aria-pressed={workspace==='validation'} onClick={()=>setWorkspace('validation')}>Validation</button><button aria-pressed={workspace==='evidence'} onClick={()=>setWorkspace('evidence')}>Molecular evidence</button></nav>
+      <nav className="workspace-nav" aria-label="Workspaces"><button aria-pressed={workspace==='images'&&mode==='slice'} onClick={()=>{setWorkspace('images');setMode('slice');}}>Image & ROI</button><button disabled={!available||!info||info.dimensions.Z<2} aria-pressed={workspace==='images'&&mode==='volume'} onClick={()=>{setWorkspace('images');setMode('volume');}}>3D workspace</button><button disabled={!available} aria-pressed={workspace==='validation'} onClick={()=>setWorkspace('validation')}>Validation</button><button aria-pressed={workspace==='evidence'} onClick={()=>setWorkspace('evidence')}>Molecular evidence</button><button aria-pressed={workspace==='assistant'} onClick={()=>setWorkspace('assistant')}>Local assistant</button></nav>
       {error && <div role="alert" className="error">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}
       {info?.warnings.length ? <details className="review" open><summary>Import notes · {info.warnings.length}</summary>{info.warnings.map((w,i)=><p key={i}>{w}</p>)}</details> : null}
       <div hidden={workspace!=='images'}><section className="viewer panel"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
@@ -194,6 +223,7 @@ export default function App() {
       </div></div>
       <div hidden={workspace!=='validation'}>{image && available && <ValidationPanel key={`validation-${image.id}`} image={image} rois={areas} processing={processing} measurementProcessing={selectedProcessing} thresholds={thresholds} thresholdMode={thresholdMode} target={target}/>}</div>
       <div hidden={workspace!=='evidence'}><EvidencePanel/></div>
-      <footer><span>Foundation milestone · Quantitative reconstruction and molecular agent are in development.</span><span>Source → calibration → measurement</span></footer>
-    </main></div></div>;
+      <div hidden={workspace!=='assistant'}><AssistantPanel projectId={project?.id??null}/></div>
+      <footer><span>Research development · Local projects and experimental assistant; biological validation pending.</span><span>Source → calibration → measurement</span></footer>
+    </main></div></div></ProjectStateProvider>;
 }

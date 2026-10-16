@@ -1,3 +1,4 @@
+import {useProjectState} from './ProjectContext';
 import {useEffect,useRef,useState} from 'react';
 import type {MouseEvent} from 'react';
 import {json,request,type ImageRecord} from './api';
@@ -7,12 +8,12 @@ type Position={X:number;Y:number;Z:number};
 type Bounds={x0:number;x1:number;y0:number;y1:number;z0:number;z1:number};
 export function OrthogonalWorkspace({image,processing}:{image:ImageRecord;processing:ProcessingConfig}){
  const d=image.info.dimensions;
- const [position,setPosition]=useState<Position>({X:Math.floor(d.X/2),Y:Math.floor(d.Y/2),Z:Math.floor(d.Z/2)}),[channel,setChannel]=useState(-1),[stretch,setStretch]=useState(1);
- const [bounds,setBounds]=useState<Bounds>({x0:0,x1:Math.min(d.X-1,63),y0:0,y1:Math.min(d.Y-1,63),z0:0,z1:d.Z-1});
- const [images,setImages]=useState<Record<string,string>>({}),[error,setError]=useState(''),[loading,setLoading]=useState(false),[busy,setBusy]=useState(false),[processed,setProcessed]=useState(false),[report,setReport]=useState<Record<string,any>>();
- const active=useRef<AbortController>();
+ const [position,setPosition]=useProjectState<Position>('OrthogonalWorkspace.position',{X:Math.floor(d.X/2),Y:Math.floor(d.Y/2),Z:Math.floor(d.Z/2)}),[channel,setChannel]=useProjectState('OrthogonalWorkspace.channel',-1),[stretch,setStretch]=useProjectState('OrthogonalWorkspace.stretch',1);
+ const [bounds,setBounds]=useProjectState<Bounds>('OrthogonalWorkspace.bounds',{x0:0,x1:Math.min(d.X-1,63),y0:0,y1:Math.min(d.Y-1,63),z0:0,z1:d.Z-1});
+ const [images,setImages]=useState<Record<string,string>>({}),[error,setError]=useState(''),[loading,setLoading]=useState(false),[busy,setBusy]=useState(false),[processed,setProcessed]=useProjectState('OrthogonalWorkspace.processed',false),[report,setReport]=useProjectState<Record<string,any>>('OrthogonalWorkspace.report',);
+ const active=useRef<AbortController>();const previousInputs=useRef([bounds,processed,processing,image]);
  const physical=['X','Y','Z'].every(a=>image.info.calibration[a].value_um!=null);
- useEffect(()=>{active.current?.abort();setBusy(false);setReport(undefined);return()=>active.current?.abort();},[bounds,processed,processing,image]);
+ useEffect(()=>{active.current?.abort();setBusy(false);const next=[bounds,processed,processing,image];if(next.some((value,index)=>value!==previousInputs.current[index])){setReport(undefined);}previousInputs.current=next;return()=>active.current?.abort();},[bounds,processed,processing,image]);
  useEffect(()=>{setLoading(true);setError('');setImages({});const abort=new AbortController();const hrefs:string[]=[];
   const timer=setTimeout(()=>Promise.all(['XY','XZ','YZ'].map(async axis=>{const response=await request(`/api/images/${image.id}/orthogonal?axis=${axis}&x=${position.X}&y=${position.Y}&z=${position.Z}&channel=${channel}`,{signal:abort.signal});const blob=await response.blob();if(abort.signal.aborted)return [axis,''];const href=URL.createObjectURL(blob);hrefs.push(href);return [axis,href];})).then(entries=>{if(!abort.signal.aborted)setImages(Object.fromEntries(entries));}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setLoading(false);}),300);
   return()=>{abort.abort();clearTimeout(timer);hrefs.forEach(URL.revokeObjectURL);};

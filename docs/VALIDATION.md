@@ -53,3 +53,8 @@ Browser checks on a generated 64×64×8 two-channel stack observed successful nu
 ## 0.1.6 pathway diagrams and comparison documentation
 
 KEGG diagram tests cover session authentication, academic-use gating, strict human pathway IDs, validated PNG responses, native dimensions, content hashes, cache reuse, missing offline entries and rejection of HTML responses. The interface test verifies no diagram request occurs until the user activates the pathway action, then checks the dialog, zoom and close behavior. A live browser check followed human TP53 identifier selection to the p53 signalling pathway (hsa04115), displayed its official 1305×775 PNG, and reopened the same diagram with offline-only caching enabled. This verifies access/display, not signalling activity or causal inference. The README and SOFTWARE_COMPARISON.md distinguish sourced capabilities, plugin variants, unassessed features and release-validation gaps across eight tools; no comparative performance or scientific-accuracy benchmark is claimed.
+
+
+## Source milestone 0.1.7 — projects and experimental local assistant
+
+Versioned local snapshots, source/metadata checks, revision conflicts, restored validation/3D workspace state, stale-callback isolation, a pinned local llama.cpp/Qwen3.5-4B integration, bounded read-only tools and response checks have engineering tests. These additions do not validate biological interpretation. Real local-model smoke tests identified a unit error in generated prose, leading to a qualitative-answer design with recorded numeric values displayed separately. See ASSISTANT_EVALUATION.md for observations and remaining gates. This source milestone does not change previously installed binaries or publish a new installer.

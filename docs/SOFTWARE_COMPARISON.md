@@ -1,6 +1,6 @@
 # Capability comparison and release-readiness criteria
 
-Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.6, not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
+Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.7 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
 
 ## How to interpret the comparison
 
@@ -39,7 +39,7 @@ Sources: [napari quickstart](https://napari.org/stable/getting_started/quick_sta
 
 ## Biological evidence integration
 
-OrganelleScope currently provides human STRING identifier mapping and association-network tables, academic KEGG membership lookup and on-demand official pathway diagrams. It records identifiers, source versions/timestamps and response hashes, and keeps image measurements local. This is not an LLM interpretation feature, enrichment analysis, pathway activation measurement or causal perturbation model.
+OrganelleScope currently provides human STRING identifier mapping and association-network tables, academic KEGG membership lookup and on-demand official pathway diagrams. It records identifiers, source versions/timestamps and response hashes, and keeps image measurements local. The experimental local assistant can inspect saved measurements/evidence and repeat a bounded saved query, with visible tool records. It is not validated biological interpretation, enrichment analysis, pathway activation measurement or a causal perturbation model.
 
 Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed across every plugin and extension of the other applications. Accordingly, neither the README nor this document claims that they cannot provide them. The intended distinction is a guided, traceable combined workflow, not invention of correlation metrics or a proven exclusive capability.
 
@@ -53,9 +53,9 @@ Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed 
 | Biological experiments | Descriptive image/ROI results | Independent experiment/cell identifiers, effect sizes and uncertainty without pseudoreplication |
 | 3D quantification | Source cuboids and linked sections | Inspectable organelle masks, surfaces and distances; registration/resolution uncertainty |
 | Preprocessing/restoration | Deterministic background subtraction and smoothing | Noise2Void/model validation, residuals, held-out acquisitions and downstream measurement bias |
-| Projects / automation | Imported images and last XY analysis persist; separate exports | Reopen all analysis state, batch runs, cancellation, autosave and recovery |
+| Projects / automation | Manual versioned local projects retain source associations, settings and workspace reports; round-trip tests | Portable archives, multi-image experiments, batch runs, cancellation, autosave and recovery |
 | Evidence reliability | Explicit mapping, live checks, caching, diagrams and provenance | Provider failure/changed-schema handling, rights review, stable exports and evidence review |
-| Local agent | Planned only | Versioned model, reproducible tool-use/evidence tests, supported hardware and auditable actions |
+| Local agent | Experimental pinned Qwen3.5-4B Q4_K_M / llama.cpp; local tool loop, response checks, recorded quantities, visible audit; M3 smoke tests | Curated biological/citation-entailment and adversarial evaluation; native Windows qualification; offline installer and dependency review |
 | Distribution | Development packaging and Mac signing fixes | Native platform installations, memory/performance budgets, production signing and release procedures |
 
 ## Independent benchmark protocol to implement next

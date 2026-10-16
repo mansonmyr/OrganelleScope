@@ -283,7 +283,11 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     from organelle_scope.research_routes import register_research
     from organelle_scope.evidence import register_evidence
     register_research(app, stored, authorized)
-    register_evidence(app, data_dir, authorized)
+    query_evidence = register_evidence(app, data_dir, authorized)
+    from organelle_scope.projects import register_projects
+    load_project = register_projects(app, data_dir, stored, authorized)
+    from organelle_scope.assistant import register_assistant
+    register_assistant(app, data_dir, authorized, load_project, query_evidence)
     return app
 
 
