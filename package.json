@@ -1,0 +1,66 @@
+{
+  "name": "organellescope",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Calibrated spatial microscopy workbench",
+  "author": "Kai Hong Ooi",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "desktop": "electron .",
+    "build:ui": "npm run build --prefix frontend",
+    "build:backend": "node scripts/build-backend.mjs",
+    "package": "npm run build:ui && npm run build:backend && electron-builder"
+  },
+  "build": {
+    "appId": "org.organellescope.desktop",
+    "productName": "OrganelleScope",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**",
+      "frontend/dist/**",
+      "package.json",
+      "third_party/**"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/dist/organellescope-backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.education"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3"
+  }
+}
