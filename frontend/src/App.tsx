@@ -34,6 +34,7 @@ export default function App() {
   const [roi, setRoi] = useState<LineRoi | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(false);
+  const [drawingActions, setDrawingActions] = useState<HTMLDivElement | null>(null);
   const [tool, setTool] = useState<DrawTool>("line");
   const [areas, setAreas] = useState<AreaROI[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -126,7 +127,7 @@ export default function App() {
     catch(e){setError(String(e));}finally{setBusy(false);}
   }
   return <div className="shell">
-    <header><div className="brand"><span className="brand-icon">◎</span><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
+    <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
       <span className="badge">Development build · ROI statistics</span><span className="local"><i /> Local processing</span></header>
     <div className="workspace"><aside>
       <p className="eyebrow">WORKSPACE / 01</p><h2>Your image, in context.</h2><p className="muted">Inspect the source. Confirm the scale. Explore the volume.</p>
@@ -151,13 +152,15 @@ export default function App() {
       {error && <div role="alert" className="error">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}
       {info?.warnings.length ? <details className="review" open><summary>Import notes · {info.warnings.length}</summary>{info.warnings.map((w,i)=><p key={i}>{w}</p>)}</details> : null}
       <section className="viewer panel"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
-      {!info ? <div className="empty"><div className="empty-symbol">◎</div><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel}/> : <>
+      {!info ? <div className="empty"><img className="empty-logo" src="./branding/brand-logo.jpg" alt="OrganelleScope — Cellular Exploration & Analysis"/><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel}/> : <>
         <div className="slice-toolbar"><label>Z plane <strong>{z+1} / {info.dimensions.Z}</strong><input aria-label="Z plane" type="range" min={0} max={info.dimensions.Z-1} value={z} onChange={e=>{setZ(Number(e.target.value));setRoi(null);}}/></label><span>{info.calibration.Z.value_um != null ? `${(z*info.calibration.Z.value_um).toFixed(3)} µm from first plane` : "Z spacing unknown"}</span></div>
-        <div className="roi-tools"><label>Drawing tool<select aria-label="Drawing tool" disabled={busy} value={tool} onChange={e=>setTool(e.target.value as DrawTool)}><option value="line">Line profiler</option><option value="circle">Circular ROI</option><option value="polygon">Polygonal ROI</option></select></label><span>{tool==='polygon'?'Click vertices, then finish the polygon.':tool==='circle'?'Drag from the center to the circle edge.':'Drag to sample a line.'}</span></div>
-        <div className="image-stage" style={{aspectRatio:`${info.dimensions.X}/${info.dimensions.Y}`}}>{preview ? <img src={preview} alt={`Composite Z plane ${z+1}`}/> : <p>Loading source plane…</p>}
-          <RoiOverlay disabled={busy || loadingSaved} key={`${image!.id}-${z}-${tool}`} width={info.dimensions.X} height={info.dimensions.Y} z={z} tool={tool} rois={areas} line={roi} onLine={setRoi} onAdd={r=>{if(busy)return;setAreas(a=>[...a,r]);setAnalysis(null);}}/>
 
-        </div><p className="hint viewer-note">ROIs belong to their selected Z plane. Display contrast is adjusted per channel; measurements use original values.</p>
+        <div className="image-stage" style={{aspectRatio:`${info.dimensions.X}/${info.dimensions.Y}`}}>{preview ? <img src={preview} alt={`Composite Z plane ${z+1}`}/> : <p>Loading source plane…</p>}
+          <RoiOverlay controlsContainer={drawingActions} disabled={busy || loadingSaved} key={`${image!.id}-${z}-${tool}`} width={info.dimensions.X} height={info.dimensions.Y} z={z} tool={tool} rois={areas} line={roi} onLine={setRoi} onAdd={r=>{if(busy)return;setAreas(a=>[...a,r]);setAnalysis(null);}}/>
+
+        </div>
+        <div className="drawing-dock" role="toolbar" aria-label="Image drawing tools"><div className="roi-tools"><label>Drawing tool<select aria-label="Drawing tool" disabled={busy} value={tool} onChange={e=>setTool(e.target.value as DrawTool)}><option value="line">Line profiler</option><option value="circle">Circular ROI</option><option value="polygon">Polygonal ROI</option></select></label><span>{tool==='polygon'?'Click vertices, then finish the polygon.':tool==='circle'?'Drag from the center to the circle edge.':'Drag to sample a line.'}</span></div><div ref={setDrawingActions}/></div>
+        <p className="hint viewer-note">ROIs belong to their selected Z plane. Display contrast is adjusted per channel; measurements use original values.</p>
       </>}</section>
       {image && available && <section className="panel statistics"><p className="eyebrow">AREA ANALYSIS</p><h2>ROI measurements</h2><p className="hint">Draw circular or polygonal ROIs above. Each region is measured separately on its own plane.</p>
         <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} <button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>

@@ -56,7 +56,7 @@ async function start() {
 }
 async function createWindow() {
   mainWindow = new BrowserWindow({ width: 1440, height: 960, minWidth: 950, minHeight: 680,
-    title: 'OrganelleScope', backgroundColor: '#0d1419',
+    title: 'OrganelleScope', backgroundColor: '#001524',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true } });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.webContents.on('will-navigate', event => event.preventDefault());

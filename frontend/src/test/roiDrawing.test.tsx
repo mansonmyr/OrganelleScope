@@ -16,6 +16,19 @@ const base={width:100,height:100,z:3,rois:[] as AreaROI[],line:null,onLine:vi.fn
 function click(x:number,y:number){fireEvent.pointerDown(screen.getByLabelText('ROI drawing surface'),{clientX:x,clientY:y,button:0});}
 
 describe('area drawing workflow',()=>{
+  it('finishes and cancels polygons from the separate drawing toolbar',()=>{
+    const onAdd=vi.fn();const toolbar=document.createElement('div');document.body.append(toolbar);
+    try {
+      const {container}=render(<RoiOverlay {...base} tool="polygon" controlsContainer={toolbar} onAdd={onAdd}/>);
+      expect(container.querySelector('button')).toBeNull();
+      click(10,10);click(30,10);click(20,30);
+      fireEvent.click(toolbar.querySelectorAll('button')[1]);
+      expect(toolbar.textContent).toContain('Finish polygon (0)');expect(onAdd).not.toHaveBeenCalled();
+      click(10,10);click(30,10);click(20,30);
+      fireEvent.click(toolbar.querySelector('button')!);
+      expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({kind:'polygon',z:3,points:[{x:10,y:10},{x:30,y:10},{x:20,y:30}]}));
+    } finally {toolbar.remove();}
+  });
   it('completes a circle only on release and keeps its Z plane',()=>{
     const onAdd=vi.fn();render(<RoiOverlay {...base} tool="circle" onAdd={onAdd}/>);
     click(20,20);expect(onAdd).not.toHaveBeenCalled();
