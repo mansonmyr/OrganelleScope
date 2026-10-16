@@ -6,6 +6,9 @@ import type { LineRoi } from "./types";
 import { sampleTrace, buildChannelMetrics } from "./workers/analysisCore";
 import { CalibrationHelp } from "./CalibrationHelp";
 import { ProcessingPanel, rawProcessing, isProcessed, type ProcessingConfig } from "./ProcessingPanel";
+import { ValidationPanel } from "./ValidationPanel";
+import { OrthogonalWorkspace } from "./OrthogonalWorkspace";
+import { EvidencePanel } from "./EvidencePanel";
 import { VolumeView } from "./VolumeView";
 
 import { RoiOverlay, type AreaROI, type DrawTool } from "./RoiOverlay";
@@ -24,6 +27,7 @@ export default function App() {
   const [image, setImage] = useState<ImageRecord | null>(null);
   const [recent, setRecent] = useState<ImageRecord[]>([]);
   const [z, setZ] = useState(0);
+  const [workspace,setWorkspace]=useState<"images"|"validation"|"evidence">("images");
   const [mode, setMode] = useState<"slice" | "volume">("slice");
   const [volumeChannel, setVolumeChannel] = useState(-1);
   const [axes, setAxes] = useState("");
@@ -51,7 +55,7 @@ export default function App() {
   useEffect(() => { json<ImageRecord[]>("/api/images").then(setRecent).catch(e => setError(String(e))); }, []);
 
   function accept(record: ImageRecord) {
-    setImage(record); setProcessing({...rawProcessing});setMeasurementSource("raw"); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
+    setWorkspace("images");setImage(record); setProcessing({...rawProcessing});setMeasurementSource("raw"); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
     setSpacing(Object.fromEntries("XYZ".split("").map(a => [a, String(record.info.calibration[a].value_um ?? "")])));
     setRoi(null); setAreas([]); setAnalysis(null); setTarget(0); setProfile(null); setMode("slice"); setVolumeChannel(-1);
     setRecent(records => [record, ...records.filter(r => r.id !== record.id)].slice(0,20));
@@ -162,9 +166,10 @@ export default function App() {
         <button className="secondary" disabled={busy||loadingSaved} onClick={exportInspection}>Export measurements & ROIs</button>
       </> : <section className="muted"><p>Original 8/16-bit intensities are preserved.</p><p>Ambiguous axes and missing calibration are shown for review.</p><p>Images stay on this computer.</p></section>}
     </aside><main>
+      <nav className="workspace-nav" aria-label="Workspaces"><button aria-pressed={workspace==='images'&&mode==='slice'} onClick={()=>{setWorkspace('images');setMode('slice');}}>Image & ROI</button><button disabled={!available||!info||info.dimensions.Z<2} aria-pressed={workspace==='images'&&mode==='volume'} onClick={()=>{setWorkspace('images');setMode('volume');}}>3D workspace</button><button disabled={!available} aria-pressed={workspace==='validation'} onClick={()=>setWorkspace('validation')}>Validation</button><button aria-pressed={workspace==='evidence'} onClick={()=>setWorkspace('evidence')}>Molecular evidence</button></nav>
       {error && <div role="alert" className="error">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}
       {info?.warnings.length ? <details className="review" open><summary>Import notes · {info.warnings.length}</summary>{info.warnings.map((w,i)=><p key={i}>{w}</p>)}</details> : null}
-      <section className="viewer panel"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
+      <div hidden={workspace!=='images'}><section className="viewer panel"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
       {!info ? <div className="empty"><img className="empty-logo" src="./branding/brand-logo.jpg" alt="OrganelleScope — Cellular Exploration & Analysis"/><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel}/> : <>
         <div className="slice-toolbar"><label>Z plane <strong>{z+1} / {info.dimensions.Z}</strong><input aria-label="Z plane" type="range" min={0} max={info.dimensions.Z-1} value={z} onChange={e=>{setZ(Number(e.target.value));setRoi(null);}}/></label><span>{info.calibration.Z.value_um != null ? `${(z*info.calibration.Z.value_um).toFixed(3)} µm from first plane` : "Z spacing unknown"}</span></div>
 
@@ -175,7 +180,8 @@ export default function App() {
         <div className="drawing-dock" role="toolbar" aria-label="Image drawing tools"><div className="roi-tools"><label>Drawing tool<select aria-label="Drawing tool" disabled={busy} value={tool} onChange={e=>setTool(e.target.value as DrawTool)}><option value="line">Line profiler</option><option value="circle">Circular ROI</option><option value="polygon">Polygonal ROI</option></select></label><span>{tool==='polygon'?'Click vertices, then finish the polygon.':tool==='circle'?'Drag from the center to the circle edge.':'Drag to sample a line.'}</span></div><div ref={setDrawingActions}/></div>
         <p className="hint viewer-note">ROIs belong to their selected Z plane. Display contrast is adjusted per channel; select raw or processed intensities in ROI measurements below.</p>
       </>}</section>
-      {image && available && <ProcessingPanel key={image.id} imageId={image.id} z={z} labels={info!.channel_labels} bitDepth={info!.bit_depth} value={processing} disabled={busy||loadingSaved} onChange={config=>{setProcessing(config);setAnalysis(null);if(!isProcessed(config))setMeasurementSource("raw");}}/>}
+      {image && available && mode==='volume' && <OrthogonalWorkspace key={`orthogonal-${image.id}`} image={image} processing={processing}/>}
+      <div hidden={mode!=='slice'}>{image && available && <ProcessingPanel key={`processing-${image.id}`} imageId={image.id} z={z} labels={info!.channel_labels} bitDepth={info!.bit_depth} value={processing} disabled={busy||loadingSaved} onChange={config=>{setProcessing(config);setAnalysis(null);if(!isProcessed(config))setMeasurementSource("raw");}}/>}
       {image && available && <section className="panel statistics"><p className="eyebrow">AREA ANALYSIS</p><h2>ROI measurements</h2><p className="hint">Draw circular or polygonal ROIs above. Each region is measured separately on its own plane.</p>
         <label>Measurement source<select aria-label="Measurement source" disabled={busy||loadingSaved} value={measurementSource} onChange={e=>{const source=e.target.value as 'raw'|'processed';setMeasurementSource(source);setAnalysis(null);if(source==='processed'&&thresholdMode==='costes')setThresholdMode('manual');}}><option value="raw">Raw source intensities</option><option value="processed" disabled={!isProcessed(processing)}>Processed intensities (applied recipe)</option></select></label><p className="hint">This selection applies to line profiles and ROI statistics. Raw images remain visible in the image explorer and 3D preview.</p>
         <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} <button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>
@@ -185,6 +191,9 @@ export default function App() {
       </section>}
       {analysis && <StatisticsPanel analysis={analysis}/>}
       {profile && <><SignalChart title={`${measurementSource==='processed'?'Processed':'Source'} intensity profile`} subtitle="Selected measurement intensities · approximate 3 px smoothing for peak widths only" distances={profile.distances} xUnit={profile.unit} yLabel={measurementSource==='processed'?"Processed gray value":"Source gray value"} traces={profile.traces}/><div className="widths">{profile.widths.map((w,i)=><span key={i}>{info!.channel_labels[i]} · single-peak FWHM: {w==null?"not available":`${w.toFixed(3)} ${profile.unit}`}</span>)}</div></>}
+      </div></div>
+      <div hidden={workspace!=='validation'}>{image && available && <ValidationPanel key={`validation-${image.id}`} image={image} rois={areas} processing={processing} measurementProcessing={selectedProcessing} thresholds={thresholds} thresholdMode={thresholdMode} target={target}/>}</div>
+      <div hidden={workspace!=='evidence'}><EvidencePanel/></div>
       <footer><span>Foundation milestone · Quantitative reconstruction and molecular agent are in development.</span><span>Source → calibration → measurement</span></footer>
     </main></div></div>;
 }

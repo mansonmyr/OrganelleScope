@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const { spawn } = require('node:child_process');
 const crypto = require('node:crypto');
 const path = require('node:path');
@@ -58,7 +58,14 @@ async function createWindow() {
   mainWindow = new BrowserWindow({ width: 1440, height: 960, minWidth: 950, minHeight: 680,
     title: 'OrganelleScope', backgroundColor: '#001524',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true } });
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  mainWindow.webContents.setWindowOpenHandler(({url}) => {
+    try {
+      const target=new URL(url);
+      const allowed=['string-db.org','www.string-db.org','version-12-5.string-db.org','www.kegg.jp','rest.kegg.jp','www.genome.jp'];
+      if(target.protocol==='https:' && !target.username && !target.password && !target.port && allowed.includes(target.hostname))void shell.openExternal(target.href);
+    } catch { /* Reject malformed or unapproved external links. */ }
+    return {action:'deny'};
+  });
   mainWindow.webContents.on('will-navigate', event => event.preventDefault());
   mainWindow.on('closed', () => { mainWindow = null; });
   if (process.env.ORGANELLESCOPE_UI_URL && !app.isPackaged) await mainWindow.loadURL(process.env.ORGANELLESCOPE_UI_URL);

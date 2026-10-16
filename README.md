@@ -96,3 +96,11 @@ A local packaging run writes installers into `release/` (excluded from Git). CI 
 ### Background correction and smoothing
 
 The image preparation panel compares raw and processed planes using matched contrast. Apply a background recipe, then explicitly choose raw or processed intensities for line profiles and ROI statistics. Raw TIFF pixels remain unchanged. Exports include settings, algorithm/dependency versions and recipe/source hashes. See [preprocessing methods and limitations](docs/PREPROCESSING.md). Noise2Void and biological validation remain in development.
+
+### Research workspaces (0.1.5 source milestone)
+
+- Numerical reference checks, raw/processed ROI sensitivity and a seeded single-pair spatial translation control with explicit assumptions and exports.
+- Linked XY/XZ/YZ sections and full-resolution 3D cuboid summaries (up to 500,000 source voxels per region), separate from the volume preview.
+- Optional academic human-protein STRING mapping/association queries and KEGG gene/pathway lookups, with explicit candidate selection, bounded offline caches and source provenance. These lookups require no API key and never accept images or measurements.
+
+See [research methods and limitations](docs/RESEARCH_WORKSPACES.md). Biological and independent Fiji validation, segmentation, experiment-level inference and the local LLM agent remain in development. These are source features; no new installer is implied by this milestone.

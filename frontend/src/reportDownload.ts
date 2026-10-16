@@ -1,0 +1,2 @@
+export function downloadReport(value:unknown,name:string){const href=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=href;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);}
+export const formatMetric=(value:unknown)=>typeof value==='number'?value.toLocaleString(undefined,{maximumFractionDigits:4}):'Unavailable';

@@ -1,0 +1,51 @@
+import React from 'react';
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
+import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {EvidencePanel} from '../EvidencePanel';
+import {ValidationPanel} from '../ValidationPanel';
+import {OrthogonalWorkspace} from '../OrthogonalWorkspace';
+import {rawProcessing} from '../ProcessingPanel';
+import {json,request,type ImageRecord} from '../api';
+vi.mock('../api',()=>({json:vi.fn(),request:vi.fn()}));
+const image={id:'image',info:{dimensions:{X:7,Y:6,Z:4,C:2},channel_labels:['A','B'],calibration:{X:{value_um:.1},Y:{value_um:.2},Z:{value_um:.5}}}} as unknown as ImageRecord;
+const rois=[{id:'r',kind:'circle' as const,z:1,points:[{x:3,y:3},{x:5,y:3}]}];
+beforeEach(()=>{vi.mocked(request).mockResolvedValue({blob:async()=>new Blob()} as Response);URL.createObjectURL=vi.fn(()=>'blob:sections');URL.revokeObjectURL=vi.fn();});
+afterEach(()=>{cleanup();vi.clearAllMocks();});
+describe('research workspaces',()=>{
+ it('requires academic selection and explicit mapping before a STRING network query',async()=>{
+  const mapping={rows:[{queryItem:'PCNT',preferredName:'PCNT',stringId:'9606.ENSP0001'}],database_version:'12.5',sources:[],limits:'bounded',citation_url:'https://string-db.org',terms_url:'https://string-db.org'};
+  vi.mocked(json).mockResolvedValueOnce(mapping).mockResolvedValueOnce({...mapping,rows:[]});
+  render(<EvidencePanel/>);
+  expect((screen.getByText('Find identifier candidates') as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.click(screen.getByLabelText('Use these integrations for academic research.'));
+  fireEvent.click(screen.getByText('Find identifier candidates'));
+  await screen.findByText('Identifier candidates');
+  expect((screen.getByText('Retrieve selected network') as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.click(screen.getByLabelText('PCNT → PCNT · 9606.ENSP0001'));
+  fireEvent.click(screen.getByText('Retrieve selected network'));
+  await waitFor(()=>expect(json).toHaveBeenCalledTimes(2));
+  const body=JSON.parse(vi.mocked(json).mock.calls[1][1]!.body as string);
+  expect(body.identifiers).toEqual(['9606.ENSP0001']);expect(body.operation).toBe('network');expect(body.academic_use).toBe(true);
+ });
+ it('runs matched sensitivity with zero thresholds instead of silently using automatic thresholds',async()=>{
+  vi.mocked(json).mockResolvedValue({results:[]});
+  render(<ValidationPanel image={image} rois={rois} processing={{...rawProcessing,background:'constant',offsets:[100,50]}} measurementProcessing={rawProcessing} thresholds={[0,0]} thresholdMode="costes" target={0}/>);
+  expect((screen.getByText('Run spatial control') as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.click(screen.getByText('Compare raw & processed ROIs'));
+  await waitFor(()=>expect(json).toHaveBeenCalledTimes(1));
+  const body=JSON.parse(vi.mocked(json).mock.calls[0][1]!.body as string);
+  expect(body.threshold_mode).toBe('zero');expect(body.processing.offsets).toEqual([100,50]);
+ });
+ it('measures source cuboid coordinates and invalidates results when bounds change',async()=>{
+  vi.mocked(json).mockResolvedValue({voxel_count:168,region_volume_um3:1.68,channels:[],pairs:[],scope:'source cuboid'});
+  render(<OrthogonalWorkspace image={image} processing={rawProcessing}/>);
+  fireEvent.click(screen.getByText('Measure 3D cuboid'));
+  await screen.findByText('Export 3D report');
+  const body=JSON.parse(vi.mocked(json).mock.calls[0][1]!.body as string);
+  expect(body).toMatchObject({x0:0,x1:6,y0:0,y1:5,z0:0,z1:3,processing:rawProcessing});
+  fireEvent.change(screen.getByLabelText('X start'),{target:{value:'2'}});
+  expect(screen.queryByText('Export 3D report')).toBeNull();
+  await waitFor(()=>expect(request).toHaveBeenCalledTimes(3));
+  expect(vi.mocked(request).mock.calls.map(c=>c[0])).toEqual(expect.arrayContaining([expect.stringContaining('axis=XY'),expect.stringContaining('axis=XZ'),expect.stringContaining('axis=YZ')]));
+ });
+});

@@ -280,6 +280,10 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             "X-Volume-Units": "um" if units == "physical" else "voxel"
         })
 
+    from organelle_scope.research_routes import register_research
+    from organelle_scope.evidence import register_evidence
+    register_research(app, stored, authorized)
+    register_evidence(app, data_dir, authorized)
     return app
 
 

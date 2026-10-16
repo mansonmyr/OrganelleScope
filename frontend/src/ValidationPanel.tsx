@@ -1,0 +1,32 @@
+import {useEffect,useRef,useState} from 'react';
+import {json,type ImageRecord} from './api';
+import type {AreaROI} from './RoiOverlay';
+import type {ProcessingConfig} from './ProcessingPanel';
+import {downloadReport,formatMetric as fmt} from './reportDownload';
+type Report=Record<string,any>;
+export function ValidationPanel({image,rois,processing,measurementProcessing,thresholds,thresholdMode,target}:{image:ImageRecord;rois:AreaROI[];processing:ProcessingConfig;measurementProcessing:ProcessingConfig;thresholds:number[];thresholdMode:string;target:number}){
+ const [selected,setSelected]=useState(''),[a,setA]=useState(0),[b,setB]=useState(1),[iterations,setIterations]=useState(199),[seed,setSeed]=useState(1729),[ack,setAck]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [sensitivity,setSensitivity]=useState<Report>(),[spatial,setSpatial]=useState<Report>(),[reference,setReference]=useState<Report>();
+ const active=useRef<AbortController>();
+ const roi=rois.find(r=>r.id===selected)??rois[0];
+ useEffect(()=>{active.current?.abort();setBusy(false);setSensitivity(undefined);setSpatial(undefined);return()=>active.current?.abort();},[image,rois,processing,measurementProcessing,thresholds,thresholdMode,target,a,b,selected,iterations,seed]);
+ async function run(kind:'reference'|'sensitivity'|'spatial'){
+  active.current?.abort();const abort=new AbortController();active.current=abort;setBusy(true);setError('');
+  try{
+   const result=kind==='reference'?await json<Report>('/api/validation/reference',{signal:abort.signal}):await json<Report>(`/api/images/${image.id}/validation/${kind}`,{signal:abort.signal,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(kind==='sensitivity'?{rois,processing,target_channel:target,threshold_mode:thresholdMode==='manual'?'manual':'zero',thresholds:thresholds.slice(0,image.info.dimensions.C)}:{roi,channel_a:a,channel_b:b,iterations,seed,acknowledge_stationarity:ack,processing:measurementProcessing})});
+   if(abort.signal.aborted)return;
+   if(kind==='reference')setReference(result);else if(kind==='sensitivity')setSensitivity(result);else setSpatial(result);
+  }catch(e){if(!abort.signal.aborted)setError(String(e));}finally{if(!abort.signal.aborted)setBusy(false);}
+ }
+ return <section className="panel statistics"><p className="eyebrow">VALIDATION WORKSPACE</p><h2>Processing sensitivity & spatial controls</h2><p className="hint">Spatial test source: {measurementProcessing.background!=='none'||measurementProcessing.sigma_px>0?'processed intensities':'raw intensities'}. Reference calculations test numerical behavior. Biological validation and independent Fiji comparisons remain pending.</p>
+ <div className="processing-actions"><button disabled={busy} onClick={()=>run('reference')}>Check numeric references</button><button disabled={busy||!rois.length||image.info.dimensions.C<2} onClick={()=>run('sensitivity')}>Compare raw & processed ROIs</button></div>
+ <p className="hint">Sensitivity uses the applied preparation recipe and identical manual thresholds in both images; otherwise it uses zero thresholds. Automatic thresholds are excluded from this comparison.</p>
+ {reference&&<p role="status">Numeric references: {reference.passed?'all passed':'check failed'} · {reference.checks.length} checks · {reference.fiji_benchmark_status}</p>}
+ {sensitivity&&<div className="table-scroll"><table><caption>Changes after processing (processed minus raw)</caption><thead><tr><th>ROI / channels</th><th>Δ Pearson</th><th>Δ Spearman</th><th>Δ M1</th><th>Δ M2</th></tr></thead><tbody>{sensitivity.results.flatMap((r:Report,i:number)=>r.deltas_processed_minus_raw.map((p:Report,j:number)=><tr key={`${i}-${j}`}><td>ROI {i+1} · {p.label_a} / {p.label_b}</td>{['pcc','spearman','thresholded_m1','thresholded_m2'].map(k=><td key={k}>{fmt(p[k])}</td>)}</tr>))}</tbody></table></div>}
+ <h3>Spatial translation control · one selected ROI and channel pair</h3><div className="roi-tools"><label>Test ROI<select disabled={busy||!rois.length} value={roi?.id??''} onChange={e=>setSelected(e.target.value)}>{rois.map((r,i)=><option value={r.id} key={r.id}>ROI {i+1} · Z {r.z+1}</option>)}</select></label>{([['Channel A',a,setA],['Channel B',b,setB]] as const).map(([label,value,set])=><label key={label}>{label}<select disabled={busy} value={value} onChange={e=>set(Number(e.target.value))}>{image.info.channel_labels.map((name,i)=><option key={i} value={i}>{name}</option>)}</select></label>)}<label>Random shifts<input disabled={busy} type="number" min="19" max="999" value={iterations} onChange={e=>setIterations(Number(e.target.value))}/></label><label>Reproducible seed<input disabled={busy} type="number" min="0" max="4294967295" value={seed} onChange={e=>setSeed(Number(e.target.value))}/></label></div>
+ <p className="validation-note">This control translates channel B across the entire XY field with wraparound while the ROI stays fixed. It assumes spatial stationarity. Cell boundaries, compartment differences and gradients may make it unsuitable. The result is conditional on this model and does not establish binding. Repeated tests need multiple-testing control.</p>
+ <label className="check-label"><input disabled={busy} type="checkbox" checked={ack} onChange={e=>{setAck(e.target.checked);setSpatial(undefined);}}/> I have assessed whole-field translation as an appropriate null model.</label><button disabled={busy||!roi||a===b||!ack||image.info.dimensions.C<2||!Number.isInteger(iterations)||iterations<19||iterations>999||!Number.isInteger(seed)||seed<0||seed>4294967295} onClick={()=>run('spatial')}>Run spatial control</button>
+ {spatial&&<div role="status"><p>Observed Pearson: {fmt(spatial.observed_pearson)} · upper-tail probability: {fmt(spatial.tail_probability)} · {spatial.iterations} shifts{spatial.exhaustive?' (all translations)':''}</p><p className="hint">Null 2.5% / median / 97.5%: {spatial.null_quantiles.map(fmt).join(' / ')}. One unadjusted test; this is not experiment-level inference.</p></div>}
+ {busy&&<p role="status">Running validation…</p>}{error&&<p role="alert">{error}</p>}
+ {(reference||sensitivity||spatial)&&<button className="report-button" onClick={()=>downloadReport({reference,sensitivity,spatial},'OrganelleScope-validation.json')}>Export validation report</button>}</section>;
+}

@@ -41,3 +41,7 @@ Agent tools will inspect metadata, propose workflows, run deterministic analysis
 - **Restoration:** model reference tensors, identity/negative controls, residuals and measurement changes, held-out experimental validation. Do not use denoised values as unchanged independent photon counts.
 - **Agent:** curated tasks with expected tool actions and evidence, rejection of unsupported probabilities/claims, prompt-injection handling for retrieved content, graceful offline behavior.
 - **Distribution:** platform installation/startup tests, unsigned/signing status, offline launch, model integrity and low-memory behavior. CI artifacts are development artifacts until these gates pass.
+
+## Implemented research foundations (0.1.5 source)
+
+Deterministic XY background correction and Gaussian smoothing, matched-contrast previews and raw/processed measurements are available. The validation workspace adds reference checks, matched ROI sensitivity and a narrowly specified seeded toroidal-shift control. The 3D workspace adds linked source sections and full-resolution cuboid measurements, without claiming segmentation or true molecular resolution. Academic STRING/KEGG identifier and association/pathway queries are available with local caches and provenance. The LLM, curated biological validation, independent Fiji benchmarks, experiment-level inference, compartment-aware null models, segmentation and larger-volume optimization remain outstanding. See RESEARCH_WORKSPACES.md for limits and assumptions.

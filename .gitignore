@@ -21,3 +21,5 @@ __pycache__/
 !backend/tests/fixtures/
 
 local-samples/
+
+evidence-cache/
