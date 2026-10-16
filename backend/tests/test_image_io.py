@@ -34,6 +34,17 @@ def test_imagej_resolution_and_spacing(tmp_path):
     assert [info.calibration[a].value_um for a in "XYZ"] == [.1, .2, .4]
 
 
+def test_print_dpi_is_not_automatically_specimen_calibration(tmp_path):
+    path = tmp_path / "print.tif"
+    tifffile.imwrite(path, np.zeros((8, 9), np.uint16), resolution=(300, 300), resolutionunit="INCH")
+    info = inspect_tiff(path)
+    assert not info.calibrated()
+    assert info.calibration["X"].value_um is None
+    assert info.calibration["X"].candidates["TIFF resolution"] == pytest.approx(25400/300)
+    confirmed = inspect_tiff(path, spacing_override={"X": .1, "Y": .1})
+    assert confirmed.calibrated()
+
+
 def test_ambiguous_pages_require_confirmation(tmp_path):
     path = tmp_path / "ambiguous.tif"
     a = np.arange(3 * 8 * 9, dtype=np.uint16).reshape(3, 8, 9)

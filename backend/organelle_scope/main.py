@@ -53,6 +53,12 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     def stored(image_id: str) -> tuple[Path, dict, ImageInfo]:
         folder = image_dir(image_id)
         record = json.loads((folder / "metadata.json").read_text())
+        if record.get("import_schema") != 1:
+            options = InspectOptions.model_validate(record.get("options", {}))
+            revised = inspect_tiff(folder / "source.tiff", options.series_index, options.axes, options.spacing_um)
+            revised.filename = record["info"]["filename"]
+            record.update(info=revised.model_dump(), import_schema=1)
+            save_record(folder, record)
         return folder, record, ImageInfo.model_validate(record["info"])
 
     def save_record(folder: Path, record: dict) -> None:
@@ -84,7 +90,7 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
                     dst.write(chunk)
             info = inspect_tiff(folder / "source.tiff")
             info.filename = name
-            record = {"id": image_id, "sha256": digest.hexdigest(), "info": info.model_dump(), "options": {}}
+            record = {"id": image_id, "sha256": digest.hexdigest(), "info": info.model_dump(), "options": {}, "import_schema": 1}
             save_record(folder, record)
             return record
         except Exception as exc:
@@ -100,8 +106,8 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
         records = []
         for p in sorted(data_dir.glob("*/metadata.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:20]:
             try:
-                records.append(json.loads(p.read_text()))
-            except (OSError, ValueError):
+                records.append(stored(p.parent.name)[1])
+            except (OSError, ValueError, HTTPException):
                 continue
         return records
 

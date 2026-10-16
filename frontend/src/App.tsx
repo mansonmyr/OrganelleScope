@@ -121,7 +121,7 @@ export default function App() {
         </section>
         <section><p className="eyebrow">PHYSICAL CALIBRATION</p>
           {"XYZ".split("").map(a => <label key={a}>{a} spacing <span className="unit">µm</span><input type="number" min="0.000001" step="any" value={spacing[a]} placeholder="Unknown" onChange={e => setSpacing({...spacing,[a]:e.target.value})}/><small>{info.calibration[a].source}</small>
-            {info.calibration[a].conflict && <small>{Object.entries(info.calibration[a].candidates).map(([s,v])=>`${s}: ${v} µm`).join("; ")}</small>}</label>)}
+            {(info.calibration[a].conflict || info.calibration[a].value_um == null) && <small>{Object.entries(info.calibration[a].candidates).map(([s,v])=>`${s}: ${v} µm (not applied)`).join("; ")}</small>}</label>)}
           <button disabled={busy} onClick={confirmImport}>Apply import settings</button><p className="hint">Spacing calibrates coordinates; it does not establish optical resolution.</p>
         </section>
         <section><p className="eyebrow">CHANNELS</p>{info.channel_labels.map((name,i)=><div className="channel" key={i}><i style={{background:colors[i]}}/>{name}</div>)}</section>

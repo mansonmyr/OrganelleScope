@@ -63,8 +63,11 @@ def _physical(value: object, unit: str | None) -> float | None:
 
 def _resolve(candidates: dict[str, float], warnings: list[str], axis: str) -> CalibrationValue:
     if not candidates:
-        warnings.append(f"{axis} spacing is missing or has unsupported units. Measurements use pixels until calibrated.")
+        warnings.append(f"{axis} spacing is missing or has unsupported units. Physical distances along this axis are unavailable until calibrated.")
         return CalibrationValue()
+    if list(candidates) == ["TIFF resolution"]:
+        warnings.append(f"{axis} has only generic TIFF resolution tags, which may describe print DPI rather than specimen scale. Confirm microscope pixel size before physical measurements.")
+        return CalibrationValue(source="TIFF resolution (unconfirmed)", candidates=candidates)
     source, value = next(iter(candidates.items()))
     conflict = any(not math.isclose(value, v, rel_tol=.01, abs_tol=1e-9) for v in candidates.values())
     if conflict:
