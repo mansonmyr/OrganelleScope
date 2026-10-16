@@ -132,3 +132,14 @@ def test_compressed_stack_big_endian_preserves_values(tmp_path, compression):
     tifffile.imwrite(path, a, ome=True, photometric="minisblack", byteorder=">", compression=compression, metadata={"axes": "ZCYX"})
     info = inspect_tiff(path)
     np.testing.assert_array_equal(read_plane(path, info, channel=1, z=2), a[2, 1])
+
+
+@pytest.mark.parametrize('unit',[r'\u00B5m',r'\u03BCm','um','µm'])
+def test_fiji_escaped_micrometre_units_are_calibrated(tmp_path,unit):
+    path=tmp_path/'fiji-unit.tif'
+    description=f'ImageJ=1.54p\nimages=60\nchannels=4\nslices=15\nhyperstack=true\nspacing=0.315\nunit={unit}\n'
+    tifffile.imwrite(path,np.zeros((15,4,8,9),np.uint16),photometric='minisblack',metadata=None,resolutionunit='NONE',resolution=(1/.315,1/.315),description=description.encode('latin1'))
+    info=inspect_tiff(path)
+    assert info.dimensions['Z']==15 and info.dimensions['C']==4
+    assert info.calibrated(volume=True)
+    assert [info.calibration[a].value_um for a in 'XYZ']==pytest.approx([.315,.315,.315])

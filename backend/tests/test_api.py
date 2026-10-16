@@ -67,5 +67,22 @@ def test_old_import_records_are_reinspected_without_reusing_implicit_scale(tmp_p
         path = tmp_path / record["id"] / "metadata.json"
         path.write_text(json.dumps(record))
         revised = client.get("/api/images", headers=headers).json()[0]
-        assert revised["import_schema"] == 1
+        assert revised["import_schema"] == 2
         assert revised["info"]["calibration"]["X"]["value_um"] is None
+
+
+def test_uncalibrated_voxel_preview_is_explicit_and_does_not_calibrate_source(tmp_path):
+    with TestClient(create_app(tmp_path,'token')) as client:
+        h={'X-Session-Token':'token'};buf=io.BytesIO()
+        data=np.arange(3*260*9,dtype=np.uint16).reshape(3,260,9)
+        tifffile.imwrite(buf,data,ome=True,photometric='minisblack',metadata={'axes':'ZYX'})
+        record=client.post('/api/images',headers=h,files={'file':('unknown-scale.tif',buf.getvalue())}).json()
+        url=f'/api/images/{record["id"]}'
+        assert client.get(url+'/volume',headers=h).status_code==422
+        response=client.get(url+'/volume?units=voxel',headers=h)
+        assert response.status_code==200
+        assert response.headers['X-Volume-Units']=='voxel'
+        assert json.loads(response.headers['X-Volume-Spacing'])==[1.,3.,1.]
+        np.testing.assert_array_equal(np.frombuffer(response.content,'<u2').reshape(3,87,9),data[:,::3,:])
+        assert client.get(url,headers=h).json()['info']['calibration']['X']['value_um'] is None
+        assert client.get(url+'/volume?units=wrong',headers=h).status_code==422

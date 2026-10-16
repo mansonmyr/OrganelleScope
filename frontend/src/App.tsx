@@ -4,6 +4,7 @@ import { json, request, type ImageRecord } from "./api";
 import { SignalChart } from "./components/SignalChart";
 import type { LineRoi } from "./types";
 import { sampleTrace, buildChannelMetrics } from "./workers/analysisCore";
+import { CalibrationHelp } from "./CalibrationHelp";
 import { VolumeView } from "./VolumeView";
 
 import { RoiOverlay, type AreaROI, type DrawTool } from "./RoiOverlay";
@@ -23,7 +24,7 @@ export default function App() {
   const [recent, setRecent] = useState<ImageRecord[]>([]);
   const [z, setZ] = useState(0);
   const [mode, setMode] = useState<"slice" | "volume">("slice");
-  const [volumeChannel, setVolumeChannel] = useState(0);
+  const [volumeChannel, setVolumeChannel] = useState(-1);
   const [axes, setAxes] = useState("");
   const [series, setSeries] = useState(0);
   const [spacing, setSpacing] = useState<Record<string, string>>({ X: "", Y: "", Z: "" });
@@ -47,7 +48,7 @@ export default function App() {
   function accept(record: ImageRecord) {
     setImage(record); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
     setSpacing(Object.fromEntries("XYZ".split("").map(a => [a, String(record.info.calibration[a].value_um ?? "")])));
-    setRoi(null); setAreas([]); setAnalysis(null); setTarget(0); setProfile(null); setMode("slice"); setVolumeChannel(0);
+    setRoi(null); setAreas([]); setAnalysis(null); setTarget(0); setProfile(null); setMode("slice"); setVolumeChannel(-1);
     setRecent(records => [record, ...records.filter(r => r.id !== record.id)].slice(0,20));
   }
   async function importImage(event: ChangeEvent<HTMLInputElement>) {
@@ -138,7 +139,7 @@ export default function App() {
           <label>Confirmed axis order<input value={axes} onChange={e => setAxes(e.target.value.toUpperCase())} maxLength={6} /></label>
           <p className="hint">C = channels · Z = depth · Y/X = image · T = time</p>
         </section>
-        <section><p className="eyebrow">PHYSICAL CALIBRATION</p>
+        <section><p className="eyebrow">PHYSICAL CALIBRATION</p><CalibrationHelp/>
           {"XYZ".split("").map(a => <label key={a}>{a} spacing <span className="unit">µm</span><input type="number" min="0.000001" step="any" value={spacing[a]} placeholder="Unknown" onChange={e => setSpacing({...spacing,[a]:e.target.value})}/><small>{info.calibration[a].source}</small>
             {(info.calibration[a].conflict || info.calibration[a].value_um == null) && <small>{Object.entries(info.calibration[a].candidates).map(([s,v])=>`${s}: ${v} µm (not applied)`).join("; ")}</small>}</label>)}
           <button disabled={busy} onClick={confirmImport}>Apply import settings</button><p className="hint">Spacing calibrates coordinates; it does not establish optical resolution.</p>

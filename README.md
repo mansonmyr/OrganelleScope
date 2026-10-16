@@ -8,6 +8,9 @@ A desktop microscopy workbench in development, bringing together the Probabilist
 
 - TIFF, OME-TIFF and ImageJ TIFF inspection with source bit depth, channel names, shape, axis order and calibration provenance.
 - Explicit correction of ambiguous axes; no automatic disposal of Z planes or time points.
+- An information popup explaining physical calibration, Z step, sampling and optical resolution.
+- Fiji escaped micrometre units are recognized automatically, and existing imports are refreshed.
+- An explicitly labeled voxel-space preview is available when physical spacing is unknown.
 - Conflicting physical-scale metadata blocks physical interpretation until corrected.
 - Page-wise viewing of supported uint8/uint16 layouts, up to four channels.
 - Native-intensity line profiles on a selected XY plane, calibrated for unequal X/Y spacing.
@@ -16,7 +19,7 @@ A desktop microscopy workbench in development, bringing together the Probabilist
 - Zero, manual per-channel and Costes-style automatic thresholds; explicit unavailable cases.
 - Locally saved ROI analyses, restored with their imported image and exported with source identity and settings.
 - Corrected FWHM coordinate conversion, tested against a Gaussian reference at multiple sampling intervals.
-- A single-channel, calibrated, downsampled 3D volume preview. Display downsampling does not alter source pixels.
+- A calibrated, downsampled 3D volume preview with all-channel compositing or individual channel selection, an oblique starting view, display opacity/cutoff controls and labeled Z stretching. Display downsampling does not alter source pixels.
 - Local, persistent import records with UUID identity and SHA-256 source digest.
 - An Electron launcher, local-session authentication, and initial build/CI configuration.
 

@@ -53,9 +53,14 @@ _UNITS = {"µm": 1., "μm": 1., "um": 1., "micron": 1., "microns": 1.,
           "nm": .001, "mm": 1000., "cm": 10000., "m": 1e6}
 
 
+def _unit_key(unit: object) -> str:
+    # ImageJ writes Unicode symbols either literally or as ASCII Unicode escapes.
+    return str(unit).strip().lower().replace(r"\u00b5", "µ").replace(r"\u03bc", "μ")
+
+
 def _physical(value: object, unit: str | None) -> float | None:
     try:
-        result = float(value) * _UNITS[str(unit).strip().lower()]
+        result = float(value) * _UNITS[_unit_key(unit)]
         return result if math.isfinite(result) and result > 0 else None
     except (ValueError, TypeError, KeyError):
         return None
@@ -156,7 +161,7 @@ def inspect_tiff(path: Path, series_index: int = 0, axes_override: str | None = 
         unit = "cm" if tiff_unit == 3 else None
         unit_factor = 25400. if tiff_unit == 2 else _UNITS.get(unit or "")
         if ij.get("unit"):
-            unit_factor = _UNITS.get(str(ij["unit"]).lower()) if tiff_unit == 1 else unit_factor
+            unit_factor = _UNITS.get(_unit_key(ij["unit"])) if tiff_unit == 1 else unit_factor
         for a in "XY":
             tag = page.tags.get(f"{a}Resolution")
             if tag is not None and unit_factor:

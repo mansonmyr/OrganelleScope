@@ -34,7 +34,7 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     app = FastAPI(title="OrganelleScope", version=__version__)
     app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "null"],
                        allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type", "X-Session-Token"],
-                       expose_headers=["X-Volume-Shape", "X-Volume-Spacing"])
+                       expose_headers=["X-Volume-Shape", "X-Volume-Spacing", "X-Volume-Units"])
     data_dir.mkdir(parents=True, exist_ok=True)
     lock = Lock()
 
@@ -55,11 +55,11 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     def stored(image_id: str) -> tuple[Path, dict, ImageInfo]:
         folder = image_dir(image_id)
         record = json.loads((folder / "metadata.json").read_text())
-        if record.get("import_schema") != 1:
+        if record.get("import_schema") != 2:
             options = InspectOptions.model_validate(record.get("options", {}))
             revised = inspect_tiff(folder / "source.tiff", options.series_index, options.axes, options.spacing_um)
             revised.filename = record["info"]["filename"]
-            record.update(info=revised.model_dump(), import_schema=1)
+            record.update(info=revised.model_dump(), import_schema=2)
             save_record(folder, record)
         return folder, record, ImageInfo.model_validate(record["info"])
 
@@ -92,7 +92,7 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
                     dst.write(chunk)
             info = inspect_tiff(folder / "source.tiff")
             info.filename = name
-            record = {"id": image_id, "sha256": digest.hexdigest(), "info": info.model_dump(), "options": {}, "import_schema": 1}
+            record = {"id": image_id, "sha256": digest.hexdigest(), "info": info.model_dump(), "options": {}, "import_schema": 2}
             save_record(folder, record)
             return record
         except Exception as exc:
@@ -206,9 +206,11 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
         return Response(buf.getvalue(), media_type="image/png")
 
     @app.get("/api/images/{image_id}/volume", dependencies=[Depends(authorized)])
-    def volume(image_id: str, channel: int = 0) -> Response:
+    def volume(image_id: str, channel: int = 0, units: str = "physical") -> Response:
         folder, _, info = stored(image_id)
-        if not info.calibrated(volume=True):
+        if units not in {"physical", "voxel"}:
+            raise HTTPException(422, "Volume units must be physical or voxel.")
+        if units == "physical" and not info.calibrated(volume=True):
             raise HTTPException(422, "Confirm X, Y and Z spacing before calibrated 3D rendering.")
         if info.dimensions["Z"] < 2:
             raise HTTPException(422, "A 3D volume requires at least two Z planes.")
@@ -221,9 +223,10 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
                              for z in range(0, info.dimensions["Z"], sz)])
         except (ImageError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from exc
-        spacing = [info.calibration[a].value_um * s for a, s in zip("XYZ", (sx, sy, sz))]
+        spacing = [(info.calibration[a].value_um if units == "physical" else 1.) * s for a, s in zip("XYZ", (sx, sy, sz))]
         return Response(np.ascontiguousarray(data, dtype="<u2").tobytes(), media_type="application/octet-stream", headers={
-            "X-Volume-Shape": json.dumps(list(data.shape)), "X-Volume-Spacing": json.dumps(spacing)
+            "X-Volume-Shape": json.dumps(list(data.shape)), "X-Volume-Spacing": json.dumps(spacing),
+            "X-Volume-Units": "um" if units == "physical" else "voxel"
         })
 
     return app
