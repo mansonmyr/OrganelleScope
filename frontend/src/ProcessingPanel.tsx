@@ -1,0 +1,24 @@
+import { useEffect, useState } from 'react';
+import { request } from './api';
+export interface ProcessingConfig { background:'none'|'constant'|'opening';offsets:number[];radius_px:number;sigma_px:number }
+export const rawProcessing:ProcessingConfig={background:'none',offsets:[],radius_px:20,sigma_px:0};
+export const isProcessed=(config:ProcessingConfig)=>config.background!=='none'||config.sigma_px>0;
+export function ProcessingPanel({imageId,z,labels,bitDepth,value,onChange,disabled}:{imageId:string;z:number;labels:string[];bitDepth:number;value:ProcessingConfig;onChange:(config:ProcessingConfig)=>void;disabled:boolean}) {
+ const [draft,setDraft]=useState(value),[preview,setPreview]=useState<string>(),[error,setError]=useState(''),[working,setWorking]=useState(false);
+ useEffect(()=>setDraft(value),[value]);
+ useEffect(()=>{setPreview(undefined);setError('');setWorking(true);const abort=new AbortController();let href:string|undefined;
+  const timer=setTimeout(()=>request(`/api/images/${imageId}/processing/preview?z=${z}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value),signal:abort.signal}).then(r=>r.blob()).then(blob=>{if(!abort.signal.aborted){href=URL.createObjectURL(blob);setPreview(href);}}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setWorking(false);}),200);
+  return()=>{abort.abort();clearTimeout(timer);if(href)URL.revokeObjectURL(href);};
+ },[imageId,z,value]);
+ const valid=Number.isInteger(draft.radius_px)&&draft.radius_px>=1&&draft.radius_px<=512&&Number.isFinite(draft.sigma_px)&&draft.sigma_px>=0&&draft.sigma_px<=5&&(draft.background!=='constant'||draft.offsets.length===labels.length&&draft.offsets.every(n=>Number.isFinite(n)&&n>=0&&n<=2**bitDepth-1));
+ return <section className="panel statistics processing"><p className="eyebrow">IMAGE PREPARATION</p><h2>Background correction & smoothing</h2><p className="hint">Each channel and XY plane is processed independently. Raw TIFF pixels stay unchanged. The image explorer and 3D view show the raw image; the comparison below shows the applied recipe.</p>
+ <div className="roi-tools"><label>Background method<select disabled={disabled} value={draft.background} onChange={e=>setDraft({...draft,background:e.target.value as ProcessingConfig['background'],offsets:labels.map((_,i)=>draft.offsets[i]??0)})}><option value="none">No subtraction</option><option value="constant">Constant offset per channel</option><option value="opening">Local background (square opening)</option></select></label>
+ {draft.background==='opening'&&<label>Background radius (XY pixels)<input disabled={disabled} type="number" min="1" max="512" step="1" value={draft.radius_px} onChange={e=>setDraft({...draft,radius_px:Number(e.target.value)})}/></label>}
+ <label>Gaussian smoothing σ (XY pixels)<input disabled={disabled} type="number" min="0" max="5" step="0.1" value={draft.sigma_px} onChange={e=>setDraft({...draft,sigma_px:Number(e.target.value)})}/></label></div>
+ {draft.background==='constant'&&<div className="roi-tools">{labels.map((label,i)=><label key={i}>{label} offset<input disabled={disabled} type="number" min="0" max={2**bitDepth-1} step="any" value={draft.offsets[i]??0} onChange={e=>setDraft({...draft,offsets:labels.map((_,j)=>j===i?Number(e.target.value):draft.offsets[j]??0)})}/></label>)}</div>}
+ <p className="hint">Choose a background window wider than the structures you want to retain. Subtraction clips negative values to zero. Smoothing can change peak widths and colocalization; σ = 0 disables it. This is conventional filtering, without a super-resolution claim.</p>
+ <div className="processing-actions"><button disabled={disabled||!valid} onClick={()=>onChange(draft)}>Apply recipe</button><button disabled={disabled} onClick={()=>onChange({...rawProcessing})}>Reset to raw</button></div>
+ {JSON.stringify(draft)!==JSON.stringify(value)&&<p className="hint">Settings changed. Apply the recipe to update the comparison and measurement option.</p>}
+ <div className="comparison-labels"><strong>Raw</strong><strong>Processed</strong></div>{working&&<p role="status">Preparing comparison…</p>}{error&&<p role="alert">{error}</p>}{preview&&<img className="processing-comparison" src={preview} alt="Raw image on the left and processed image on the right with identical channel contrast"/>}
+ <p className="hint">Both panels use the same raw-derived channel contrast. Results retain float32 intensities without conversion back to 8/16-bit.</p></section>;
+}

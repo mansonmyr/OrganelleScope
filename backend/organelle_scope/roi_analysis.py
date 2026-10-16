@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from scipy.stats import rankdata
 
 from organelle_scope.image_io import ImageError
+from organelle_scope.processing import ProcessingConfig
 
 
 class Point(BaseModel):
@@ -31,6 +32,7 @@ class AreaROI(BaseModel):
 
 
 class AnalysisRequest(BaseModel):
+    processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
     rois: list[AreaROI] = Field(min_length=1, max_length=100)
     target_channel: int = Field(default=0, ge=0, le=3)
     threshold_mode: Literal["zero", "manual", "costes"] = "costes"

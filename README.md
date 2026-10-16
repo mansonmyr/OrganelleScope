@@ -92,3 +92,7 @@ Version 0.1.2 adds explicit ad-hoc development signing of the Mac app and its bu
 If a 0.1.1 installer reports that the app is damaged, replace it with the rebuilt 0.1.2 app rather than disabling Gatekeeper globally. Drag OrganelleScope from the new DMG into Applications and choose Replace. Imported images and analyses are stored separately in the app's user-data directory. The signing hooks clean only FinderInfo/ResourceFork metadata in generated build output and do not remove quarantine from installed apps.
 
 A local packaging run writes installers into `release/` (excluded from Git). CI installers remain available as Actions artifacts until attached to a GitHub Release. Publication-ready Mac distribution requires a Developer ID certificate and notarization configured separately; these credentials are not present in the project.
+
+### Background correction and smoothing
+
+The image preparation panel compares raw and processed planes using matched contrast. Apply a background recipe, then explicitly choose raw or processed intensities for line profiles and ROI statistics. Raw TIFF pixels remain unchanged. Exports include settings, algorithm/dependency versions and recipe/source hashes. See [preprocessing methods and limitations](docs/PREPROCESSING.md). Noise2Void and biological validation remain in development.

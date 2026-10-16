@@ -20,6 +20,7 @@ from PIL import Image
 from pydantic import BaseModel, Field
 
 from organelle_scope.roi_analysis import AnalysisRequest, analyze_roi
+from organelle_scope.processing import ProcessingConfig, process_plane, provenance
 from organelle_scope import __version__
 from organelle_scope.image_io import ImageError, ImageInfo, inspect_tiff, read_plane
 
@@ -155,22 +156,25 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
                 raise HTTPException(422, "Provide one finite threshold per channel within the source intensity range.")
             results = []
             try:
+                options.processing.validate_channels(count, info.bit_depth)
+                if options.processing.active and options.threshold_mode == "costes":
+                    raise ImageError("Automatic thresholds currently support raw integer intensities only. Select manual or zero thresholds for processed measurements.")
                 for z in sorted({r.z for r in options.rois}):
-                    channels = [read_plane(folder / "source.tiff", info, c, z) for c in range(count)]
+                    channels = [process_plane(read_plane(folder / "source.tiff", info, c, z), options.processing, c) if options.processing.active else read_plane(folder / "source.tiff", info, c, z) for c in range(count)]
                     for roi in options.rois:
                         if roi.z == z:
                             results.append(analyze_roi(channels, roi, info.channel_labels, options.target_channel,
                                 options.threshold_mode, thresholds, (info.calibration["X"].value_um, info.calibration["Y"].value_um)))
             except (ImageError, ValueError) as exc:
                 raise HTTPException(422, str(exc)) from exc
-            result = {"algorithm_version": "roi-1", "image_id": image_id, "source_sha256": record["sha256"],
+            result = {"algorithm_version": "roi-2", "processing": provenance(options.processing), "image_id": image_id, "source_sha256": record["sha256"],
                       "image_info": record["info"], "request": options.model_dump(), "results": results,
                       "validation": {"status": "engineering-tested; biological validation pending",
                                      "publication_ready": False,
                                      "limitations": ["No spatially calibrated significance or experiment-level inference.",
                                                      "Independent microscopy-software and real-control benchmarks pending."],
                                      "methods_document": "docs/ROI_STATISTICS.md"},
-                      "scope": "Separate XY-plane ROIs; native source intensities; no 3D or pooled biological inference."}
+                      "scope": f"Separate XY-plane ROIs; {'processed float32' if options.processing.active else 'native source'} intensities; no 3D or pooled biological inference."}
             temp = folder / "analysis.tmp"
             temp.write_text(json.dumps(result, indent=2, allow_nan=False))
             temp.replace(folder / "analysis.json")
@@ -204,6 +208,53 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
         buf = io.BytesIO()
         image.save(buf, format="PNG")
         return Response(buf.getvalue(), media_type="image/png")
+
+    def processing_channels(image_id: str, z: int, config: ProcessingConfig):
+        folder, _, info = stored(image_id)
+        config.validate_channels(info.dimensions["C"], info.bit_depth)
+        return info, [read_plane(folder / "source.tiff", info, c, z) for c in range(info.dimensions["C"])]
+
+    @app.post("/api/images/{image_id}/processing/recipe", dependencies=[Depends(authorized)])
+    def processing_recipe(image_id: str, config: ProcessingConfig) -> dict:
+        _, record, info = stored(image_id)
+        try:
+            config.validate_channels(info.dimensions["C"], info.bit_depth)
+        except ImageError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return {"source_sha256": record["sha256"], "image_info": record["info"], **provenance(config)}
+
+    @app.post("/api/images/{image_id}/processing/plane", dependencies=[Depends(authorized)])
+    def processed_plane(image_id: str, config: ProcessingConfig, z: int = 0, channel: int = 0) -> Response:
+        folder, _, info = stored(image_id)
+        try:
+            config.validate_channels(info.dimensions["C"], info.bit_depth)
+            data = process_plane(read_plane(folder / "source.tiff", info, channel, z), config, channel)
+        except (ImageError, ValueError) as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return Response(np.ascontiguousarray(data, dtype="<f4").tobytes(), media_type="application/octet-stream")
+
+    @app.post("/api/images/{image_id}/processing/preview", dependencies=[Depends(authorized)])
+    def processing_preview(image_id: str, config: ProcessingConfig, z: int = 0) -> Response:
+        try:
+            info, channels = processing_channels(image_id, z, config)
+            colors = np.array([[1, .12, .25], [.1, 1, .65], [.2, .45, 1], [.8, .8, .8]])
+            raw = np.zeros((info.dimensions["Y"], info.dimensions["X"], 3), np.float32)
+            corrected = np.zeros_like(raw)
+            for c, source in enumerate(channels):
+                # Identical raw-derived contrast in both panels: no misleading independent rescaling.
+                high = float(np.percentile(source[::4, ::4], 99.5)) or float(source.max()) or 1.
+                raw += np.clip(source/high, 0, 1)[..., None]*colors[c]
+                corrected += np.clip(process_plane(source, config, c)/high, 0, 1)[..., None]*colors[c]
+            panels = []
+            for data in (raw, corrected):
+                image = Image.fromarray((np.clip(data, 0, 1)*255).astype(np.uint8))
+                image.thumbnail((768, 768));panels.append(image)
+            comparison = Image.new("RGB", (panels[0].width*2, panels[0].height))
+            comparison.paste(panels[0], (0, 0));comparison.paste(panels[1], (panels[0].width, 0))
+            buf = io.BytesIO();comparison.save(buf, format="PNG")
+            return Response(buf.getvalue(), media_type="image/png")
+        except (ImageError, ValueError) as exc:
+            raise HTTPException(422, str(exc)) from exc
 
     @app.get("/api/images/{image_id}/volume", dependencies=[Depends(authorized)])
     def volume(image_id: str, channel: int = 0, units: str = "physical") -> Response:

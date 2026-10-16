@@ -16,3 +16,5 @@
 .viewer-note{margin-top:12px}
 input[type=range]{accent-color:#ff7d00}
 @media(max-width:650px){header{gap:12px}.brand-icon{width:44px;height:44px}.brand p{font-size:10px}.drawing-dock{padding:18px}.chart-legend{flex-wrap:wrap}}
+
+.processing-actions{display:flex;gap:12px;flex-wrap:wrap}.comparison-labels{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin:24px 0 10px;color:#ffecd1;font-size:12px}.processing-comparison{display:block;width:100%;height:auto;background:#05090b}.processing .roi-tools label{flex:1;min-width:180px}
