@@ -78,4 +78,8 @@ The user withdrew Noise2Void denoising and deconvolution. Both are removed from 
 
 ## 0.2.2 viewer and documentation milestone
 
-Independent per-channel LUTs are implemented for the single-image XY/volume/linked-section/preparation views and snapshot provenance. Measurement intensities remain unchanged. README is a concise entry point and MANUAL.md is the detailed current guide. Keep Gemma; no candidate download/model swap. [napari-inspired work](NAPARI_INSPIRED_ROADMAP.md) remains a prioritized proposal, per user clarification. Next priorities are source-aware layers and linked object review, not automatic ROI drawing.
+Independent per-channel LUTs are implemented for the single-image XY/volume/linked-section/preparation views and snapshot provenance. Measurement intensities remain unchanged. README is a concise entry point and MANUAL.md is the detailed current guide. Keep Gemma; no candidate download/model swap. Future viewer features remain subject to user priorities and independent implementation/verification. No separate viewer-inspired roadmap is published.
+
+## 0.2.3 Workspace layout and sample QA
+
+Project save/open/archive/recovery controls move into the Workspace sidebar. UI chrome uses #6DB1BF, #FFEAEC, #FDF0D5 and #83BCFF with dark readable text; scientific channel LUTs stay independent. The separate viewer-inspired roadmap and its current-document links are removed at the user's request. General software comparisons/citations remain factual references; no third-party implementation or dependency was introduced. User-provided local TIFFs support technical tests; biological marker mappings and independent replicate identities must be confirmed before control interpretation.

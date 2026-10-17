@@ -2,7 +2,7 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Research development source 0.2.2.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
+**Research development source 0.2.3.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
 
 ## Main features
 
@@ -13,7 +13,7 @@ A local desktop microscopy workbench for calibrated image inspection, ROI measur
 - Full-resolution cuboids, inspectable threshold masks/objects, image-based proximity and radial enrichment.
 - Reviewed per-image batches, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
 - Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant for recorded results and evidence.
-- Local versioned projects, portable archives, recovery state and source/settings/evidence provenance.
+- Workspace sidebar project controls, portable archives, recovery state and source/settings/evidence provenance.
 
 ## Start here
 
@@ -28,7 +28,6 @@ Open a TIFF, confirm channels/axes/calibration, inspect the image and draw ROIs.
 | [Manual](MANUAL.md) | User guide and scientific interpretation |
 | [Software comparison](docs/SOFTWARE_COMPARISON.md) | napari, QuPath, CellProfiler, Fiji JaCoP/Coloc 2, Icy and Imaris |
 | [Model decisions](README_MODEL_DECISIONS.md) / [candidate assessment](docs/MODEL_SELECTION.md) | Why Gemma remains; GPT-OSS, Llama Vision and optional vision candidates |
-| [napari-inspired roadmap](docs/NAPARI_INSPIRED_ROADMAP.md) | Prioritized proposals, clearly separated from implemented LUTs |
 | [Validation](docs/VALIDATION.md) / [release readiness](docs/RELEASE_READINESS.md) | Numerical evidence and outstanding qualification |
 
 ## Development and downloads

@@ -157,3 +157,18 @@ def test_rgb_components_are_flagged_as_color_export_not_assumed_microscope_chann
  assert any('independent raw microscope channels' in warning for warning in info.warnings)
  for z in range(3):
   for c in range(3):np.testing.assert_array_equal(read_plane(path,info,c,z),raw[z,:,:,c])
+
+def test_extracted_imagej_plane_warns_about_inherited_acquisition_dimensions(tmp_path):
+    path=tmp_path/'extracted.tif';a=np.arange(8*9,dtype=np.uint16).reshape(8,9)
+    tifffile.imwrite(path,a,imagej=True,metadata={'axes':'YX','Info':'SizeC = 3\nSizeT = 1\nSizeX = 2048\nSizeY = 2048\nSizeZ = 4\n'})
+    info=inspect_tiff(path)
+    assert info.dimensions['C']==1 and info.dimensions['Z']==1
+    assert info.shape==[8,9] and info.channel_labels==['Channel 1']
+    assert any('Inherited ImageJ Info dimensions' in w for w in info.warnings)
+    assert 'C: Info 3, stored 1' in info.acquisition['imagej_info_dimension_mismatch']
+    np.testing.assert_array_equal(read_plane(path,info),a)
+
+def test_matching_imagej_info_dimensions_do_not_produce_stale_export_warning(tmp_path):
+    path=tmp_path/'matching.tif';a=np.zeros((4,3,8,9),np.uint16)
+    tifffile.imwrite(path,a,imagej=True,metadata={'axes':'ZCYX','Info':'SizeC = 3\nSizeT = 1\nSizeX = 9\nSizeY = 8\nSizeZ = 4\n'})
+    assert not any('Inherited ImageJ Info dimensions' in w for w in inspect_tiff(path).warnings)

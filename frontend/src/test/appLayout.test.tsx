@@ -80,3 +80,10 @@ it('keeps per-channel display LUTs through workspace changes and sends them to p
  fireEvent.click(screen.getByRole('button',{name:'Reset channel LUTs'}));
  expect((screen.getByRole('combobox',{name:'A display LUT'}) as HTMLSelectElement).value).toBe('rose');
 });
+it('places all project and archive controls inside the Workspace sidebar rather than above the preview',async()=>{
+ await openImage();const sidebar=screen.getByRole('complementary',{name:'Workspace'});
+ for(const element of [screen.getByRole('button',{name:'Save project'}),screen.getByRole('button',{name:'Save as new'}),screen.getByRole('combobox',{name:'Open saved project'}),screen.getByRole('button',{name:'Export saved project archive'}),screen.getByLabelText('Import portable project')])expect(sidebar.contains(element)).toBe(true);
+ expect(document.querySelectorAll('.shell > .project-bar').length).toBe(0);
+ expect(document.querySelectorAll('aside .project-bar').length).toBe(2);
+ expect(document.querySelector('.shell > .workspace')).toBeTruthy();
+});

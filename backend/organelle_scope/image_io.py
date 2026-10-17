@@ -7,6 +7,7 @@ All quantitative values retain their native uint8/uint16 units.
 from __future__ import annotations
 
 import math
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Literal
@@ -155,6 +156,13 @@ def inspect_tiff(path: Path, series_index: int = 0, axes_override: str | None = 
                 warnings.append("OME XML could not be parsed; inspect calibration manually.")
 
         ij = tf.imagej_metadata or {}
+        # Bio-Formats/Fiji exports may retain the original acquisition's Info block
+        # after cropping/extracting a channel. Stored TIFF geometry remains authoritative.
+        inherited={a:int(n) for a,n in re.findall(r"^\s*Size([TCZYX])\s*=\s*(\d+)\s*$",str(ij.get('Info','')),re.MULTILINE)}
+        mismatches=[f"{a}: Info {n}, stored {dims[a]}" for a,n in inherited.items() if n!=dims[a]]
+        if mismatches:
+            acquisition['imagej_info_dimension_mismatch']='; '.join(mismatches)
+            warnings.append('Inherited ImageJ Info dimensions differ from the stored TIFF ('+'; '.join(mismatches)+'). This may be an extracted channel, crop or projection. Stored pixels/axes are used; verify export history and channel identity. Missing original channels are not recovered.')
         page = series.pages[0]
         unit_tag = page.tags.get("ResolutionUnit")
         tiff_unit = int(unit_tag.value) if unit_tag is not None else 1

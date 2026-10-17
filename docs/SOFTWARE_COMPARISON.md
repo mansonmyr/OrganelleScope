@@ -70,4 +70,4 @@ Historical 0.2.0 included N2V/RL, removed in 0.2.1. Current OrganelleScope provi
 
 ## Source 0.2.2 viewer follow-up
 
-Independent single-image channel LUTs are now implemented. The [napari-inspired roadmap](NAPARI_INSPIRED_ROADMAP.md) distinguishes those controls from proposed layers, object inspection, edit history, calibration context, sensitivity records and multiscale previews. This is a workflow/design assessment, not proof of unique capability or superiority over napari plugins. See [MANUAL.md](../MANUAL.md) for the current feature-by-feature guide.
+Independent single-image channel LUTs are implemented. This comparison is a capability review, not a claim of unique algorithms or superiority over napari/plugins. See [MANUAL.md](../MANUAL.md) for the current feature guide. No separate viewer-inspired roadmap is published.

@@ -2,11 +2,11 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 0.2.2 · 17 October 2026 · research development software**
+**Edition 0.2.3 · 18 October 2026 · research development software**
 
-This manual describes the current source, including independent channel LUTs. An installed binary can contain an earlier feature set: check its version and the corresponding release notes. The [build verification record](docs/BUILD_VERIFICATION.json) identifies the separately verified installer version; it is not a certificate for later source changes.
+This manual describes the current source, including independent channel LUTs, Workspace sidebar project controls and the updated interface palette. An installed binary can contain an earlier feature set: check its version and the corresponding release notes. The [build verification record](docs/BUILD_VERIFICATION.json) identifies the separately verified installer version; it is not a certificate for later source changes.
 
-OrganelleScope combines workflows from the Probabilistic Colocalization Estimator and Quick IF Line Profiler. It keeps microscopy images local, connects explicit measurement choices to saved results, and offers optional database context and a supervised local assistant. It does not convert conventional fluorescence images into validated super-resolution acquisitions, identify molecular binding from overlap, or certify publication readiness. Biological validation was deferred by the user because representative control images are unavailable. Numerical verification and biological validation answer different questions.
+OrganelleScope combines workflows from the Probabilistic Colocalization Estimator and Quick IF Line Profiler. It keeps microscopy images local, connects explicit measurement choices to saved results, and offers optional database context and a supervised local assistant. It does not convert conventional fluorescence images into validated super-resolution acquisitions, identify molecular binding from overlap, or certify publication readiness. Biological validation was previously deferred because representative controls were unavailable. Four local samples are now available for technical QA; biological control interpretation remains pending confirmation of channel-marker assignments, export history and experimental units. Numerical verification and biological validation answer different questions.
 
 ### Contents
 
@@ -60,7 +60,7 @@ On macOS, open the DMG, copy the application into Applications and open it. Curr
 
 ### 4. Interface map
 
-The sidebar contains source information, import/calibration controls and **Channels**. The shared top preview has independent **XY slice / 3D preview** modes and capture controls. The drawing dock is below the XY image. Workspace tabs below the preview open Image & ROI, Background correction, ROI measurements, Channel associations, 3D workspace, Validation, Molecular evidence, Batch analysis and Local assistant. Switching these tabs does not replace the shared preview. Preview mode is a separate choice.
+The **Workspace** sidebar contains image import, recent imports, **Projects & recovery** (save/open, portable archives and recovery), source information, calibration and **Channels**. Project controls no longer occupy horizontal bars above the preview. The shared top preview has independent **XY slice / 3D preview** modes and capture controls. The drawing dock is below the XY image. Workspace tabs below the preview open Image & ROI, Background correction, ROI measurements, Channel associations, 3D workspace, Validation, Molecular evidence, Batch analysis and Local assistant. Switching these tabs does not replace the shared preview. Preview mode is a separate choice.
 
 ---
 
@@ -76,7 +76,7 @@ Rendered RGB exports can contain colour components rather than separate quantita
 
 ### 6. What metadata is extracted
 
-The sidebar shows file identity, storage dtype, dimensions, source/confirmed axes, series, decoded-size estimate, channel labels, calibration candidates and acquisition information when present. Metadata availability depends on the writer. OME physical sizes and available plane information, ImageJ units/spacing and TIFF resolution tags are inspected. Missing values remain missing. A microscope's generic specification cannot substitute for the actual objective, zoom, binning and acquisition settings of an image.
+The sidebar shows file identity, storage dtype, dimensions, source/confirmed axes, series, decoded-size estimate, channel labels, calibration candidates and acquisition information when present. Metadata availability depends on the writer. OME physical sizes and available plane information, ImageJ units/spacing and TIFF resolution tags are inspected. Missing values remain missing. Inherited ImageJ Info dimensions that disagree with the actual stored TIFF now produce an explicit warning; an original acquisition saying three channels does not recreate channels omitted during export. A microscope's generic specification cannot substitute for the actual objective, zoom, binning and acquisition settings of an image.
 
 OME pixel size is not the same as print DPI. Generic TIFF resolution tags can describe page printing rather than specimen scale. Conflicting sources are surfaced for review; an explicit user override is recorded. **Apply import settings** reinspects the association and invalidates affected analyses. Retain the reason for an override in your laboratory records. [OME data model](https://docs.openmicroscopy.org/ome-model/6.2.3/ome-tiff/); [import implementation](backend/organelle_scope/image_io.py).
 
@@ -535,7 +535,7 @@ Installer version and checksums must match. The currently verified compact insta
 
 See the [detailed software comparison](docs/SOFTWARE_COMPARISON.md) for napari, QuPath, CellProfiler, Fiji JaCoP/Coloc 2, Icy and Imaris. Compare actual versions, enabled modules/plugins and matched metric/threshold/mask conventions. This is a workflow comparison, not an accuracy ranking or assertion of unique algorithms.
 
-The [napari-inspired roadmap](docs/NAPARI_INSPIRED_ROADMAP.md) proposes source-aware layers, linked object inspection, undoable boundary edits, calibration/provenance inspection, a processing-sensitivity notebook and bounded multiscale previews. Only the LUT work is implemented by this milestone. The intended distinction is a traceable, guided route from source/calibration through measurement and experiment design to evidence/interpretation. Future proposals are not current buttons or promises of biological validity.
+Future viewer improvements will be considered against specific user tasks and tested independently. The application uses established scientific viewing conventions; references to other viewers are comparisons, not claims that their features originated here. No third-party viewer code or dependency was added by these layout changes. The UI uses #6DB1BF for the Workspace/header, #FFEAEC for panels, #FDF0D5 for the page/inputs and #83BCFF for primary/selected controls, with dark readable text. Image LUTs and scientific overlays are independent of this interface theme.
 
 ---
 
@@ -718,4 +718,4 @@ References explain methods and interpretation; they do not certify this applicat
 - [ROI definitions](docs/ROI_STATISTICS.md), [preparation](docs/PREPROCESSING.md), [current masks/inference methods](docs/PROCESSING_AND_INFERENCE.md), [batch export](docs/BATCH_ANALYSIS.md), [evidence/sections](docs/RESEARCH_WORKSPACES.md).
 - [Validation](docs/VALIDATION.md), [Coloc 2 fixtures](docs/COLOC2_BENCHMARK.json), [cuboid checks](docs/CUBOID_VERIFICATION.md), [hierarchical simulation](docs/HIERARCHICAL_SYNTHETIC_BENCHMARK.json), [Gaussian simulation](docs/INFERENCE_SYNTHETIC_BENCHMARK.json).
 - [Gemma evaluation](docs/GEMMA_EVALUATION.md), [Liquid comparison](docs/LIQUID_COMPARISON.md), [cumulative decisions](README_MODEL_DECISIONS.md), [new candidate assessment](docs/MODEL_SELECTION.md).
-- [Software comparison](docs/SOFTWARE_COMPARISON.md), [napari roadmap](docs/NAPARI_INSPIRED_ROADMAP.md), [release readiness](docs/RELEASE_READINESS.md), [build environment](docs/BUILD_ENVIRONMENT.json), [third-party notices](third_party/NOTICE.md).
+- [Software comparison](docs/SOFTWARE_COMPARISON.md), [release readiness](docs/RELEASE_READINESS.md), [build environment](docs/BUILD_ENVIRONMENT.json), [third-party notices](third_party/NOTICE.md).

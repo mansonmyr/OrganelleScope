@@ -29,7 +29,7 @@ Install `backend[test]` plus PyInstaller and build normally. There is no restora
 
 No repository deletion, overwrite of the installed application, new installer publication or claim of publication certification occurs automatically with this source milestone. Keep exact release/version/checksum and validation status visible when distributing research builds.
 
-Biological validation was explicitly deferred by the user on 17 October 2026 because the control images could not be located. This does not block further development; it remains a documented scientific limitation.
+Biological validation was deferred on 17 October 2026. Four local samples were subsequently supplied and technically tested; channel-marker assignment, export history and independent experimental units remain unconfirmed, so biological validation is still incomplete.
 
 ## Local evaluation build
 
