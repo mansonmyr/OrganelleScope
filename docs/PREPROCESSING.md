@@ -1,39 +1,35 @@
-# Reproducible XY preprocessing
+# Reproducible XY preprocessing — source 0.1.12
 
-The first preprocessing milestone supports constant background offsets per channel, local background subtraction with a flat square grayscale opening, and optional Gaussian smoothing. These deterministic filters run on the CPU using existing SciPy dependencies. No model weights or cloud service are required.
+Constant offsets, flat square opening, curved rolling-ball background subtraction and optional Gaussian smoothing run on the CPU using NumPy/SciPy. No extra model, package download or cloud service is needed. **No subtraction and σ = 0 remain the defaults.** The initial radius of 20 pixels is an editable starting entry, not a validated recommendation or an estimate from microscope metadata.
 
 ## Exact operations
 
-1. Read the full-resolution unsigned source plane and copy to float32.
-2. Subtract either the specified channel offset or a grayscale opening of the plane. The opening has a flat square footprint of width `2*radius_px+1`, and reflected boundaries. It is not a rolling-ball implementation.
-3. Clip negative values to zero. This convention changes intensity sums and fractions; it is recorded explicitly.
-4. Optionally smooth with a Gaussian of `sigma_px` in each XY axis, reflected boundaries and kernel truncation at four standard deviations. Zero sigma disables smoothing.
+1. Read the full-resolution unsigned plane and copy to float32.
+2. Subtract the selected background estimate:
+   - **Constant:** one supplied intensity offset per channel.
+   - **Square opening:** erosion followed by dilation with a flat square of width `2*radius_px+1`, reflected boundaries.
+   - **Rolling ball:** a curved lower-envelope estimate. For integer XY radius `r` and positive native-intensity height `h`, define `K(dx,dy) = h*sqrt(1-(dx²+dy²)/r²)` inside the disk `dx²+dy² <= r²`. Background at `p` is the minimum of `I(p+q)+h-K(q)` over in-image offsets `q`. This is evaluated by SciPy nonflat grey erosion with structure `K-h`; positive-infinity padding excludes out-of-image samples. Height defaults to radius when absent from the saved recipe. Equal numerical height/radius gives a sphere; other heights give an ellipsoid. No intensity normalization, quantization, downsampling or approximate ball is used. This implements the generalized rolling-ball definition, not a claim of bitwise equivalence with Fiji's implementation/options.
+3. Clip negative values to zero, explicitly changing sums and fractions.
+4. Optionally smooth with XY Gaussian σ, reflected boundaries, truncation at four standard deviations. σ = 0 disables smoothing.
 
-Each channel and Z plane is independent. No Z filtering, channel mixing, resampling or intensity normalization enters quantitative measurements. XY pixel units can represent different physical widths when X and Y calibration differ. No super-resolution information is established by filtering.
+XY planes and channels are independent: no Z filtering or channel mixing. All analysis uses native spatial sampling, with float32 corrected intensities. At unequal X/Y spacing a circular pixel footprint spans unequal physical distances. Filtering does not establish super-resolution information.
 
-Choose a window wider than the structures to preserve. A local opening can remove broad biological signal along with background. Gaussian smoothing changes spatial correlations, peak widths and apparent overlap. Neither setting is inferred automatically from microscope metadata. Compare results on raw data and known controls, and report the chosen settings.
+## Choosing settings
 
-## Display and measurement
+Rolling ball assumes bright structures on a darker background. Spatial radius should accommodate the structures you want to retain; height controls how the curved kernel fits the native intensity landscape. A radius suitable for an 8-bit export does not establish a suitable height for a 16-bit acquisition. Both are recorded, and must be assessed against raw data and known controls. Large structures may be removed as background. Noise can distort the background estimate; smoothing also alters spatial correlations, widths and overlap. No universal scientifically validated setting is inferred from metadata.
 
-The source explorer, drawing surface and 3D renderer retain raw-image displays. The preparation panel shows raw on the left and processed on the right using the *same* per-channel raw-derived display ceiling (99.5th percentile of a stride-four sample, with maximum/one fallback). Thus the processed view is not independently brightened. Display clipping and thumbnailing do not enter measurements.
+Rolling-ball radius is limited to 1–100 XY pixels as a computational guard; square-opening radius remains 1–512. Full-resolution rolling-ball work scales with plane area and kernel area, then with channel and Z count. A local engineering timing on the M3 host, 2048 × 2048 uint16 plane, radius 20, default height, σ = 0, took **3.707 seconds** (single run, synthetic sparse bright square on constant background). This is not a general performance guarantee; complete stacks and larger radii take longer.
 
-Raw is the default measurement source. Users must explicitly select processed measurements after applying a nonidentity recipe. This choice applies to line profiles and ROI statistics. The latter use the full plane processing before masking an ROI, avoiding ROI-specific filter boundaries. Line traces retain floating values. Existing approximate three-pixel smoothing used solely for FWHM extraction is separately labelled in the chart.
+## Display, measurements and saved recipes
 
-Costes-style automatic thresholding remains available for raw integer images. It is rejected for processed measurements until a continuous-intensity version is separately validated; zero or manual thresholds are available. Filtering is not evidence of molecular binding, and current statistics still lack independent biological publication validation.
+The explorer, drawing surface and 3D renderer display raw images. The preparation comparison uses the same raw-derived channel display ceiling on both sides, without independent brightening. Display clipping/thumbnailing never enters measurements. Apply the recipe, then explicitly select processed intensities for line profiles, ROI statistics or cuboid measurements; raw remains the default.
 
-## Provenance
+Filters run on full XY planes before cropping an ROI or cuboid, avoiding artificial ROI-specific boundaries. Only corrected values **inside** the selected ROI/cuboid enter its summary, though their background estimates can depend on outside-XY neighbors. Cuboids use only their selected Z slices. Costes-style automatic thresholding is rejected for corrected floating intensities until separately validated; use zero/manual thresholds.
 
-The JSON inspection export records the source file SHA-256, import/calibration settings, applied recipe, selected measurement source, ROIs and available measurements. The recipe records processing algorithm version, settings, NumPy/SciPy versions, arithmetic type, operation order, boundary handling, footprint and Gaussian truncation, plus a SHA-256 of this canonical recipe. Saved ROI analyses contain their own measurement recipe, source SHA-256 and request. The original imported TIFF is never rewritten. A recipe is persisted through an analysis/export; there is no separate saved project session yet.
+Algorithm `xy-processing-2` records all settings, NumPy/SciPy versions, float32 arithmetic, operation order, boundaries, kernel definition and effective height, Gaussian truncation, and canonical recipe SHA-256. Saved reports retain source SHA-256 and exact request. Original TIFFs are never rewritten. Older projects without `rolling_height` remain valid; they retain their stored reports until explicitly recalculated. Recipe hashes change with the new algorithm version, including for existing methods.
 
-## Numerical verification
+## Verification and limits
 
-Tests cover exact fractional offset subtraction near the 16-bit range, clipping without unsigned wraparound, preservation of source bytes, recovery of a known isolated signal above a constant background, Gaussian symmetry/constant preservation/impulse flux, invalid inputs and authentication, float32 delivery, processed ROI sums, raw/processed isolation, saved recipe round trips and rejection of unsupported automatic thresholds. These establish engineering behavior, not biological validation. Model-based Noise2Void denoising, deconvolution and spatial significance inference remain separate future milestones.
+Tests compare rolling-ball results with an independent scalar spherical-surface calculation at image edges and in 8/16-bit ranges; check analytic impulse curvature, constant backgrounds, unchanged source bytes, finite nonnegative float32 output, invalid settings, authenticated plane/preview/recipe APIs, recipe hash changes, and full-plane-then-crop cuboid sums. Existing offset/opening/Gaussian tests remain. These establish numerical behavior, not biological or publication validation. Noise2Void, deconvolution and learned reconstruction remain future work.
 
-Primary implementation references: [SciPy grayscale opening](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.grey_opening.html) and [SciPy Gaussian filtering](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter.html).
-
-
-## Defaults and in-app guidance — 0.1.11
-
-The default remains **no subtraction, Gaussian σ = 0**. This preserves source values while users choose an appropriate method; it is not a claim that raw values are background-free. Constant offsets initially contain zero and have not been estimated from the image. The inactive radius field initially contains 20 XY pixels, an editable starting entry rather than a validated recommendation inferred from microscope metadata.
-
-The new **Background methods & defaults** pop-up explains each option, clipping, smoothing and measurement-source selection. True rolling-ball subtraction is not implemented in this build. The earlier implementation shipped a flat square opening, which must not be renamed rolling ball. [SciPy documents opening as erosion followed by dilation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.grey_opening.html). [ImageJ's rolling-ball guidance](https://imagej.net/plugins/rolling-ball-background-subtraction) relates radius to foreground structure size; it does not validate a universal 20-pixel square-opening setting. [scikit-image's rolling-ball example](https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_rolling_ball.html) also shows why intensity scale matters for a curved kernel. A future implementation requires its own kernel, boundary, performance and quantitative validation.
+References: [SciPy nonflat erosion and its definition](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.grey_erosion.html), [SciPy grey opening](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.grey_opening.html), [scikit-image rolling-ball definition and intensity-scale examples](https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_rolling_ball.html), [ImageJ radius guidance](https://imagej.net/plugins/rolling-ball-background-subtraction).

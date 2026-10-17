@@ -73,3 +73,18 @@ it('moves the cuboid from a section click and arrow key, then measures those exa
  expect(JSON.parse(call[1]!.body as string)).toMatchObject({x0:26,x1:89,y0:36,y1:99,z0:0,z1:7});
  fireEvent.keyDown(section,{key:'ArrowLeft'});expect(screen.queryByText('Export 3D report')).toBeNull();
 });
+it('resizes the cuboid in XY and Z, clears old results and measures the new inclusive bounds',async()=>{
+ vi.mocked(json).mockResolvedValue({voxel_count:168,region_volume_um3:1.68,channels:[],pairs:[],scope:'source cuboid'});
+ render(<OrthogonalWorkspace image={image} processing={rawProcessing}/>);
+ fireEvent.click(screen.getByText('Measure 3D cuboid'));await screen.findByText('Export 3D report');
+ fireEvent.change(screen.getByLabelText('Width X (voxels)'),{target:{value:'3'}});
+ fireEvent.change(screen.getByLabelText('Height Y (voxels)'),{target:{value:'2'}});
+ fireEvent.change(screen.getByLabelText('Depth Z (slices)'),{target:{value:'2'}});
+ expect(screen.queryByText('Export 3D report')).toBeNull();
+ fireEvent.click(screen.getByText('Measure 3D cuboid'));await screen.findByText('Export 3D report');
+ expect(JSON.parse(vi.mocked(json).mock.calls[vi.mocked(json).mock.calls.length-1][1]!.body as string)).toMatchObject({x0:2,x1:4,y0:2,y1:3,z0:1,z1:2});
+ expect(screen.getAllByText('0.300 µm extent')).toHaveLength(1);
+ fireEvent.change(screen.getByLabelText('Depth Z (slices)'),{target:{value:'4'}});
+ expect((screen.getByLabelText('Z start') as HTMLInputElement).value).toBe('0');
+ expect((screen.getByLabelText('Z end') as HTMLInputElement).value).toBe('3');
+});

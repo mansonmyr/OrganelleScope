@@ -1,6 +1,6 @@
 # Capability comparison and release-readiness criteria
 
-Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.11 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
+Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.12 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
 
 ## How to interpret the comparison
 
@@ -61,3 +61,5 @@ Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed 
 ## Independent benchmark protocol to implement next
 
 Use versioned synthetic fixtures and representative research images with identical channel pairs, ROI masks, source intensities, calibration and thresholds. Compare Pearson, Spearman where available, Manders numerators/denominators, threshold edge cases, undefined values and 3D voxel inclusion separately. Record exact tool/plugin versions and expected algorithm differences. Compare spatial tests only when the null models and sampling rules match; do not rank incompatible p-values. Add blinded controls and independent-experiment replication before drawing biological conclusions. No benchmark result is claimed in this document.
+
+Source 0.1.12 adds a full-resolution rolling-ball lower-envelope background filter (adjustable XY radius and native-intensity height), alongside square opening. Cuboid width, height and Z-depth are editable; measurements crop inclusive source XYZ bounds. This is feature availability, not a claim of identical Fiji pixels or biological validation.

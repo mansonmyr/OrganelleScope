@@ -21,3 +21,14 @@ export function initialCuboid(dimensions:Record<string,number>):Bounds{
  for(const axis of ['X','Y','Z'] as const){const a=axis.toLowerCase(),size=axis==='Z'?dimensions[axis]:Math.min(dimensions[axis],64);b[a+'0']=Math.floor((dimensions[axis]-size)/2);b[a+'1']=b[a+'0']+size-1;}
  return b as Bounds;
 }
+// Keep the geometric center where possible; shift the whole box at image edges.
+export function resizeCuboid(bounds:Bounds,sizes:Position,dimensions:Record<string,number>):Bounds{
+ const next={...bounds} as Record<string,number>;
+ for(const axis of ['X','Y','Z'] as const){
+  const a=axis.toLowerCase(),size=sizes[axis],start=next[a+'0'],end=next[a+'1'];
+  if(!Number.isInteger(size)||size<1||size>dimensions[axis]||!Number.isInteger(start)||!Number.isInteger(end)||start<0||end<start||end>=dimensions[axis])return bounds;
+  next[a+'0']=Math.max(0,Math.min(dimensions[axis]-size,Math.floor((start+end-(size-1))/2)));
+  next[a+'1']=next[a+'0']+size-1;
+ }
+ return next as Bounds;
+}

@@ -120,3 +120,36 @@ def test_cuboid_rgb_decoder_and_all_pair_values_match_independent_array_referenc
         assert out['pairs'][1]['pcc'] is None and out['pairs'][1]['m1']==0 and out['pairs'][1]['m2'] is None
         assert 'only zero' in out['pairs'][1]['unavailable_reasons']['pcc']
         assert any('RGB' in w for w in out['image_info']['warnings'])
+
+
+def test_cuboid_includes_each_selected_z_slice_and_excludes_outside_xyz(tmp_path):
+    from organelle_scope.processing import ProcessingConfig, process_plane
+    data=np.full((2,5,7,8),17,np.uint16)
+    # Selected cuboid has distinct signals at both included Z endpoints.
+    data[0,1,2:4,3:6]=np.arange(6).reshape(2,3)+100
+    data[0,2,2:4,3:6]=np.arange(6).reshape(2,3)+200
+    data[1]=data[0]*2
+    bounds={'x0':3,'x1':5,'y0':2,'y1':3,'z0':1,'z1':2}
+    h={'X-Session-Token':'test'}
+    with TestClient(create_app(tmp_path,'test')) as client:
+        def measure(array,extra=None):
+            buf=io.BytesIO();tifffile.imwrite(buf,array,ome=True,photometric='minisblack',metadata={'axes':'CZYX','PhysicalSizeX':.1,'PhysicalSizeY':.2,'PhysicalSizeZ':.5})
+            rec=client.post('/api/images',headers=h,files={'file':('zproof.tif',buf.getvalue())}).json()
+            result=client.post('/api/images/'+rec['id']+'/cuboid',headers=h,json={**bounds,**(extra or {})})
+            assert result.status_code==200,result.text
+            return result.json()
+        first=measure(data)
+        assert first['voxel_count']==12 and first['channels'][0]['sum']==1830
+        assert first['region_volume_um3']==pytest.approx(.12)
+        outside=np.full_like(data,65000);outside[:,1:3,2:4,3:6]=data[:,1:3,2:4,3:6]
+        second=measure(outside)
+        assert first['channels']==second['channels'] and first['pairs']==second['pairs']
+        inside=data.copy();inside[0,2,3,5]+=7
+        assert measure(inside)['channels'][0]['sum']==1837
+        one_slice=measure(data,{'z0':2,'z1':2})
+        assert one_slice['voxel_count']==6 and one_slice['channels'][0]['sum']==1215
+        recipe={'background':'rolling_ball','radius_px':2,'rolling_height':500}
+        processed=measure(data,{'processing':recipe})
+        expected=sum(process_plane(data[0,z],ProcessingConfig(**recipe),0)[2:4,3:6].sum(dtype=np.float64) for z in [1,2])
+        assert processed['channels'][0]['sum']==pytest.approx(expected)
+        assert processed['processing']['rolling_ball']['height_native_intensity']==500

@@ -79,3 +79,59 @@ def test_processing_api_records_recipe_and_preserves_raw_measurements(tmp_path):
         raw_result=client.post(url+'/analysis',headers=h,json=body).json()
         assert raw_result['results'][0]['channel_summary'][0]['sum']==500+13*100
         assert (tmp_path/record['id']/'source.tiff').read_bytes()==stream.getvalue()
+
+
+@pytest.mark.parametrize('dtype,height',[(np.uint8,None),(np.uint16,1500.)])
+def test_rolling_ball_matches_explicit_spherical_surface_reference(dtype,height):
+    # Independent scalar geometry calculation, including edges and >8-bit values.
+    import math
+    raw=np.random.default_rng(17).integers(0,200 if dtype==np.uint8 else 60000,(6,7),dtype=dtype)
+    original=raw.copy();radius=2;h=height if height is not None else radius
+    expected=np.empty(raw.shape,np.float64)
+    for y,x in np.ndindex(raw.shape):
+        candidates=[]
+        for yy,xx in np.ndindex(raw.shape):
+            d=(yy-y)**2+(xx-x)**2
+            if d<=radius**2:
+                candidates.append(float(raw[yy,xx])+h*(1-math.sqrt(1-d/radius**2)))
+        expected[y,x]=max(float(raw[y,x])-min(candidates),0)
+    result=process_plane(raw,ProcessingConfig(background='rolling_ball',radius_px=radius,rolling_height=height),0)
+    np.testing.assert_allclose(result,expected,atol=.005,rtol=1e-6)
+    np.testing.assert_array_equal(raw,original)
+    assert result.dtype==np.float32 and np.isfinite(result).all() and (result>=0).all()
+
+
+def test_rolling_ball_constant_background_and_curvature_are_not_square_opening():
+    radius=3
+    raw=np.full((11,11),1000,np.uint16);raw[5,5]=1500
+    ball=process_plane(raw,ProcessingConfig(background='rolling_ball',radius_px=radius),0)
+    expected_peak=500-radius*(1-np.sqrt(1-1/radius**2))
+    assert ball[5,5]==pytest.approx(expected_peak,abs=.0001)
+    assert np.count_nonzero(ball)==1
+    np.testing.assert_array_equal(process_plane(np.full((5,6),65535,np.uint16),ProcessingConfig(background='rolling_ball'),0),0)
+    opening=process_plane(raw,ProcessingConfig(background='opening',radius_px=radius),0)
+    assert opening[5,5]==500 and ball[5,5]!=opening[5,5]
+
+
+@pytest.mark.parametrize('settings',[{'radius_px':101},{'rolling_height':0},{'rolling_height':float('nan')},{'rolling_height':65536}])
+def test_rolling_ball_rejects_unsafe_or_invalid_kernel(settings):
+    with pytest.raises(ValidationError):ProcessingConfig(background='rolling_ball',**settings)
+
+
+def test_rolling_ball_plane_preview_and_recipe_api(tmp_path):
+    raw=np.full((2,9,9),1000,np.uint16);raw[:,4,4]=60000
+    stream=io.BytesIO();tifffile.imwrite(stream,raw,ome=True,photometric='minisblack',metadata={'axes':'CYX'})
+    h={'X-Session-Token':'test'}
+    recipe={'background':'rolling_ball','radius_px':2,'rolling_height':250}
+    with TestClient(create_app(tmp_path,'test')) as client:
+        record=client.post('/api/images',headers=h,files={'file':('ball.tif',stream.getvalue())}).json();url='/api/images/'+record['id']
+        response=client.post(url+'/processing/plane?channel=0',headers=h,json=recipe)
+        assert response.status_code==200,response.text
+        np.testing.assert_array_equal(np.frombuffer(response.content,'<f4').reshape(9,9),process_plane(raw[0],ProcessingConfig(**recipe),0))
+        assert client.post(url+'/processing/preview',headers=h,json=recipe).status_code==200
+        report=client.post(url+'/processing/recipe',headers=h,json=recipe).json()
+        assert report['rolling_ball']['height_native_intensity']==250
+        assert report['rolling_ball']['radius_xy_px']==2
+        changed=client.post(url+'/processing/recipe',headers=h,json={**recipe,'rolling_height':500}).json()
+        assert report['recipe_sha256']!=changed['recipe_sha256']
+        assert (tmp_path/record['id']/'source.tiff').read_bytes()==stream.getvalue()

@@ -29,3 +29,13 @@ describe('processing recipe workflow',()=>{
   expect((screen.getByText('Reset to raw') as HTMLButtonElement).disabled).toBe(true);
  });
 });
+it('exposes rolling-ball radius and native intensity height and validates the CPU limit',()=>{
+ const onChange=vi.fn();render(<ProcessingPanel imageId="test" z={0} labels={['A']} bitDepth={16} value={rawProcessing} disabled={false} onChange={onChange}/>);
+ fireEvent.change(screen.getByLabelText('Background method'),{target:{value:'rolling_ball'}});
+ fireEvent.change(screen.getByLabelText('Ball height (native intensity units)'),{target:{value:'1500'}});
+ fireEvent.change(screen.getByLabelText('Background radius (XY pixels)'),{target:{value:'30'}});
+ fireEvent.click(screen.getByText('Apply recipe'));
+ expect(onChange).toHaveBeenLastCalledWith({...rawProcessing,background:'rolling_ball',offsets:[0],radius_px:30,rolling_height:1500});
+ fireEvent.change(screen.getByLabelText('Background radius (XY pixels)'),{target:{value:'101'}});
+ expect((screen.getByText('Apply recipe') as HTMLButtonElement).disabled).toBe(true);
+});

@@ -10,3 +10,12 @@ it('moves within all axes, clamps to source edges and preserves inclusive voxel 
 it('starts near the specimen center instead of an unexplained corner and keeps full Z',()=>{
  const b=initialCuboid({X:370,Y:370,Z:36});expect(b).toEqual({x0:153,x1:216,y0:153,y1:216,z0:0,z1:35});expect(cuboidCenter(b)).toEqual({X:184,Y:184,Z:17});
 });
+it('resizes all axes about the center and preserves exact size near edges',async()=>{
+ const {resizeCuboid}=await import('../cuboidMovement');
+ const b={x0:2,x1:5,y0:3,y1:6,z0:1,z1:2},d={X:12,Y:14,Z:6};
+ expect(resizeCuboid(b,{X:2,Y:2,Z:1},d)).toEqual({x0:3,x1:4,y0:4,y1:5,z0:1,z1:1});
+ expect(resizeCuboid(b,{X:10,Y:12,Z:6},d)).toEqual({x0:0,x1:9,y0:0,y1:11,z0:0,z1:5});
+ expect(resizeCuboid(b,{X:13,Y:2,Z:1},d)).toBe(b);
+ expect(resizeCuboid(b,{X:2,Y:2,Z:0},d)).toBe(b);
+ expect(resizeCuboid(b,{X:2.5,Y:2,Z:1},d)).toBe(b);
+});
