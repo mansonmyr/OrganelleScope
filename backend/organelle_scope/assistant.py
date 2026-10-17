@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import time
+import unicodedata
 from datetime import datetime,timezone
 from threading import Lock
 from fastapi import Depends,HTTPException
@@ -42,6 +43,9 @@ def invalid_answer(answer,sources,identifiers=()):
  identifier_mentions=set(re.findall(r'\bhsa:[A-Za-z0-9_-]+',without_citations))
  if identifier_mentions-set(identifiers):return True
  for identifier in identifier_mentions:without_citations=without_citations.replace(identifier,'supplied_identifier')
+ # Normalize full-width digits and dash variants before checking quantities such as 20-pixel.
+ without_citations=unicodedata.normalize('NFKC',without_citations)
+ without_citations=re.sub(r'[-\u2010-\u2015\u2212]',' ',without_citations)
  # Keep model prose qualitative. Protein identifiers such as TP53 and geometry terms such as 3D are allowed.
  numbers=re.search(r'(?<![A-Za-z0-9])[-+]?\d+(?:\.\d+)?(?=$|[\s.,;%×]|[µμ]|nm\b|um\b|mm\b)',without_citations)
  ids=set(re.findall(r'\[([A-Za-z0-9][A-Za-z0-9_-]*)\]',answer))

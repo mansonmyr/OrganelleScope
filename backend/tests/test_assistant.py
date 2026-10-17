@@ -174,3 +174,15 @@ def test_candidate_model_does_not_change_selected_model_or_response_provenance(t
  assert calls[0]['chat_template_kwargs']['enable_thinking'] is True
  fake=Fake(response('No image is saved. [project]'));fake.manifest=LIQUID_MODEL
  assert run_agent(fake,RECORD,options(),None)['model']['sha256']==LIQUID_MODEL['sha256']
+
+
+@pytest.mark.parametrize('quantity',['20-pixel','20‑pixel','20–pixel','２０‑pixel'])
+def test_hyphenated_numeric_quantities_cannot_evade_qualitative_prose_guard(quantity):
+ from organelle_scope.assistant import invalid_answer
+ assert invalid_answer('An applied '+quantity+' filter establishes binding. [measurements]',{'measurements':{}})
+
+
+def test_quantity_normalization_keeps_protein_names_dimensions_and_exact_ids():
+ from organelle_scope.assistant import invalid_answer
+ assert not invalid_answer('TP53, 53BP1 and 3D measurements require review. [project]',{'project':{}})
+ assert not invalid_answer('hsa:7157 membership is not activation. [project]',{'project':{}},{'hsa:7157'})

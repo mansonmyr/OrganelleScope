@@ -240,3 +240,7 @@ Keep Gemma as the selected experimental model and remove Liquid's evaluation wei
 ## Cleanup and application checks
 
 After both owned evaluation processes stopped, the verified Liquid candidate weights were removed, reclaiming 5,155,564,768 bytes. Evaluation runtime logs were removed; the current Gemma weights/runtime, images, projects, measurements, conversations and evidence were preserved. The application model remains Gemma. All 88 backend tests passed for the comparison/profile support. No frontend implementation changed in this assessment.
+
+## Post-comparison numeric-format correction
+
+The paired evaluation corresponds to Git revision 25644e0, before this correction; no model prompt/guard was changed between the two runs. The subsequent application patch normalizes full-width digits and ASCII/Unicode dash variants before checking generated numeric quantities. Four hyphenated-unit regression cases are rejected while protein identifiers such as TP53/53BP1, 3D notation and exact supplied hsa:7157 remain permitted. Rechecking Liquid's previously accepted threshold answer now rejects it. All 93 backend tests pass after the fix. This closes that formatting gap; it does not verify semantic correctness, cover every spelled-out quantitative statement or repair the model's fabricated processing claim. The two complete eight-case model runs were not repeated after this targeted guard correction.
