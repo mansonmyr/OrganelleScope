@@ -160,3 +160,17 @@ def test_evidence_gene_identifiers_are_collected_from_actual_tool_records():
  model=Fake(response(name='read_evidence'),response('hsa:7157 membership is not measured activation. [evidence-1-1]'))
  result=run_agent(model,record,options(),None)
  assert 'hsa:7157' in result['answer']
+
+
+def test_candidate_model_does_not_change_selected_model_or_response_provenance(tmp_path,monkeypatch):
+ from organelle_scope.local_model import LocalModel,MODEL
+ from organelle_scope.model_candidates import LIQUID_MODEL
+ model=LocalModel(tmp_path,manifest=LIQUID_MODEL);calls=[]
+ monkeypatch.setattr(model,'status',lambda:{'ready':True})
+ monkeypatch.setattr(model,'_request',lambda path,body:calls.append(body))
+ model.completion([{'role':'user','content':'Test'}])
+ assert MODEL['name'].startswith('Gemma') and model.model.name==LIQUID_MODEL['filename']
+ assert calls[0]['temperature']==.2 and calls[0]['top_k']==80 and calls[0]['repeat_penalty']==1.05
+ assert calls[0]['chat_template_kwargs']['enable_thinking'] is True
+ fake=Fake(response('No image is saved. [project]'));fake.manifest=LIQUID_MODEL
+ assert run_agent(fake,RECORD,options(),None)['model']['sha256']==LIQUID_MODEL['sha256']

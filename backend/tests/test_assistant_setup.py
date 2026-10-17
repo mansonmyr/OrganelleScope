@@ -31,3 +31,12 @@ def test_modified_runtime_is_not_accepted_from_receipt(tmp_path,monkeypatch):
  monkeypatch.setattr(module,'download',download)
  with pytest.raises(ValueError,match='fresh verified archive'):module.main()
  assert len(calls)==2
+
+
+def test_candidate_download_is_explicit_and_does_not_replace_selected_manifest(tmp_path,monkeypatch):
+ module,binary=setup_module_for_test(tmp_path,monkeypatch);calls=[]
+ monkeypatch.setattr(module.sys,'argv',['setup-local-assistant.py','--candidate','liquid','--download'])
+ monkeypatch.setattr(module,'download',lambda url,*args:calls.append(url))
+ module.main()
+ assert len(calls)==1 and '/LiquidAI/LFM2.5-8B-A1B-GGUF/resolve/' in calls[0]
+ assert module.MODEL['name'].startswith('Gemma')

@@ -149,7 +149,7 @@ def run_agent(model,record,options,query_evidence):
     answer=structured['answer'].strip()+' '+ ' '.join('['+key+']' for key in dict.fromkeys(structured['citations']))
     if invalid_answer(answer,sources,identifiers):raise ValueError('The assistant returned an unverified reference, altered identifier or a generated quantitative claim. Its answer was withheld; try a narrower question.')
    if response['choices'][0].get('finish_reason')=='length':answer+='\n[Answer reached its length limit.]'
-   return {'answer':answer,'model':MODEL,'project_id':record['id'],'project_revision':record['revision'],
+   return {'answer':answer,'model':getattr(model,'manifest',MODEL),'project_id':record['id'],'project_revision':record['revision'],
       'created_utc':datetime.now(timezone.utc).isoformat(),'recorded_quantities':recorded_quantities(record),'sources':list(sources.values()),'audit':audit,'usage':usage,
       'elapsed_seconds':round(time.monotonic()-start,2),'status':'AI draft; verify against measurements and cited evidence.'}
   if call_count+len(calls)>4:raise ValueError('The assistant exceeded its four-tool limit. Ask a narrower question.')

@@ -6,6 +6,7 @@ import certifi
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'backend'))
 from organelle_scope.local_model import MODEL
+from organelle_scope.model_candidates import LIQUID_MODEL
 RUNTIMES={
  'Darwin-arm64':{'file':'llama-b11669-bin-macos-arm64.tar.gz','sha256':'dbed55493d72bc1ba2babc8770d669c2289b5bc4ee9fb2a4dfc158d45b7d13fd','bytes':12191582},
  'Windows-AMD64':{'file':'llama-b11669-bin-win-cpu-x64.zip','sha256':'37b3efcf962847ca869745fd4ccf7f5e7e8dacfeff9fa3523b4ca8cdc66d632b','bytes':19537886},
@@ -34,14 +35,16 @@ def download(url,path,size,digest):
  temp.replace(path)
 
 def main():
- parser=argparse.ArgumentParser(description='Install pinned llama.cpp and Gemma 4 12B for local development (about 6.99 GB download).')
+ parser=argparse.ArgumentParser(description='Install the pinned local runtime and selected model; --candidate liquid is for explicit comparison only.')
+ parser.add_argument('--candidate',choices=['selected','liquid'],default='selected',help='Comparison profile; does not change the application model. Selected model is the default.')
  parser.add_argument('--download',action='store_true',help='Explicitly download and verify the model/runtime.')
  args=parser.parse_args();key=platform.system()+'-'+platform.machine()
  if key not in RUNTIMES:parser.error('Supported setup: Apple Silicon macOS or native Windows x64. Windows ARM/emulation and other targets need separate qualification.')
- runtime=RUNTIMES[key];manifest={'model':MODEL,'runtime':runtime,'runtime_tag':'b11669'}
+ selected=MODEL if args.candidate=='selected' else LIQUID_MODEL
+ runtime=RUNTIMES[key];manifest={'model':selected,'runtime':runtime,'runtime_tag':'b11669'}
  print(json.dumps(manifest,indent=2))
  if not args.download:return
- download(MODEL['quantization']+'/resolve/'+MODEL['revision']+'/'+MODEL['filename'],ROOT/'.local-models'/MODEL['filename'],MODEL['bytes'],MODEL['sha256'])
+ download(selected['quantization']+'/resolve/'+selected['revision']+'/'+selected['filename'],ROOT/'.local-models'/selected['filename'],selected['bytes'],selected['sha256'])
  runtime_root=ROOT/'.local-runtime';destination=runtime_root/'llama-b11669';receipt=runtime_root/'installed-runtime.json'
  installed=False
  if receipt.is_file():
