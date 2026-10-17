@@ -3,7 +3,7 @@ import hashlib,json,os,re,urllib.request
 from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
-version=json.loads((root/'package.json').read_text())['version']
+version=json.loads((root/'package.json').read_text(encoding='utf-8'))['version']
 tag=os.environ['GITHUB_REF_NAME']
 if not re.fullmatch(r'v'+re.escape(version)+r'(?:-[A-Za-z0-9.]+)?',tag):
     raise SystemExit('Tag must match the application version.')
@@ -19,7 +19,7 @@ def request(url,method='GET',payload=None,content_type='application/json'):
 folder=root/'release';lines=[];assets=[]
 for label,suffix in [('macos-arm64','dmg'),('windows-x64','exe')]:
     asset=folder/f'OrganelleScope-{version}-{label}.{suffix}'
-    report=json.loads((folder/f'verification-{label}.json').read_text())
+    report=json.loads((folder/f'verification-{label}.json').read_text(encoding='utf-8'))
     if report['version']!=version or report['commit']!=os.environ['GITHUB_SHA']:raise SystemExit('Mixed source revisions in installer artifacts.')
     with asset.open('rb') as source:digest=hashlib.file_digest(source,'sha256').hexdigest()
     if report['sha256']!=digest or report['bytes']!=asset.stat().st_size:raise SystemExit('Installer verification checksum mismatch.')
@@ -30,7 +30,7 @@ for label,suffix in [('macos-arm64','dmg'),('windows-x64','exe')]:
 assets.append(folder/'SHA256SUMS.txt')
 installer_check=folder/'installer-check-macos-arm64.json'
 if installer_check.is_file():assets.append(installer_check)
-body=(root/'docs/RELEASE_NOTES.md').read_text()+'\n\nSee [MANUAL.md](https://github.com/'+repo+'/blob/'+tag+'/MANUAL.md) for installation, features, interpretation and references.\n'
+body=(root/'docs/RELEASE_NOTES.md').read_text(encoding='utf-8')+'\n\nSee [MANUAL.md](https://github.com/'+repo+'/blob/'+tag+'/MANUAL.md) for installation, features, interpretation and references.\n'
 # A failed upload intentionally leaves a draft. Do not silently replace a published asset.
 existing=request(base+'/releases?per_page=100')
 if any(item['tag_name']==tag for item in existing):raise SystemExit('A release with this tag already exists. Review it before retrying publication.')

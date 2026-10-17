@@ -2,7 +2,7 @@
 import hashlib,json,platform,subprocess,zipfile
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-version=json.loads((root/'package.json').read_text())['version']
+version=json.loads((root/'package.json').read_text(encoding='utf-8'))['version']
 label='macos-arm64' if platform.system()=='Darwin' else 'windows-x64'
 suffix='dmg' if platform.system()=='Darwin' else 'exe'
 release=root/'release';asset=release/f'OrganelleScope-{version}-{label}.{suffix}'

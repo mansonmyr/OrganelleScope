@@ -9,7 +9,7 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--dmg',type=Path)
 parser.add_argument('--output',type=Path,required=True)
 args=parser.parse_args()
-version=json.loads((root/'package.json').read_text())['version']
+version=json.loads((root/'package.json').read_text(encoding='utf-8'))['version']
 dmg=(args.dmg or root/'release'/f'OrganelleScope-{version}-macos-arm64.dmg').resolve()
 if sys.platform!='darwin' or not dmg.is_file():parser.error('Select an existing macOS disk image on a Mac.')
 

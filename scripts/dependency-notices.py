@@ -21,9 +21,9 @@ def collect_python():
     graph = ROOT / 'backend/build/organellescope-backend/PYZ-00.toc'
     if not graph.is_file():
         raise SystemExit('Freeze the backend before generating its dependency notices.')
-    modules = {row[0].split('.')[0] for row in ast.literal_eval(graph.read_text())[1]}
+    modules = {row[0].split('.')[0] for row in ast.literal_eval(graph.read_text(encoding='utf-8'))[1]}
     providers = md.packages_distributions()
-    pending = list(tomllib.loads((ROOT/'backend/pyproject.toml').read_text())['project']['dependencies'])
+    pending = list(tomllib.loads((ROOT/'backend/pyproject.toml').read_text(encoding='utf-8'))['project']['dependencies'])
     pending.extend(name for module in modules for name in providers.get(module, []))
     seen, inventory, sections = set(), [], []
     while pending:
@@ -61,7 +61,7 @@ def collect_python():
     return sorted(inventory, key=lambda d:d['name'].lower()), sections
 
 def collect_javascript():
-    packages = json.loads((ROOT/'frontend/package-lock.json').read_text())['packages']
+    packages = json.loads((ROOT/'frontend/package-lock.json').read_text(encoding='utf-8'))['packages']
     inventory, sections = [], []
     for relative, info in sorted(packages.items()):
         if not relative or info.get('dev') or info.get('link'):
@@ -70,7 +70,7 @@ def collect_javascript():
         if not folder.is_dir():
             if info.get('optional'): continue
             raise SystemExit(f'Install frontend dependencies before collecting notices: {relative}')
-        manifest = json.loads((folder/'package.json').read_text())
+        manifest = json.loads((folder/'package.json').read_text(encoding='utf-8'))
         name, version = manifest['name'], manifest['version']
         texts=[]
         for file in sorted(folder.iterdir()):
