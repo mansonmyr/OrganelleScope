@@ -19,7 +19,7 @@ function freePort() {
     server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(() => resolve(port)); });
   });
 }
-function ready(timeout = 45000) {
+function ready(timeout = 120000) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
     function poll() {
@@ -37,6 +37,10 @@ async function start() {
   const env = { ...process.env, ORGANELLESCOPE_SESSION_TOKEN: token };
   const args = ['--port', String(port), '--data-dir', path.join(app.getPath('userData'), 'images')];
   if (app.isPackaged) {
+    const bundledModel=path.join(process.resourcesPath,'local-ai','model','gemma-4-12b-it-qat-q4_0.gguf');
+    const bundledRuntime=path.join(process.resourcesPath,'local-ai','runtime',process.platform==='win32'?'llama-server.exe':'llama-server');
+    if(fs.existsSync(bundledModel))env.ORGANELLESCOPE_MODEL=bundledModel;
+    if(fs.existsSync(bundledRuntime))env.ORGANELLESCOPE_LLAMA_SERVER=bundledRuntime;
     backend = spawn(path.join(process.resourcesPath, 'backend', process.platform === 'win32' ? 'organellescope-backend.exe' : 'organellescope-backend'), args, { env, stdio: ['ignore','pipe','pipe'] });
   } else {
     const localPython = path.join(root, 'backend', '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
@@ -61,7 +65,7 @@ async function createWindow() {
   mainWindow.webContents.setWindowOpenHandler(({url}) => {
     try {
       const target=new URL(url);
-      const allowed=['string-db.org','www.string-db.org','version-12-5.string-db.org','www.kegg.jp','rest.kegg.jp','www.genome.jp'];
+      const allowed=['string-db.org','www.string-db.org','version-12-5.string-db.org','www.kegg.jp','rest.kegg.jp','www.genome.jp','openaccess.thecvf.com','careamics.github.io','scikit-image.org','docs.scipy.org','pmc.ncbi.nlm.nih.gov','www.cs.ubc.ca'];
       if(target.protocol==='https:' && !target.username && !target.password && !target.port && allowed.includes(target.hostname))void shell.openExternal(target.href);
     } catch { /* Reject malformed or unapproved external links. */ }
     return {action:'deny'};

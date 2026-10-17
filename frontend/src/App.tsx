@@ -5,15 +5,19 @@ import { SignalChart } from "./components/SignalChart";
 import type { LineRoi } from "./types";
 import { sampleTrace, buildChannelMetrics } from "./workers/analysisCore";
 import { CalibrationHelp } from "./CalibrationHelp";
+import {SegmentationPanel} from './SegmentationPanel';
+import {RestorationPanel} from './RestorationPanel';
 import { ProcessingPanel, rawProcessing, isProcessed, type ProcessingConfig } from "./ProcessingPanel";
 import { ValidationPanel } from "./ValidationPanel";
 import { OrthogonalWorkspace } from "./OrthogonalWorkspace";
 import { EvidencePanel } from "./EvidencePanel";
 import {ProjectStateProvider,type WorkspaceData} from './ProjectContext';
 import {AssistantPanel} from './AssistantPanel';
+import {sliceSnapshot,downloadSnapshot,type VolumeCapture} from './previewSnapshot';
 import { VolumeView } from "./VolumeView";
 
 import { RoiOverlay, type AreaROI, type DrawTool } from "./RoiOverlay";
+import {ExperimentPanel} from './ExperimentPanel';
 import {BatchPanel} from './BatchPanel';
 import {CircleSizeEditor} from "./CircleSizeEditor";
 import { StatisticsPanel, type AnalysisResult } from "./StatisticsPanel";
@@ -32,6 +36,7 @@ function download(value: unknown, name: string) {
 export default function App() {
   const [projectData,setProjectData]=useState<WorkspaceData>({});
   const [project,setProject]=useState<ProjectRecord|null>(null),[projects,setProjects]=useState<ProjectSummary[]>([]),[projectName,setProjectName]=useState('Untitled project'),[projectBusy,setProjectBusy]=useState(false),[generation,setGeneration]=useState(0),[projectMessage,setProjectMessage]=useState('');
+  const [recovery,setRecovery]=useState<ProjectRecord|null>(null),[recoveryMessage,setRecoveryMessage]=useState('');
   const skipSaved=useRef<string>();
   const [image, setImage] = useState<ImageRecord | null>(null);
   const [recent, setRecent] = useState<ImageRecord[]>([]);
@@ -48,6 +53,8 @@ export default function App() {
   const [roi, setRoi] = useState<LineRoi | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(false);
+  const snapshotStage=useRef<HTMLDivElement>(null),volumeCapture=useRef<(()=>Promise<VolumeCapture>)|null>(null);
+  const [snapshotBusy,setSnapshotBusy]=useState(false),[snapshotMessage,setSnapshotMessage]=useState(''),[snapshotDetails,setSnapshotDetails]=useState<Record<string,unknown>>(),[includeSnapshotRois,setIncludeSnapshotRois]=useState(true);
   const [drawingActions, setDrawingActions] = useState<HTMLDivElement | null>(null);
   const [tool, setTool] = useState<DrawTool>("line");
   const [areas, setAreas] = useState<AreaROI[]>([]);
@@ -66,7 +73,7 @@ export default function App() {
   function accept(record: ImageRecord, restoring=false) {
     skipSaved.current=restoring?record.id:undefined;
     setProject(null);setProjectName(record.info.filename.replace(/\.ome\.tiff?$|\.tiff?$/i,''));setProjectData({});setGeneration(g=>g+1);setProjectMessage('Image open. Saving a project is optional; save to retain this workspace.');
-    setWorkspace("images");setImage(record); setProcessing({...rawProcessing});setMeasurementSource("raw"); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
+    setSnapshotDetails(undefined);setSnapshotMessage('');setWorkspace("images");setImage(record); setProcessing({...rawProcessing});setMeasurementSource("raw"); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
     setSpacing(Object.fromEntries("XYZ".split("").map(a => [a, String(record.info.calibration[a].value_um ?? "")])));
     setRoi(null); setAreas([]); setAnalysis(null); setTarget(0); setProfile(null); setMode("slice"); setVolumeChannel(-1);
     setRecent(records => [record, ...records.filter(r => r.id !== record.id)].slice(0,20));
@@ -145,20 +152,28 @@ export default function App() {
   }, [image]);
 
   useEffect(()=>{json<ProjectSummary[]>('/api/projects').then(setProjects).catch(e=>setError(String(e)));},[]);
+  useEffect(()=>{json<ProjectRecord|null>('/api/recovery').then(v=>{if(v?.state?.core)setRecovery(v);}).catch(e=>setRecoveryMessage(String(e)));},[]);
+  const recoveryBody=JSON.stringify({name:projectName,image_id:image?.id??null,expected_image_info:image?.info??null,state:{core:{layout_version:2,z,workspace,mode,volumeChannel,roi,areas,analysis,thresholdMode,thresholds,target,processing,measurementSource,tool},workspaces:projectData}});
+  useEffect(()=>{if(!image||loadingSaved||projectBusy)return;const abort=new AbortController();const timer=setTimeout(()=>{json('/api/recovery',{signal:abort.signal,method:'POST',headers:{'Content-Type':'application/json'},body:recoveryBody}).then(()=>{if(!abort.signal.aborted)setRecoveryMessage('Recovery copy saved locally.');}).catch(e=>{if(!abort.signal.aborted)setRecoveryMessage('Recovery copy not saved: '+String(e));});},3000);return()=>{clearTimeout(timer);abort.abort();};},[recoveryBody,loadingSaved,projectBusy,image?.id]);
   function snapshot(){return {core:{layout_version:2,z,workspace,mode,volumeChannel,roi,areas,analysis,thresholdMode,thresholds,target,processing,measurementSource,tool},workspaces:projectData};}
   async function saveProject(asNew=false){
     setProjectBusy(true);setError('');
     try{const saved=await json<ProjectRecord>(`/api/projects${project&&!asNew?'/'+project.id:''}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:projectName,image_id:image?.id??null,expected_image_info:image?.info??null,state:snapshot(),expected_revision:project&&!asNew?project.revision:null})});setProject(saved);setProjectMessage(`Saved revision ${saved.revision} on this computer.`);setProjects(await json<ProjectSummary[]>('/api/projects'));return saved;}
     catch(e){setError(String(e));}finally{setProjectBusy(false);}
   }
+  function restoreWorkspace(saved:ProjectRecord){const c=saved.state.core??{};
+      if(saved.image){accept(saved.image,true);}else{setImage(null);}
+      setProject(saved.id==='recovery'?null:saved);setProjectName(saved.name);setProjectData(saved.state.workspaces??{});setGeneration(g=>g+1);
+      setZ(c.z??0);setWorkspace(c.layout_version!==2&&c.workspace==='images'&&c.mode==='volume'?'volume':c.workspace??'images');setMode(c.mode??'slice');setVolumeChannel(c.volumeChannel??-1);setRoi(c.roi??null);setAreas(c.areas??[]);setAnalysis(c.analysis??null);setThresholdMode(c.thresholdMode??'costes');setThresholds(c.thresholds??[0,0,0,0]);setTarget(c.target??0);setProcessing(c.processing??{...rawProcessing});setMeasurementSource(c.measurementSource??'raw');setTool(c.tool??'line');setLoadingSaved(false);setProjectMessage(`Opened revision ${saved.revision}; ${saved.image?'source SHA-256 verified.':'evidence-only project.'}`);
+  }
+  async function recoverWorkspace(){if((image||Object.keys(projectData).length)&&!window.confirm('Restore the recovery copy? Current unsaved changes will be replaced.'))return;setProjectBusy(true);try{const saved=await json<ProjectRecord>('/api/recovery');if(saved?.state)restoreWorkspace(saved);else setRecoveryMessage('No recovery copy exists.');}catch(e){setError(String(e));}finally{setProjectBusy(false);}}
+  async function exportArchive(){if(!project)return;setProjectBusy(true);try{const response=await request(`/api/projects/${project.id}/archive`);const href=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=href;a.download='OrganelleScope-project.zip';a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);}catch(e){setError(String(e));}finally{setProjectBusy(false);}}
+  async function importArchive(file?:File){if(!file)return;if(image&&!window.confirm('Open the portable project? Save current changes first.'))return;setProjectBusy(true);try{const form=new FormData();form.append('file',file);const saved=await json<ProjectRecord>('/api/project-archives/import',{method:'POST',body:form});restoreWorkspace(saved);setProjects(await json<ProjectSummary[]>('/api/projects'));}catch(e){setError(String(e));}finally{setProjectBusy(false);}}
   async function openProject(id:string){
     if(!id)return;
     if((image||Object.keys(projectData).length)&&!window.confirm('Open the saved project? Any changes since your last save will be discarded.'))return;
     setProjectBusy(true);setError('');
-    try{const saved=await json<ProjectRecord>('/api/projects/'+id);const c=saved.state.core??{};
-      if(saved.image){accept(saved.image,true);}else{setImage(null);}
-      setProject(saved);setProjectName(saved.name);setProjectData(saved.state.workspaces??{});setGeneration(g=>g+1);
-      setZ(c.z??0);setWorkspace(c.layout_version!==2&&c.workspace==='images'&&c.mode==='volume'?'volume':c.workspace??'images');setMode(c.mode??'slice');setVolumeChannel(c.volumeChannel??-1);setRoi(c.roi??null);setAreas(c.areas??[]);setAnalysis(c.analysis??null);setThresholdMode(c.thresholdMode??'costes');setThresholds(c.thresholds??[0,0,0,0]);setTarget(c.target??0);setProcessing(c.processing??{...rawProcessing});setMeasurementSource(c.measurementSource??'raw');setTool(c.tool??'line');setLoadingSaved(false);setProjectMessage(`Opened revision ${saved.revision}; ${saved.image?'source SHA-256 verified.':'evidence-only project.'}`);
+    try{const saved=await json<ProjectRecord>('/api/projects/'+id);restoreWorkspace(saved);
     }catch(e){setError(String(e));}finally{setProjectBusy(false);}
   }
   async function exportInspection() {
@@ -168,6 +183,17 @@ export default function App() {
       download({...image,selected_z:z,roi,profile,profile_source:measurementSource,processing_recipe:recipe,measurement_source:measurementSource,area_rois:areas,analysis},"OrganelleScope-inspection.json");
     } catch(e){setError(String(e));}finally{setBusy(false);}
   }
+  async function capturePreview(){
+    if(!image||!available)return;
+    setSnapshotBusy(true);setSnapshotMessage('');
+    const capturedImage=image,capturedMode=mode,capturedZ=z;
+    try{
+      const capture=capturedMode==='volume'?await (volumeCapture.current?volumeCapture.current():Promise.reject(new Error('Wait for the 3D preview to finish loading.'))):{dataUrl:await sliceSnapshot(snapshotStage.current!,includeSnapshotRois),details:{z_index:capturedZ,includes_overlays:includeSnapshotRois,contrast:'Per-channel raw preview intensity scaling; display PNG, not native TIFF intensities',rois:includeSnapshotRois?areas.filter(r=>r.z===capturedZ):[],line:includeSnapshotRois?roi:null}};
+      const details={schema:'organelle-preview-snapshot-1',created_utc:new Date().toISOString(),source_sha256:capturedImage.sha256,image_id:capturedImage.id,image_info:capturedImage.info,preview_mode:capturedMode,measurement_source:'raw',display_only:true,scope:'Display snapshot, not native quantitative image data. XY contrast is per-channel; 3D is downsampled. See recorded display settings.',...capture.details};
+      downloadSnapshot(capture.dataUrl,`OrganelleScope-${capturedImage.info.filename.replace(/\.tiff?$/i,'')}-${capturedMode==='slice'?`Z${capturedZ+1}`:'3D'}-${Date.now()}.png`);
+      setSnapshotDetails(details);setSnapshotMessage('PNG captured. Export snapshot details to retain calibration, source identity and display settings.');
+    }catch(e){setSnapshotMessage(String(e));}finally{setSnapshotBusy(false);}
+  }
   async function calculate() {
     if(!image)return;setBusy(true);setError("");setAnalysis(null);
     try { setAnalysis(await json<AnalysisResult>(`/api/images/${image.id}/analysis`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({processing:selectedProcessing,rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})})); }
@@ -176,6 +202,7 @@ export default function App() {
   return <div className="shell">
     <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
       <span className="badge">Development build · ROI statistics</span><span className="local"><i /> Local processing</span></header>
+    <div className="project-bar"><button disabled={!project||projectBusy} onClick={exportArchive}>Export saved project archive</button><label>Import portable project<input disabled={projectBusy} type="file" accept=".zip" onChange={e=>{void importArchive(e.target.files?.[0]);e.target.value='';}}/></label>{recovery&&<button disabled={projectBusy} onClick={recoverWorkspace}>Restore recovery copy</button>}<span className="hint">{recoveryMessage}</span></div>
     <div className="project-bar" aria-label="Project controls"><label>Project name<input aria-label="Project name" value={projectName} maxLength={120} onChange={e=>setProjectName(e.target.value)}/></label><button disabled={projectBusy||busy||loadingSaved||!projectName.trim()} onClick={()=>saveProject()}>{projectBusy?'Working…':'Save project'}</button><button className="secondary" disabled={projectBusy||busy||loadingSaved} onClick={()=>saveProject(true)}>Save as new</button><label>Open saved project<select aria-label="Open saved project" disabled={projectBusy||busy} value={project?.id??''} onChange={e=>openProject(e.target.value)}><option value="">Select project</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name} · r{p.revision}</option>)}</select></label><span className="hint" role="status">{project&&JSON.stringify(snapshot())!==JSON.stringify(project.state)?`Unsaved changes · assistant reads saved revision ${project.revision}.`:projectMessage||'Projects keep the imported image and analysis on this computer. Save before switching images.'}</span></div>
     <div className="workspace"><aside>
       <p className="eyebrow">WORKSPACE / 01</p><h2>Your image, in context.</h2><p className="muted">Inspect the source. Confirm the scale. Explore the volume.</p>
@@ -201,10 +228,11 @@ export default function App() {
       {info?.warnings.length ? <details className="review" open><summary>Import notes · {info.warnings.length}</summary>{info.warnings.map((w,i)=><p key={i}>{w}</p>)}</details> : null}
       <ProjectStateProvider key={generation} data={projectData} setData={setProjectData}>
       <section className="viewer panel" aria-label="Image preview"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
-      {!info ? <div className="empty"><img className="empty-logo" src="./branding/brand-logo.jpg" alt="OrganelleScope — Cellular Exploration & Analysis"/><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel}/> : <>
+      <div className="snapshot-controls"><button disabled={!available||snapshotBusy} onClick={capturePreview}>{snapshotBusy?'Capturing…':'Capture PNG'}</button>{mode==='slice'&&<label className="check-label"><input type="checkbox" checked={includeSnapshotRois} onChange={e=>setIncludeSnapshotRois(e.target.checked)}/> Include visible ROIs</label>}<button disabled={!snapshotDetails} onClick={()=>download(snapshotDetails,'OrganelleScope-snapshot-details.json')}>Export snapshot details</button><span className="hint" role="status">{snapshotMessage||'Capture the displayed view; native pixels remain in the TIFF.'}</span></div>
+      {!info ? <div className="empty"><img className="empty-logo" src="./branding/brand-logo.jpg" alt="OrganelleScope — Cellular Exploration & Analysis"/><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel} captureRef={volumeCapture} maskMesh={projectData['Segmentation.mesh'] as Record<string,any>|undefined}/> : <>
         <div className="slice-toolbar"><label>Z plane <strong>{z+1} / {info.dimensions.Z}</strong><input aria-label="Z plane" type="range" min={0} max={info.dimensions.Z-1} value={z} onChange={e=>{setZ(Number(e.target.value));setRoi(null);}}/></label><span>{info.calibration.Z.value_um != null ? `${(z*info.calibration.Z.value_um).toFixed(3)} µm from first plane` : "Z spacing unknown"}</span></div>
 
-        <div className="image-stage" style={{aspectRatio:`${info.dimensions.X}/${info.dimensions.Y}`}}>{preview ? <img src={preview} alt={`Composite Z plane ${z+1}`}/> : <p>Loading source plane…</p>}
+        <div className="image-stage" ref={snapshotStage} style={{aspectRatio:`${info.dimensions.X}/${info.dimensions.Y}`}}>{preview ? <img src={preview} alt={`Composite Z plane ${z+1}`}/> : <p>Loading source plane…</p>}
           <RoiOverlay spacing={{x:info.calibration.X.value_um,y:info.calibration.Y.value_um}} controlsContainer={drawingActions} disabled={busy || loadingSaved} key={`${image!.id}-${z}-${tool}`} width={info.dimensions.X} height={info.dimensions.Y} z={z} tool={tool} rois={areas} line={roi} onLine={setRoi} onAdd={r=>{if(busy)return;setAreas(a=>[...a,r]);setAnalysis(null);}}/>
 
         </div>
@@ -212,8 +240,8 @@ export default function App() {
         <p className="hint viewer-note">ROIs belong to their selected Z plane. Display contrast is adjusted per channel; select raw or processed intensities in ROI measurements below.</p>
       </>}</section>
       <nav className="workspace-nav" aria-label="Workspaces"><button aria-pressed={workspace==='images'} onClick={()=>setWorkspace('images')}>Image & ROI</button><button disabled={!available||!info||info.dimensions.Z<2} aria-pressed={workspace==='volume'} onClick={()=>setWorkspace('volume')}>3D workspace</button><button disabled={!available} aria-pressed={workspace==='validation'} onClick={()=>setWorkspace('validation')}>Validation</button><button aria-pressed={workspace==='evidence'} onClick={()=>setWorkspace('evidence')}>Molecular evidence</button><button aria-pressed={workspace==='batch'} onClick={()=>setWorkspace('batch')}>Batch analysis</button><button aria-pressed={workspace==='assistant'} onClick={()=>setWorkspace('assistant')}>Local assistant</button></nav>
-      <div hidden={workspace!=='volume'}>{image && available && info!.dimensions.Z>=2 && <OrthogonalWorkspace key={`orthogonal-${image.id}`} image={image} processing={processing}/>}</div>
-      <div hidden={workspace!=='images'}>{image && available && <ProcessingPanel key={`processing-${image.id}`} imageId={image.id} z={z} labels={info!.channel_labels} bitDepth={info!.bit_depth} value={processing} disabled={busy||loadingSaved} onChange={config=>{setProcessing(config);setAnalysis(null);if(!isProcessed(config))setMeasurementSource("raw");}}/>}
+      <div hidden={workspace!=='volume'}>{image && available && info!.dimensions.Z>=2 && <OrthogonalWorkspace key={`orthogonal-${image.id}`} image={image} processing={processing}/>} {image && available && <SegmentationPanel key={`segment-${image.id}`} image={image} processing={processing} rois={areas}/>}</div>
+      <div hidden={workspace!=='images'}>{image && available && <RestorationPanel key={`restoration-${image.id}`} image={image} onActivate={id=>{setProcessing(c=>({...c,restoration_result_id:id}));setMeasurementSource('processed');if(thresholdMode==='costes')setThresholdMode('zero');setAnalysis(null);}}/>}{image && available && <ProcessingPanel key={`processing-${image.id}`} imageId={image.id} z={z} labels={info!.channel_labels} bitDepth={info!.bit_depth} value={processing} disabled={busy||loadingSaved} onChange={config=>{setProcessing(config);setAnalysis(null);if(!isProcessed(config))setMeasurementSource("raw");}}/>}
       {image && available && <section className="panel statistics"><p className="eyebrow">AREA ANALYSIS</p><h2>ROI measurements</h2><p className="hint">Draw circular or polygonal ROIs above. Each region is measured separately on its own plane.</p>
         <label>Measurement source<select aria-label="Measurement source" disabled={busy||loadingSaved} value={measurementSource} onChange={e=>{const source=e.target.value as 'raw'|'processed';setMeasurementSource(source);setAnalysis(null);if(source==='processed'&&thresholdMode==='costes')setThresholdMode('manual');}}><option value="raw">Raw source intensities</option><option value="processed" disabled={!isProcessed(processing)}>Processed intensities (applied recipe)</option></select></label><p className="hint">This selection applies to line profiles and ROI statistics. Raw images remain visible in the image explorer and 3D preview.</p>
         <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} {r.kind==='circle'&&<CircleSizeEditor roi={r} sx={info!.calibration.X.value_um} sy={info!.calibration.Y.value_um} width={info!.dimensions.X} height={info!.dimensions.Y} disabled={busy||loadingSaved} onChange={updated=>{setAreas(a=>a.map(x=>x.id===r.id?updated:x));setAnalysis(null);}}/>}<button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>
@@ -228,7 +256,7 @@ export default function App() {
       <div hidden={workspace!=='evidence'}><EvidencePanel/></div>
       <div hidden={workspace!=='assistant'}><AssistantPanel projectId={project?.id??null} context={{image_id:image?.id??null,expected_image_info:image?.info??null,state:{core:snapshot().core,workspaces:Object.fromEntries(Object.entries(projectData).filter(([key])=>!key.startsWith('AssistantPanel.')))}}}/></div>
       </ProjectStateProvider>
-      <div hidden={workspace!=='batch'}><BatchPanel/></div>
+      <div hidden={workspace!=='batch'}><BatchPanel/><ProjectStateProvider data={projectData} setData={setProjectData}><ExperimentPanel/></ProjectStateProvider></div>
       <footer><span>Research development · Local projects and experimental assistant; biological validation pending.</span><span>Source → calibration → measurement</span></footer>
     </main></div></div>;
 }

@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { request } from './api';
+import {ProcessingDiagnostics} from './ProcessingDiagnostics';
 import {ProcessingHelp} from './ProcessingHelp';
-export interface ProcessingConfig { background:'none'|'constant'|'opening'|'rolling_ball';rolling_height?:number|null;offsets:number[];radius_px:number;sigma_px:number }
+export interface ProcessingConfig { background:'none'|'constant'|'opening'|'rolling_ball';restoration_result_id?:string|null;rolling_height?:number|null;offsets:number[];radius_px:number;sigma_px:number }
 export const rawProcessing:ProcessingConfig={background:'none',offsets:[],radius_px:20,sigma_px:0};
 type ProcessingDraft=Omit<ProcessingConfig,'radius_px'|'sigma_px'|'rolling_height'|'offsets'> & {radius_px:string;sigma_px:string;rolling_height?:string|null;offsets:string[]};
 function editing(config:ProcessingConfig):ProcessingDraft{return {...config,radius_px:String(config.radius_px),sigma_px:String(config.sigma_px),offsets:config.offsets.map(String),rolling_height:config.rolling_height==null?config.rolling_height:String(config.rolling_height)};}
-export const isProcessed=(config:ProcessingConfig)=>config.background!=='none'||config.sigma_px>0;
+export const isProcessed=(config:ProcessingConfig)=>!!config.restoration_result_id||config.background!=='none'||config.sigma_px>0;
 export function ProcessingPanel({imageId,z,labels,bitDepth,value,onChange,disabled}:{imageId:string;z:number;labels:string[];bitDepth:number;value:ProcessingConfig;onChange:(config:ProcessingConfig)=>void;disabled:boolean}) {
+ const [view,setView]=useState<'comparison'|'background'|'residual'>('comparison');
  const [draft,setDraft]=useState(()=>editing(value)),[preview,setPreview]=useState<string>(),[error,setError]=useState(''),[working,setWorking]=useState(false);
  useEffect(()=>setDraft(editing(value)),[value]);
  useEffect(()=>{setPreview(undefined);setError('');setWorking(true);const abort=new AbortController();let href:string|undefined;
-  const timer=setTimeout(()=>request(`/api/images/${imageId}/processing/preview?z=${z}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value),signal:abort.signal}).then(r=>r.blob()).then(blob=>{if(!abort.signal.aborted){href=URL.createObjectURL(blob);setPreview(href);}}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setWorking(false);}),200);
+  const timer=setTimeout(()=>request(`/api/images/${imageId}/processing/preview?z=${z}${view==='comparison'?'':`&view=${view}`}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value),signal:abort.signal}).then(r=>r.blob()).then(blob=>{if(!abort.signal.aborted){href=URL.createObjectURL(blob);setPreview(href);}}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setWorking(false);}),200);
   return()=>{abort.abort();clearTimeout(timer);if(href)URL.revokeObjectURL(href);};
- },[imageId,z,value]);
+ },[imageId,z,value,view]);
  const radiusNeeded=draft.background==='opening'||draft.background==='rolling_ball';
  const height=draft.rolling_height??draft.radius_px;
  const numeric=(text:string,min:number,max:number)=>text.trim()!==''&&Number.isFinite(Number(text))&&Number(text)>=min&&Number(text)<=max;
@@ -20,6 +22,7 @@ export function ProcessingPanel({imageId,z,labels,bitDepth,value,onChange,disabl
  const recipe:ProcessingConfig={...draft,radius_px:radiusNeeded?Number(draft.radius_px):(numeric(draft.radius_px,1,512)?Number(draft.radius_px):value.radius_px),sigma_px:Number(draft.sigma_px),offsets:draft.background==='constant'?draft.offsets.map(Number):draft.offsets.map(n=>numeric(n,0,2**bitDepth-1)?Number(n):0),rolling_height:draft.rolling_height==null?draft.rolling_height:draft.background==='rolling_ball'?Number(height):(numeric(draft.rolling_height,Number.MIN_VALUE,65535)?Number(draft.rolling_height):null)};
 
  return <section className="panel statistics processing"><p className="eyebrow">IMAGE PREPARATION</p><h2>Background correction & smoothing</h2><ProcessingHelp/><p className="hint">Each channel and XY plane is processed independently. Raw TIFF pixels stay unchanged. The image explorer and 3D view show the raw image; the comparison below shows the applied recipe.</p>
+ {value.restoration_result_id&&<p className="hint">Restoration result active: {value.restoration_result_id}. Correction below follows denoising. Reset to raw removes it.</p>}
  <div className="roi-tools"><label>Background method<select disabled={disabled} value={draft.background} onChange={e=>setDraft({...draft,background:e.target.value as ProcessingConfig['background'],offsets:labels.map((_,i)=>draft.offsets[i]??'0')})}><option value="none">No subtraction</option><option value="constant">Constant offset per channel</option><option value="opening">Local background (square opening)</option><option value="rolling_ball">Rolling-ball background</option></select></label>
  {(draft.background==='opening'||draft.background==='rolling_ball')&&<label>Background radius (XY pixels)<input disabled={disabled} type="number" min="1" max={draft.background==='rolling_ball'?100:512} step="1" value={draft.radius_px} onChange={e=>setDraft({...draft,radius_px:e.target.value})}/></label>}
  {draft.background==='rolling_ball'&&<label>Ball height (native intensity units)<input disabled={disabled} type="number" min="0.000001" max="65535" step="any" value={draft.rolling_height??draft.radius_px} onChange={e=>setDraft({...draft,rolling_height:e.target.value})}/></label>}
@@ -30,6 +33,7 @@ export function ProcessingPanel({imageId,z,labels,bitDepth,value,onChange,disabl
  {!valid&&<p className="hint">Enter all required values within the allowed ranges before applying. An empty field is not treated as zero.</p>}
  <div className="processing-actions"><button disabled={disabled||!valid} onClick={()=>{if(valid)onChange(recipe);}}>Apply recipe</button><button disabled={disabled} onClick={()=>onChange({...rawProcessing})}>Reset to raw</button></div>
  {JSON.stringify(draft)!==JSON.stringify(editing(value))&&<p className="hint">Settings changed. Apply the recipe to update the comparison and measurement option.</p>}
- <div className="comparison-labels"><strong>Raw</strong><strong>Processed</strong></div>{working&&<p role="status">Preparing comparison…</p>}{error&&<p role="alert">{error}</p>}{preview&&<img className="processing-comparison" src={preview} alt="Raw image on the left and processed image on the right with identical channel contrast"/>}
- <p className="hint">Both panels use the same raw-derived channel contrast. Results retain float32 intensities without conversion back to 8/16-bit.</p></section>;
+ <label>Processing preview<select aria-label="Processing preview" value={view} onChange={e=>setView(e.target.value as typeof view)}><option value="comparison">Raw and processed</option><option value="background">Estimated background</option><option value="residual">Absolute residual (raw − processed)</option></select></label>
+ {view==='comparison'?<div className="comparison-labels"><strong>Raw</strong><strong>Processed</strong></div>:<p className="hint">{view==='background'?'Estimated background uses the raw-derived channel contrast.':'Residual magnitude is grayscale, averaged across channels after dividing by their raw display ceilings. Dark means little change; this display is not an independent noise estimate.'}</p>}{working&&<p role="status">Preparing comparison…</p>}{error&&<p role="alert">{error}</p>}{preview&&<img className="processing-comparison" src={preview} alt={view==='comparison'?'Raw image on the left and processed image on the right with identical channel contrast':view==='background'?'Estimated background image':'Absolute raw minus processed residual image'}/>}
+ <p className="hint">Comparison and background views use the same raw-derived channel contrast. Results retain float32 intensities without conversion back to 8/16-bit.</p><ProcessingDiagnostics imageId={imageId} z={z} config={value}/></section>;
 }

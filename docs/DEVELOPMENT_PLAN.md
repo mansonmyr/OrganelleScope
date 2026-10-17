@@ -15,7 +15,7 @@ Working name: OrganelleScope. Academic research use. Repository visibility chang
 
 ## Milestones
 
-1. **Import and viewing foundation (in progress):** provenance, metadata conflicts, axes, native intensities, XY profiles, calibrated volume preview, source reconciliation, automated checks.
+1. **Import and viewing foundation:** provenance, metadata conflicts, axes, native intensities, XY profiles, calibrated volume preview, source reconciliation, automated checks.
 2. **Measurement engine:** explicit Pearson/Spearman/Manders definitions and threshold outcomes; 2D/3D ROIs; spatially appropriate nulls; source/processed comparison. No mock phenotype classifier or uncalibrated probability of binding.
 3. **Preprocessing:** validated background estimators, faithful N2V/CAREamics loading and normalization, residuals, PSF-based deconvolution, full processing records. Do not port the profiler's mean-filter subtraction under a rolling-ball label.
 4. **Organelle workflows:** inspectable/editable segmentation with compartment-specific measurements, calibrated surfaces/distances, radial enrichment and multi-ROI projects. Multi-channel rendering, orthogonal linked slices and quality overlays.
@@ -57,3 +57,17 @@ The selected evaluation candidate is now the official Ministral 3 8B Instruct Q4
 ## Gemma evaluation update (0.1.9 source)
 
 Gemma 4 12B Instruct official QAT Q4_0 is the selected replacement evaluation candidate. It uses the same owned local runtime and read-only tool boundaries. The evaluation also expands answer budgets and preserves critical threshold/background context, so observed differences must not be attributed solely to model weights. Current results belong in ASSISTANT_EVALUATION.md; no replacement installer is published by this source milestone.
+
+## Active roadmap status — source 0.2.0
+
+Implemented in this development run: actual CAREamics training/tiled inference and safe numeric model bundles; residual/background and quantitative processing checks; PSF-based 2D/3D Richardson–Lucy; preview PNG/camera/calibration snapshots; inspectable/editable threshold masks, calibrated surfaces/object measurements, conditional proximity and radial enrichment; cell/experiment aggregation, paired/independent permutation tests, hierarchical bootstrap and BH correction; optional Gaussian MLE and visible-prior Bayesian uncertainty with sensitivity checks; portable project archives (including active restoration artifacts), latest-workspace recovery autosave; restoration build variants, frozen-service smoke checks, dependency notices and installer checksums.
+
+Completed independent implementation benchmark: 12 direct installed Coloc_2 cases for Pearson/Spearman/zero-threshold Manders. Held-out synthetic N2V and Gaussian-posterior simulations are retained with unfavorable results as well as successes. See RESTORATION_AND_INFERENCE.md. These tests do not substitute for biological validation.
+
+Still open for the comprehensive public release: representative user control images and experiment labels, held-out acquisition/domain-shift validation, realistic bootstrap coverage and model mismatch checks, compartment-specific classifiers/null models beyond threshold masks, native Windows/large-image installation stress tests, visual interaction testing, distributable full-offline installer qualification, signing when credentials are available and marketing/download launch. The current local assistant remains a bounded read-only interpreter; autonomous modification of measurements and automatic LLM ROI drawing are not introduced.
+
+A browser access-policy rejection prevented live UI inspection in this run. Automated component/build checks and numerical endpoint checks proceed, but visual QA is explicitly outstanding. The user has been asked for local validation-image paths while independent implementation continues.
+
+## Biological validation deferred by user — 17 October 2026
+
+The user could not locate the original control images and explicitly authorized continuing without biological validation. Continue numerical, synthetic and packaging checks; keep biological validation marked deferred and do not imply publication certification. No further control-image request is required to continue development.

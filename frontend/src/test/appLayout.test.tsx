@@ -5,10 +5,12 @@ import App from '../App';
 import {json,request} from '../api';
 vi.mock('../api',()=>({json:vi.fn(),request:vi.fn()}));
 vi.mock('../VolumeView',()=>({VolumeView:()=>{const [rotation,setRotation]=useState(0);return <button onClick={()=>setRotation(r=>r+1)}>Test volume rotation {rotation}</button>;}}));
+vi.mock('../RestorationPanel',()=>({RestorationPanel:()=> <p>Test denoising workspace</p>}));
 vi.mock('../OrthogonalWorkspace',()=>({OrthogonalWorkspace:()=> <p>Test cuboid workspace</p>}));
 vi.mock('../ValidationPanel',()=>({ValidationPanel:()=> <p>Test validation workspace</p>}));
 vi.mock('../EvidencePanel',()=>({EvidencePanel:()=> <p>Test molecular workspace</p>}));
 vi.mock('../AssistantPanel',()=>({AssistantPanel:()=> <p>Test assistant workspace</p>}));
+vi.mock('../ExperimentPanel',()=>({ExperimentPanel:()=> <p>Test experiment workspace</p>}));
 vi.mock('../BatchPanel',()=>({BatchPanel:()=> <p>Test batch workspace</p>}));
 const image={id:'test',info:{filename:'stack.tif',dimensions:{X:7,Y:6,Z:4,C:2,T:1},shape:[2,4,6,7],channel_labels:['A','B'],calibration:{X:{value_um:.1,candidates:{}},Y:{value_um:.2,candidates:{}},Z:{value_um:.5,candidates:{}}},warnings:[],axes:'CZYX',source_axes:'CZYX',series_index:0,series_count:1,decoded_bytes:672,bit_depth:16,dtype:'uint16',needs_axis_confirmation:false},options:{}};
 beforeEach(()=>{

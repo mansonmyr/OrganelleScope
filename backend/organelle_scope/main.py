@@ -9,6 +9,7 @@ import secrets
 import shutil
 from pathlib import Path
 from threading import Lock
+from typing import Literal
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -19,7 +20,7 @@ from PIL import Image
 from pydantic import BaseModel, Field
 
 from organelle_scope.roi_analysis import AnalysisRequest
-from organelle_scope.processing import ProcessingConfig, process_plane, provenance
+from organelle_scope.processing import ProcessingConfig, process_plane, provenance, estimate_background, processing_diagnostics, prepared_plane
 from organelle_scope import __version__
 from organelle_scope.image_io import ImageError, ImageInfo, inspect_tiff, read_plane
 
@@ -206,40 +207,55 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             config.validate_channels(info.dimensions["C"], info.bit_depth)
         except ImageError as exc:
             raise HTTPException(422, str(exc)) from exc
-        return {"source_sha256": record["sha256"], "image_info": record["info"], **provenance(config)}
+        return {"source_sha256": record["sha256"], "image_info": record["info"], **provenance(config,data_dir)}
 
     @app.post("/api/images/{image_id}/processing/plane", dependencies=[Depends(authorized)])
     def processed_plane(image_id: str, config: ProcessingConfig, z: int = 0, channel: int = 0) -> Response:
         folder, _, info = stored(image_id)
         try:
             config.validate_channels(info.dimensions["C"], info.bit_depth)
-            data = process_plane(read_plane(folder / "source.tiff", info, channel, z), config, channel)
+            data = process_plane(read_plane(folder / "source.tiff", info, channel, z), config, channel, data_dir,z)
         except (ImageError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from exc
         return Response(np.ascontiguousarray(data, dtype="<f4").tobytes(), media_type="application/octet-stream")
 
     @app.post("/api/images/{image_id}/processing/preview", dependencies=[Depends(authorized)])
-    def processing_preview(image_id: str, config: ProcessingConfig, z: int = 0) -> Response:
+    def processing_preview(image_id: str, config: ProcessingConfig, z: int = 0, view: Literal['comparison','background','residual'] = 'comparison') -> Response:
         try:
             info, channels = processing_channels(image_id, z, config)
             colors = np.array([[1, .12, .25], [.1, 1, .65], [.2, .45, 1], [.8, .8, .8]])
             raw = np.zeros((info.dimensions["Y"], info.dimensions["X"], 3), np.float32)
             corrected = np.zeros_like(raw)
+            auxiliary = np.zeros_like(raw)
             for c, source in enumerate(channels):
                 # Identical raw-derived contrast in both panels: no misleading independent rescaling.
                 high = float(np.percentile(source[::4, ::4], 99.5)) or float(source.max()) or 1.
                 raw += np.clip(source/high, 0, 1)[..., None]*colors[c]
-                corrected += np.clip(process_plane(source, config, c)/high, 0, 1)[..., None]*colors[c]
+                processed=process_plane(source, config, c,data_dir,z)
+                corrected += np.clip(processed/high, 0, 1)[..., None]*colors[c]
+                if view=='background':auxiliary += np.clip(estimate_background(prepared_plane(source,config,c,data_dir,z),config,c)/high,0,1)[...,None]*colors[c]
+                elif view=='residual':auxiliary += np.abs(source.astype(np.float32)-processed)[...,None]/high/len(channels)
             panels = []
-            for data in (raw, corrected):
+            for data in ((raw, corrected) if view=='comparison' else (auxiliary,)):
                 image = Image.fromarray((np.clip(data, 0, 1)*255).astype(np.uint8))
                 image.thumbnail((768, 768));panels.append(image)
-            comparison = Image.new("RGB", (panels[0].width*2, panels[0].height))
-            comparison.paste(panels[0], (0, 0));comparison.paste(panels[1], (panels[0].width, 0))
+            comparison = Image.new("RGB", (sum(p.width for p in panels), panels[0].height))
+            comparison.paste(panels[0], (0, 0))
+            if len(panels)>1:comparison.paste(panels[1], (panels[0].width, 0))
             buf = io.BytesIO();comparison.save(buf, format="PNG")
             return Response(buf.getvalue(), media_type="image/png")
         except (ImageError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from exc
+
+    @app.post('/api/images/{image_id}/processing/diagnostics',dependencies=[Depends(authorized)])
+    def processing_quality(image_id:str,config:ProcessingConfig,z:int=0):
+        try:
+            info,channels=processing_channels(image_id,z,config)
+            _,record,_=stored(image_id)
+            rows=[{'channel':c,'label':info.channel_labels[c],**processing_diagnostics(raw,process_plane(raw,config,c,data_dir,z),estimate_background(prepared_plane(raw,config,c,data_dir,z),config,c))} for c,raw in enumerate(channels)]
+            return {'source_sha256':record['sha256'],'z_index':z,'processing':provenance(config,data_dir),'channels':rows,
+                    'scope':'Full XY-plane descriptive differences. Residual structure can indicate removed signal or noise; it does not prove restoration quality or optical resolution.'}
+        except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
 
     @app.get("/api/images/{image_id}/volume", dependencies=[Depends(authorized)])
     def volume(image_id: str, channel: int = 0, units: str = "physical") -> Response:
@@ -275,6 +291,12 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     register_assistant(app, data_dir, authorized, load_project, query_evidence, stored)
     from organelle_scope.batch import register_batch
     register_batch(app, data_dir, stored, image_dir, authorized)
+    from organelle_scope.restoration import register_restoration
+    register_restoration(app,data_dir,stored,authorized)
+    from organelle_scope.segmentation import register_segmentation
+    register_segmentation(app,stored,authorized)
+    from organelle_scope.experiments import register_experiments
+    register_experiments(app,data_dir,authorized)
     return app
 
 

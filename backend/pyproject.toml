@@ -4,16 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "organellescope-backend"
-version = "0.1.13.dev0"
+version = "0.2.0.dev0"
 description = "Calibrated microscopy import and analysis for OrganelleScope"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "numpy>=1.26,<3",
   "tifffile>=2025.10.4,<2027", "pillow>=10,<13", "python-multipart>=0.0.18,<1",
-  "pydantic>=2.10,<3", "imagecodecs>=2025.3.30,<2027", "scipy>=1.13,<2", "certifi>=2025.1.31"
+  "pydantic>=2.10,<3", "imagecodecs>=2025.3.30,<2027", "scipy>=1.13,<2", "scikit-image>=0.26,<0.27", "certifi>=2025.1.31"
 ]
 
 [project.optional-dependencies]
+restoration = ["careamics==0.3.4", "torch==2.11.0", "torchvision==0.26.0"]
 test = ["pytest>=8,<10", "httpx>=0.27,<1"]
 
 [tool.setuptools.packages.find]

@@ -1,6 +1,6 @@
 # Capability comparison and release-readiness criteria
 
-Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.12 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
+Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.2.0 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
 
 ## How to interpret the comparison
 
@@ -20,9 +20,9 @@ No overall quality score is assigned. Scientific accuracy, speed, large-data sta
 | Alternative correlation methods | Spearman implemented; Li/Van Steensel not implemented | Li/Van Steensel tools documented | Li and other pixel-intensity methods documented | Module-specific; match settings before comparison |
 | Thresholding | Manual/zero; Costes-style automatic on raw integer images only | Costes tools; behavior depends on variant/settings | Automatic thresholding supported | Configurable module settings; inspect exact implementation |
 | Spatial chance assessment | One explicitly conditional whole-plane toroidal-shift test | Costes randomization tools documented | Statistical significance testing documented | Not assessed here; a correlation measurement alone is not a spatial significance test |
-| Object-based colocalization | Planned; a cuboid is not object segmentation | Object-based options, variant dependent | Explicitly outside Coloc 2's scope | Can measure within identified objects; do not equate this with every object-distance method |
-| 3D | Full-resolution cuboid measurements, linked slices and preview | Stack behavior must be checked for the chosen variant | Z stacks documented | MeasureColocalization documents 3D support |
-| Numerical equivalence to others | Not established; independent comparisons pending | Must match masks, threshold rules and version | OrganelleScope does not claim to replicate its algorithms | Must match masks, intensity scaling and module settings |
+| Object-based colocalization | Threshold-defined connected objects, editable masks and marker-to-reference voxel distances; no binding inference | Object-based options, variant dependent | Explicitly outside Coloc 2's scope | Can measure within identified objects; do not equate this with every object-distance method |
+| 3D | Full-resolution cuboid and mask measurements, linked slices, threshold surfaces and preview | Stack behavior must be checked for the chosen variant | Z stacks documented | MeasureColocalization documents 3D support |
+| Numerical equivalence to others | 12 direct Coloc_2 fixtures passed for Pearson/Spearman/zero Manders; other algorithms and biological equivalence remain unestablished | Must match masks, threshold rules and version | OrganelleScope does not claim to replicate its algorithms | Must match masks, intensity scaling and module settings |
 
 Sources: [ImageJ colocalization overview / JaCoP](https://imagej.net/imaging/colocalization-analysis), [JaCoP project entry](https://imagej.net/ij/plugins/track/jacop.html), [Coloc 2 documentation](https://imagej.net/plugins/coloc-2), [CellProfiler 4.2.8 measurement documentation](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.2.8/modules/measurement.html#measurecolocalization). JaCoP classic and BIOP variants are distinct benchmark configurations. The CellProfiler document version is a reviewed reference, not a claim about the newest release.
 
@@ -63,3 +63,7 @@ Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed 
 Use versioned synthetic fixtures and representative research images with identical channel pairs, ROI masks, source intensities, calibration and thresholds. Compare Pearson, Spearman where available, Manders numerators/denominators, threshold edge cases, undefined values and 3D voxel inclusion separately. Record exact tool/plugin versions and expected algorithm differences. Compare spatial tests only when the null models and sampling rules match; do not rank incompatible p-values. Add blinded controls and independent-experiment replication before drawing biological conclusions. No benchmark result is claimed in this document.
 
 Source 0.1.12 adds a full-resolution rolling-ball lower-envelope background filter (adjustable XY radius and native-intensity height), alongside square opening. Cuboid width, height and Z-depth are editable; measurements crop inclusive source XYZ bounds. This is feature availability, not a claim of identical Fiji pixels or biological validation.
+
+## 0.2.0 evidence update
+
+OrganelleScope now also provides optional CAREamics N2V, PSF-based RL, matched-contrast residual/QC views, snapshot capture, mask editing/export, calibrated conditional proximity and radial enrichment, and explicit experiment-level comparisons. These additions do not establish superiority over napari plugins, QuPath, CellProfiler, Fiji or Imaris. Threshold masks are less general than trained organelle classification and can merge adjacent objects. See [measured validation and assumptions](RESTORATION_AND_INFERENCE.md). A native Windows installation, actual image-quality and biological benchmarks remain required.

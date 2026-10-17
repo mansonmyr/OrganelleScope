@@ -1,0 +1,303 @@
+{
+  "plugin": "Colocalisation_Analysis-3.1.0.jar",
+  "plugin_sha256": "f686c152d99163ccb66e1964665c8c9a69c7fbfd37a687053c51d472b5cba88f",
+  "seed": 20261017,
+  "metrics": [
+    "Pearson",
+    "Spearman with ties",
+    "zero-threshold Manders M1/M2"
+  ],
+  "tolerance": 1e-10,
+  "cases": [
+    {
+      "case": "8-bit independent full",
+      "selected_pixels": 257,
+      "fixture_sha256": "d29575d4d5c5e064e0d48ff7a2307816fdcfa6d35b2c24b8e270ce42c6dbaca7",
+      "coloc2": {
+        "pcc": -0.05233884817309996,
+        "spearman": -0.04770293711338893,
+        "m1": 0.8621809567476693,
+        "m2": 0.7893908969210174
+      },
+      "organellescope": {
+        "pcc": -0.0523388481730998,
+        "spearman": -0.04770293711338893,
+        "m1": 0.8621809567476693,
+        "m2": 0.7893908969210174
+      },
+      "absolute_differences": {
+        "pcc": 1.5959455978986625e-16,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "8-bit independent irregular",
+      "selected_pixels": 171,
+      "fixture_sha256": "d865abbec0aad28e2415d877d632739162ca82770e35a902385b07f34c7f0c46",
+      "coloc2": {
+        "pcc": -0.07147381671008858,
+        "spearman": -0.05862244228386615,
+        "m1": 0.8503812316715542,
+        "m2": 0.7743626644736842
+      },
+      "organellescope": {
+        "pcc": -0.07147381671008866,
+        "spearman": -0.05862244228386616,
+        "m1": 0.8503812316715542,
+        "m2": 0.7743626644736842
+      },
+      "absolute_differences": {
+        "pcc": 8.326672684688674e-17,
+        "spearman": 6.938893903907228e-18,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "8-bit positive full",
+      "selected_pixels": 257,
+      "fixture_sha256": "55d8e30a7300ca1b4094f7a3ddfecf33c05fa18c0a3b972e817b64a8c800c2cc",
+      "coloc2": {
+        "pcc": 0.9356789248687886,
+        "spearman": 0.9618492673371799,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "organellescope": {
+        "pcc": 0.9356789248687886,
+        "spearman": 0.9618492673371799,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "absolute_differences": {
+        "pcc": 0.0,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "8-bit positive irregular",
+      "selected_pixels": 163,
+      "fixture_sha256": "5c9e24664009a7c4c96efed34c8cf197025b73af7dec5be22f1f82bb3a3bf447",
+      "coloc2": {
+        "pcc": 0.933456925270804,
+        "spearman": 0.9673735663011636,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "organellescope": {
+        "pcc": 0.9334569252708037,
+        "spearman": 0.9673735663011633,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "absolute_differences": {
+        "pcc": 3.3306690738754696e-16,
+        "spearman": 2.220446049250313e-16,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "8-bit negative full",
+      "selected_pixels": 257,
+      "fixture_sha256": "621109621183d2ec922d692fbc436837e09090290a9cf3ec4f4bb65562e9f0fd",
+      "coloc2": {
+        "pcc": -1.0000000000000002,
+        "spearman": -1.0,
+        "m1": 1.0,
+        "m2": 0.6566572669766024
+      },
+      "organellescope": {
+        "pcc": -0.9999999999999999,
+        "spearman": -1.0,
+        "m1": 1.0,
+        "m2": 0.6566572669766024
+      },
+      "absolute_differences": {
+        "pcc": 3.3306690738754696e-16,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "8-bit negative irregular",
+      "selected_pixels": 173,
+      "fixture_sha256": "6d0c13fafef329164ca61a5475731e1c574c251b6da86fe17f02e93ae6c32a9c",
+      "coloc2": {
+        "pcc": -0.9999999999999997,
+        "spearman": -1.0,
+        "m1": 1.0,
+        "m2": 0.6742790787691116
+      },
+      "organellescope": {
+        "pcc": -1.0,
+        "spearman": -0.9999999999999999,
+        "m1": 1.0,
+        "m2": 0.6742790787691116
+      },
+      "absolute_differences": {
+        "pcc": 3.3306690738754696e-16,
+        "spearman": 1.1102230246251565e-16,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "16-bit independent full",
+      "selected_pixels": 257,
+      "fixture_sha256": "8690cf6b108ba9cb37fb8b460baae39ff1d90357246bd8a8e4ccd8cca21a1bd6",
+      "coloc2": {
+        "pcc": -0.021983441949425392,
+        "spearman": -0.0050467195446033015,
+        "m1": 0.8825375345909634,
+        "m2": 0.7945377070257073
+      },
+      "organellescope": {
+        "pcc": -0.02198344194942529,
+        "spearman": -0.0050467195446033015,
+        "m1": 0.8825375345909634,
+        "m2": 0.7945377070257073
+      },
+      "absolute_differences": {
+        "pcc": 1.0061396160665481e-16,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "16-bit independent irregular",
+      "selected_pixels": 166,
+      "fixture_sha256": "ea287b6fa59f967b0cb8e017c6e9a426ce0d45407215590805287d0aa095af4b",
+      "coloc2": {
+        "pcc": -0.01464758613739553,
+        "spearman": -0.008860050758179633,
+        "m1": 0.8680877955601581,
+        "m2": 0.8052182240944502
+      },
+      "organellescope": {
+        "pcc": -0.014647586137395358,
+        "spearman": -0.008860050758179633,
+        "m1": 0.8680877955601581,
+        "m2": 0.8052182240944502
+      },
+      "absolute_differences": {
+        "pcc": 1.717376241217039e-16,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "16-bit positive full",
+      "selected_pixels": 257,
+      "fixture_sha256": "3a9d1874a78e1209db04b6269e3b23ad76729cac5965d8e5ee75fa4bbbfe499a",
+      "coloc2": {
+        "pcc": 0.9324613156632635,
+        "spearman": 0.9650068578533564,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "organellescope": {
+        "pcc": 0.9324613156632635,
+        "spearman": 0.9650068578533564,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "absolute_differences": {
+        "pcc": 0.0,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "16-bit positive irregular",
+      "selected_pixels": 167,
+      "fixture_sha256": "e8809eff21b01ff97ac4046d301df8d6846178e0dad0031f1a5d597aea855649",
+      "coloc2": {
+        "pcc": 0.9364533235177784,
+        "spearman": 0.9668122922241138,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "organellescope": {
+        "pcc": 0.9364533235177788,
+        "spearman": 0.9668122922241138,
+        "m1": 1.0,
+        "m2": 1.0
+      },
+      "absolute_differences": {
+        "pcc": 3.3306690738754696e-16,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "16-bit negative full",
+      "selected_pixels": 257,
+      "fixture_sha256": "9776da604fe1985b85cb904834933f1dc47eafff6373348c546877ab81f78658",
+      "coloc2": {
+        "pcc": -1.0,
+        "spearman": -1.0,
+        "m1": 1.0,
+        "m2": 0.6627893641235044
+      },
+      "organellescope": {
+        "pcc": -0.9999999999999999,
+        "spearman": -0.9999999999999999,
+        "m1": 1.0,
+        "m2": 0.6627893641235044
+      },
+      "absolute_differences": {
+        "pcc": 1.1102230246251565e-16,
+        "spearman": 1.1102230246251565e-16,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    },
+    {
+      "case": "16-bit negative irregular",
+      "selected_pixels": 152,
+      "fixture_sha256": "51b990f83077e70d2dfd3e006e694e0dc247a57021ab1d1dac06ae77bf0bd482",
+      "coloc2": {
+        "pcc": -0.9999999999999996,
+        "spearman": -1.0,
+        "m1": 1.0,
+        "m2": 0.675640922845748
+      },
+      "organellescope": {
+        "pcc": -1.0,
+        "spearman": -1.0,
+        "m1": 1.0,
+        "m2": 0.675640922845748
+      },
+      "absolute_differences": {
+        "pcc": 4.440892098500626e-16,
+        "spearman": 0.0,
+        "m1": 0.0,
+        "m2": 0.0
+      },
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "scope": "Same native arrays and exact masks. No equivalence claim for Costes threshold rounding/search, spatial randomization, biological validity or image acquisition."
+}

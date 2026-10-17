@@ -18,11 +18,11 @@ def compute_analysis(folder,record,info,options,checkpoint=lambda:None):
         checkpoint();channels=[]
         for c in range(count):
             checkpoint();plane=read_plane(folder/'source.tiff',info,c,z)
-            channels.append(process_plane(plane,options.processing,c) if options.processing.active else plane)
+            channels.append(process_plane(plane,options.processing,c,folder.parent,z) if options.processing.active else plane)
         for roi in options.rois:
             checkpoint()
             if roi.z==z:results.append(analyze_roi(channels,roi,info.channel_labels,options.target_channel,options.threshold_mode,thresholds,(info.calibration['X'].value_um,info.calibration['Y'].value_um)))
-    return {'algorithm_version':'roi-3','processing':provenance(options.processing),'image_id':record['id'],'source_sha256':record['sha256'],'image_info':record['info'],
+    return {'algorithm_version':'roi-3','processing':provenance(options.processing,folder.parent),'image_id':record['id'],'source_sha256':record['sha256'],'image_info':record['info'],
         'request':options.model_dump(),'results':results,'validation':{'status':'engineering-tested; biological validation pending','publication_ready':False,
         'limitations':['No spatially calibrated significance or experiment-level inference.','Independent microscopy-software and real-control benchmarks pending.'],'methods_document':'docs/ROI_STATISTICS.md'},
         'scope':f"Separate XY-plane ROIs; {'processed float32' if options.processing.active else 'native source'} intensities; no 3D or pooled biological inference."}

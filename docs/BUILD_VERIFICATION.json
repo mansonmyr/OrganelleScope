@@ -1,0 +1,17 @@
+{
+  "source_version": "0.2.0",
+  "backend_tests": 132,
+  "frontend_tests": 59,
+  "ui_build": "passed",
+  "signed_bundle_service_smoke": "passed",
+  "dmg_integrity": "passed hdiutil verify",
+  "development_signature": "passed for app and bundled backend; ad-hoc, not notarized",
+  "installer_filename": "OrganelleScope-0.2.0-arm64.dmg",
+  "installer_bytes": 317895481,
+  "installer_sha256": "a1f2ec43b73d01d8ac5678ef3ee2c86bad6eafb5318b05ad76fea315cc0bae39",
+  "included": "CAREamics CPU restoration runtime",
+  "not_included": "Gemma weights and standalone llama.cpp runtime",
+  "biological_validation": "deferred by user; control images unavailable",
+  "visual_qa": "blocked by browser access policy",
+  "native_windows_installation": "not performed locally"
+}

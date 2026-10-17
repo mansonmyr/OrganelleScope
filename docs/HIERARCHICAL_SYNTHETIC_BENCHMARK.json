@@ -1,0 +1,26 @@
+{
+  "seed": 20261017,
+  "bootstrap_draws": 199,
+  "true_difference": 0,
+  "between_experiment_sd": 1,
+  "within_experiment_cell_sd": 0.5,
+  "cases": [
+    {
+      "experiments_per_condition": 3,
+      "cells_per_experiment": 4,
+      "simulations": 100,
+      "bootstrap_coverage_fraction": 0.89,
+      "permutation_false_positive_fraction": 0.0,
+      "minimum_attainable_two_sided_p": 0.1
+    },
+    {
+      "experiments_per_condition": 8,
+      "cells_per_experiment": 4,
+      "simulations": 100,
+      "bootstrap_coverage_fraction": 0.92,
+      "permutation_false_positive_fraction": 0.07,
+      "minimum_attainable_two_sided_p": 0.01
+    }
+  ],
+  "scope": "One Gaussian nested independent-experiment simulation with 100 repetitions per case. Monte Carlo uncertainty is substantial. Percentile bootstrap intervals can under-cover with few independent experiments; minimum p depends on assignment count. This is not validation for every lab design or phenotype."
+}

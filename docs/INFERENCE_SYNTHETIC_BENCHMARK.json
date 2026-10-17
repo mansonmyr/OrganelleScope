@@ -1,0 +1,55 @@
+{
+  "seed": 20261017,
+  "simulations_per_case": 1000,
+  "prior": {
+    "prior_mean": 0.0,
+    "prior_kappa": 0.01,
+    "prior_alpha": 2.0,
+    "prior_beta": 1.0
+  },
+  "cases": [
+    {
+      "experiments": 5,
+      "true_mean": 0,
+      "true_sigma": 1,
+      "coverage_fraction": 0.905,
+      "mean_posterior_bias": -0.0037781268335474014
+    },
+    {
+      "experiments": 5,
+      "true_mean": 2,
+      "true_sigma": 2,
+      "coverage_fraction": 0.837,
+      "mean_posterior_bias": -0.013613754949667116
+    },
+    {
+      "experiments": 20,
+      "true_mean": 0,
+      "true_sigma": 1,
+      "coverage_fraction": 0.928,
+      "mean_posterior_bias": -0.01178634003272772
+    },
+    {
+      "experiments": 20,
+      "true_mean": 2,
+      "true_sigma": 2,
+      "coverage_fraction": 0.918,
+      "mean_posterior_bias": -0.0015375245955598375
+    },
+    {
+      "experiments": 50,
+      "true_mean": 0,
+      "true_sigma": 1,
+      "coverage_fraction": 0.946,
+      "mean_posterior_bias": -0.00046632774810943296
+    },
+    {
+      "experiments": 50,
+      "true_mean": 2,
+      "true_sigma": 2,
+      "coverage_fraction": 0.938,
+      "mean_posterior_bias": -0.014671863329981534
+    }
+  ],
+  "scope": "Gaussian experiment means with known simulated truth. Coverage is conditional on this model and prior; no biological or non-Gaussian guarantee. Small-n prior sensitivity is expected. Not a calibration of hierarchical bootstrap intervals."
+}

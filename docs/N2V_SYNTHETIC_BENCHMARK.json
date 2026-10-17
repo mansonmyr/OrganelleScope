@@ -1,0 +1,84 @@
+{
+  "implementation": "CAREamics 0.3.4, CPU, independent-channel 2D N2V, no batch normalization",
+  "parameters": {
+    "name": "Synthetic benchmark only",
+    "train_ids": [
+      "8fbf3f7b-552a-4699-b0af-d8876be2c5ce",
+      "cc74d7cb-845d-4bc3-b29c-17035ebb4081",
+      "13128570-ff5d-4b95-aa60-eec90dbbc477",
+      "8387f4fa-ca22-4463-a458-6d0f304fa770",
+      "ab126fee-f0fc-4833-b4d9-b4b6ec57b0e0",
+      "73459862-2370-4ee1-9900-d435e3609b2c"
+    ],
+    "validation_ids": [
+      "b86f98a5-c291-42f1-a515-8bec082890e0"
+    ],
+    "epochs": 10,
+    "steps": 50,
+    "patch_size": 32,
+    "patches_per_image": 64,
+    "filters": 16,
+    "seed": 1729
+  },
+  "training_seconds": 17.80002616601996,
+  "model_bytes": 328704,
+  "model_weights_sha256": "fe30c2175b2835131b70b59f2cbb5d6d6a6dee5cc04cb4c79fc61949d9e87320",
+  "validation_loss": 0.020240386947989464,
+  "held_out_cases": [
+    {
+      "seed": 107,
+      "raw": {
+        "mse": 60.50011893945808,
+        "sum_bias_percent": -0.16542025354625287,
+        "pearson_to_truth": 0.9883844696689769
+      },
+      "n2v": {
+        "mse": 22.213085341964245,
+        "sum_bias_percent": -2.1647160218300727,
+        "pearson_to_truth": 0.9963202343485996
+      },
+      "gaussian_sigma_1_reference": {
+        "mse": 7.454491631188969,
+        "sum_bias_percent": -0.16542024247570242,
+        "pearson_to_truth": 0.9985370696140806
+      }
+    },
+    {
+      "seed": 108,
+      "raw": {
+        "mse": 73.12229412113504,
+        "sum_bias_percent": 0.1895937785387044,
+        "pearson_to_truth": 0.992100005735432
+      },
+      "n2v": {
+        "mse": 23.379111099887698,
+        "sum_bias_percent": -1.043446575478807,
+        "pearson_to_truth": 0.9977240944387967
+      },
+      "gaussian_sigma_1_reference": {
+        "mse": 7.304300304502466,
+        "sum_bias_percent": 0.1895938223679035,
+        "pearson_to_truth": 0.9991967334378574
+      }
+    },
+    {
+      "seed": 109,
+      "raw": {
+        "mse": 63.98109190559314,
+        "sum_bias_percent": -0.16169685188437827,
+        "pearson_to_truth": 0.9896682680269914
+      },
+      "n2v": {
+        "mse": 23.25586085510377,
+        "sum_bias_percent": -1.539981636716185,
+        "pearson_to_truth": 0.9965423447785012
+      },
+      "gaussian_sigma_1_reference": {
+        "mse": 9.70558664966638,
+        "sum_bias_percent": -0.1616968052852358,
+        "pearson_to_truth": 0.9984330488386068
+      }
+    }
+  ],
+  "scope": "Synthetic independent Poisson noise, heterogeneous smooth structures and small puncta. Training seeds 100\u2013105, validation 106, untouched test 107\u2013109. Clean truth is used only for test scoring. Numerical efficacy under this simulation does not validate real acquisition noise, resolution, colocalization or biology."
+}

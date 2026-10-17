@@ -1,0 +1,8 @@
+import {describe,it,expect,vi,afterEach} from 'vitest';
+import {sliceSnapshot,downloadSnapshot} from '../previewSnapshot';
+afterEach(()=>vi.restoreAllMocks());
+describe('preview snapshot',()=>{
+ it('refuses an unloaded image instead of exporting a blank view',async()=>{await expect(sliceSnapshot(document.createElement('div'),true)).rejects.toThrow('finish loading');});
+ it('captures the native preview dimensions without modifying its source',async()=>{const stage=document.createElement('div');stage.innerHTML='<img src="data:image/png;base64,test"/><svg viewBox="0 0 100 60"><circle cx="20" cy="20" r="5"/></svg>';const image=stage.querySelector('img')!;Object.defineProperties(image,{complete:{value:true},naturalWidth:{value:100},naturalHeight:{value:60}});const draw=vi.fn();vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({drawImage:draw} as any);const output=vi.spyOn(HTMLCanvasElement.prototype,'toDataURL').mockImplementation(function(this:HTMLCanvasElement){expect(this.width).toBe(100);expect(this.height).toBe(60);return 'data:image/png;base64,result';});const before=stage.innerHTML;expect(await sliceSnapshot(stage,false)).toBe('data:image/png;base64,result');expect(draw).toHaveBeenCalledTimes(1);expect(stage.innerHTML).toBe(before);expect(output).toHaveBeenCalledWith('image/png');});
+ it('downloads a PNG without navigating the application',()=>{const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(function(this:HTMLAnchorElement){expect(this.download).toBe('view.png');expect(this.href).toContain('data:image/png');});downloadSnapshot('data:image/png;base64,result','view.png');expect(click).toHaveBeenCalledOnce();});
+});

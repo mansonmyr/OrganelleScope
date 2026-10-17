@@ -1,0 +1,29 @@
+{
+  "shape_czyx": [
+    4,
+    16,
+    2048,
+    2048
+  ],
+  "bit_depth": 16,
+  "decoded_bytes": 536870912,
+  "compressed_file_bytes": 4556673,
+  "source_sha256": "5f7c830e06928a6f7ea1766cb1fe5cbb636229ab38685ccaaa663925c354cd7a",
+  "calibration_um_xyz": [
+    0.1,
+    0.1,
+    0.5
+  ],
+  "z_extent_um": 8,
+  "cuboid_voxels": 65536,
+  "exact_sum_check": true,
+  "timings": {
+    "import_seconds": 0.0126619579968974,
+    "volume_seconds": 0.046170584042556584,
+    "cuboid_seconds": 0.18246116593945771,
+    "segmentation_seconds": 0.692851125029847,
+    "full_plane_qc_seconds": 0.2509796250378713
+  },
+  "process_peak_rss_bytes": 1020936192,
+  "scope": "One deterministic synthetic stack, local source service. Checks import, volume preparation, exact full-resolution cuboid sum, threshold mask and full-plane QC. Not a real acquisition, sustained batch stress test, native Windows result or quality validation."
+}

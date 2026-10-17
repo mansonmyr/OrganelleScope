@@ -32,3 +32,6 @@ project-data/
 assistant/
 
 batch-data/
+
+.dev-restoration-check/
+restoration-data/

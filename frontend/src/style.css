@@ -57,3 +57,7 @@ input[type=range]{accent-color:#ff7d00}
 button.metric-explanation {background:transparent;border:0;padding:0;color:#ffecd1;text-decoration:underline dotted;text-underline-offset:4px;font:inherit;}
 button.metric-explanation:hover {color:#ffb46d;}
 .metric-explanation + dialog {white-space:normal;}
+
+.snapshot-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:8px 24px;border-bottom:1px solid #254650}.snapshot-controls .hint{flex:1;min-width:180px}.snapshot-controls .check-label{margin:0}
+
+.statistics fieldset {border:0;padding:0;margin:0;min-width:0}.statistics figure {margin:16px 0}.statistics figcaption {color:#a9c8cc;font-size:.9rem}

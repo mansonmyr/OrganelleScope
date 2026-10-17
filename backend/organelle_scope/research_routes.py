@@ -41,7 +41,7 @@ def register_research(app, stored, authorized):
             results=[]
             for z in sorted({r.z for r in options.rois}):
                 raw=[read_plane(folder/'source.tiff',info,c,z) for c in range(info.dimensions['C'])]
-                processed=[process_plane(a,options.processing,c) for c,a in enumerate(raw)]
+                processed=[process_plane(a,options.processing,c,folder.parent,z) for c,a in enumerate(raw)]
                 for roi in options.rois:
                     if roi.z!=z:continue
                     args=(roi,info.channel_labels,options.target_channel,options.threshold_mode,thresholds,(info.calibration['X'].value_um,info.calibration['Y'].value_um))
@@ -50,7 +50,7 @@ def register_research(app, stored, authorized):
                     for a,b in zip(before['pairs'],after['pairs']):
                         changes.append({'label_a':a['label_a'],'label_b':a['label_b'],**{key:None if a[key] is None or b[key] is None else b[key]-a[key] for key in ('pcc','spearman','moc','thresholded_m1','thresholded_m2')}})
                     results.append({'roi':roi.model_dump(),'raw':before,'processed':after,'deltas_processed_minus_raw':changes})
-            return {**stamp(record),'processing':provenance(options.processing),'request':options.model_dump(),'results':results,
+            return {**stamp(record),'processing':provenance(options.processing,folder.parent),'request':options.model_dump(),'results':results,
                     'reference_benchmarks':reference_benchmarks(),'scope':'Descriptive processing sensitivity; no biological confidence intervals or publication certification.'}
         except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
 
@@ -62,8 +62,8 @@ def register_research(app, stored, authorized):
                 raise ImageError('Confirm that whole-field translations are a defensible null model for this image before running the test.')
             if options.channel_a==options.channel_b:raise ImageError('Choose two different channels.')
             options.processing.validate_channels(info.dimensions['C'],info.bit_depth)
-            channels=[process_plane(read_plane(folder/'source.tiff',info,c,options.roi.z),options.processing,c) for c in (options.channel_a,options.channel_b)]
-            return {**stamp(record),'request':options.model_dump(),'processing':provenance(options.processing),
+            channels=[process_plane(read_plane(folder/'source.tiff',info,c,options.roi.z),options.processing,c,folder.parent,options.roi.z) for c in (options.channel_a,options.channel_b)]
+            return {**stamp(record),'request':options.model_dump(),'processing':provenance(options.processing,folder.parent),
                     **spatial_shift(*channels,options.roi,options.iterations,options.seed,(info.calibration['X'].value_um,info.calibration['Y'].value_um))}
         except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
 
@@ -108,9 +108,9 @@ def register_research(app, stored, authorized):
                 pieces=[]
                 for z in range(options.z0,options.z1+1):
                     plane=read_plane(folder/'source.tiff',info,c,z)
-                    if options.processing.active:plane=process_plane(plane,options.processing,c)
+                    if options.processing.active:plane=process_plane(plane,options.processing,c,folder.parent,z)
                     pieces.append(plane[options.y0:options.y1+1,options.x0:options.x1+1].ravel().copy())
                 values.append(np.concatenate(pieces).astype(np.float64))
-            return {**stamp(record),'algorithm_version':'cuboid-1','request':options.model_dump(),'processing':provenance(options.processing),
+            return {**stamp(record),'algorithm_version':'cuboid-1','request':options.model_dump(),'processing':provenance(options.processing,folder.parent),
                     **summarize_cuboid(values,info.channel_labels,thresholds,[info.calibration[a].value_um for a in 'XYZ'])}
         except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc

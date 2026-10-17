@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
 from uuid import UUID, uuid4
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field, JsonValue
 from organelle_scope import __version__
 
@@ -37,6 +37,12 @@ def register_projects(app,data_dir,stored,authorized):
         if not isinstance(record,dict) or record.get('schema_version')!=1:raise HTTPException(422,'This project format is not supported by this application version.')
         return record
 
+    def file_digest(path):
+        h=hashlib.sha256()
+        with path.open('rb') as stream:
+            while chunk:=stream.read(1024**2):h.update(chunk)
+        return h.hexdigest()
+
     def write(path,record):
         text=json.dumps(record,indent=2,allow_nan=False)
         if len(text.encode())>16*1024*1024:raise HTTPException(422,'The project exceeds the current 16 MiB metadata/report limit.')
@@ -64,6 +70,8 @@ def register_projects(app,data_dir,stored,authorized):
         records=[]
         for path in sorted(root.glob('*.json'),key=lambda p:p.stat().st_mtime,reverse=True)[:50]:
             try:
+
+                if path.stem=='recovery-latest':continue
                 r=load(path.stem);records.append({k:r[k] for k in ('id','name','revision','updated_utc')})
             except (ValueError,KeyError,HTTPException):continue
         return records
@@ -101,5 +109,106 @@ def register_projects(app,data_dir,stored,authorized):
                     # Keep the resolved immutable source association for subsequent opens.
                     write(path_for(project_id),record)
             return record
+
+    @app.post('/api/recovery',dependencies=[Depends(authorized)])
+    def save_recovery(options:ProjectSave):
+        with lock:
+            image=stored(options.image_id)[1] if options.image_id else None
+            if image and image['info']!=options.expected_image_info:raise HTTPException(409,'Import metadata changed; refresh before recovery autosave.')
+            record={'schema_version':1,'id':'recovery','name':options.name,'revision':1,'created_utc':datetime.now(timezone.utc).isoformat(),'updated_utc':datetime.now(timezone.utc).isoformat(),'application_version':__version__,'image':image,'state':options.state}
+            write(root/'recovery-latest.json',record)
+            return {'updated_utc':record['updated_utc']}
+
+    @app.get('/api/recovery',dependencies=[Depends(authorized)])
+    def read_recovery():
+        p=root/'recovery-latest.json'
+        if not p.is_file():return None
+        record=json.loads(p.read_text());snapshot=record.get('image')
+        if snapshot:
+            folder,current,_=stored(snapshot['id'])
+            if current['info']!=snapshot['info'] or file_digest(folder/'source.tiff')!=snapshot['sha256']:raise HTTPException(409,'Recovery source or import settings changed; open the original project instead.')
+        return record
+
+    @app.get('/api/projects/{project_id}/archive',dependencies=[Depends(authorized)])
+    def export_archive(project_id:str):
+        import tempfile,zipfile
+        from fastapi.responses import StreamingResponse
+        from organelle_scope.restoration import result_manifest
+        record=open_project(project_id);stream=tempfile.SpooledTemporaryFile(max_size=8*1024**2)
+        try:
+            with zipfile.ZipFile(stream,'w',zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr('project.json',json.dumps(record,allow_nan=False))
+                if record['image']:
+                    folder,_,_=stored(record['image']['id']);archive.write(folder/'source.tiff','source.tiff')
+                ids=set()
+                def find(value):
+                    if isinstance(value,dict):
+                        if value.get('restoration_result_id'):ids.add(value['restoration_result_id'])
+                        for v in value.values():find(v)
+                    elif isinstance(value,list):
+                        for v in value:find(v)
+                find(record['state'])
+                for ident in ids:
+                    manifest=result_manifest(data_dir,ident);folder=data_dir/'restoration-data'/'results'/ident
+                    archive.write(folder/'manifest.json',f'restoration/{ident}/manifest.json')
+                    for key,entry in manifest['planes'].items():
+                        filename=folder/(key+'.npy')
+                        if file_digest(filename)!=entry['sha256']:raise ValueError('Restoration integrity check failed.')
+                        archive.write(filename,f'restoration/{ident}/{key}.npy')
+            stream.seek(0)
+            def chunks():
+                try:
+                    while chunk:=stream.read(1024**2):yield chunk
+                finally:stream.close()
+            return StreamingResponse(chunks(),media_type='application/zip',headers={'Content-Disposition':'attachment; filename="OrganelleScope-project.zip"'})
+        except Exception:stream.close();raise
+
+    @app.post('/api/project-archives/import',dependencies=[Depends(authorized)])
+    def import_archive(file:UploadFile=File(...)):
+        import zipfile,re
+        from organelle_scope.image_io import inspect_tiff
+        from organelle_scope.processing import ProcessingConfig
+        image_id=str(uuid4());project_id=str(uuid4());folder=data_dir/image_id;created=[]
+        try:
+            with zipfile.ZipFile(file.file) as archive:
+                entries=archive.infolist();names=[e.filename for e in entries]
+                if len(names)!=len(set(names)) or len(names)>5000 or sum(e.file_size for e in entries)>8*1024**3:raise ValueError('Duplicate entries or archive size/count limit exceeded.')
+                if 'project.json' not in names or archive.getinfo('project.json').file_size>16*1024**2:raise ValueError('Missing or oversized project metadata.')
+                if any(n not in ('project.json','source.tiff') and not re.fullmatch(r'restoration/[0-9a-f-]{36}/(?:manifest\.json|[0-3]-(?:z[0-9]+-)?[0-9a-f]{64}\.npy)',n) for n in names):raise ValueError('Unexpected archive entry; only project data and verified float artifacts are accepted.')
+                if shutil.disk_usage(data_dir).free<sum(e.file_size for e in entries)+256*1024**2:raise ValueError('Insufficient free disk space for the project archive.')
+                record=json.loads(archive.read('project.json'));options=ProjectSave(name=record['name'],state=record['state']);image=record.get('image');mapping={}
+                if image:
+                    folder.mkdir();created.append(folder)
+                    with archive.open('source.tiff') as source,(folder/'source.tiff').open('wb') as destination:shutil.copyfileobj(source,destination,1024**2)
+                    digest=hashlib.sha256()
+                    with (folder/'source.tiff').open('rb') as source:
+                        while chunk:=source.read(1024**2):digest.update(chunk)
+                    if digest.hexdigest()!=image['sha256']:raise ValueError('Source TIFF checksum mismatch.')
+                    settings=image.get('options',{});info=inspect_tiff(folder/'source.tiff',settings.get('series_index',0),settings.get('axes'),settings.get('spacing_um',{}));info.filename=Path(image['info']['filename']).name
+                    if info.model_dump()!=image['info']:raise ValueError('Archive metadata does not match inspected source and recorded calibration.')
+                    mapping[image['id']]=image_id;image={**image,'id':image_id,'info':info.model_dump(),'import_schema':2};(folder/'metadata.json').write_text(json.dumps(image,allow_nan=False))
+                for old in {n.split('/')[1] for n in names if n.startswith('restoration/')}:
+                    UUID(old);new=str(uuid4());mapping[old]=new;destination=data_dir/'restoration-data'/'results'/new;destination.mkdir(parents=True);created.append(destination)
+                    manifest=json.loads(archive.read(f'restoration/{old}/manifest.json'))
+                    if not image or manifest['source_sha256']!=image['sha256']:raise ValueError('Restoration source does not match archive image.')
+                    for key,entry in manifest['planes'].items():
+                        if not re.fullmatch(r'[0-3]-(?:z[0-9]+-)?[0-9a-f]{64}',key):raise ValueError('Invalid artifact key.')
+                        path=destination/(key+'.npy')
+                        with archive.open(f'restoration/{old}/{key}.npy') as source,path.open('wb') as out:shutil.copyfileobj(source,out,1024**2)
+                        if file_digest(path)!=entry['sha256']:raise ValueError('Restoration checksum mismatch.')
+                    manifest.update(id=new,image_id=image_id);(destination/'manifest.json').write_text(json.dumps(manifest,allow_nan=False))
+                def remap(v):
+                    if isinstance(v,dict):return {k:remap(x) for k,x in v.items()}
+                    if isinstance(v,list):return [remap(x) for x in v]
+                    return mapping.get(v,v) if isinstance(v,str) else v
+                options.state=remap(options.state);options.image_id=image_id if image else None;options.expected_image_info=image['info'] if image else None
+                config=ProcessingConfig.model_validate(options.state.get('core',{}).get('processing',{}))
+                if config.restoration_result_id and config.restoration_result_id not in mapping.values():raise ValueError('Archive is missing its active restoration result.')
+                with lock:return save(project_id,options)
+        except Exception as exc:
+            for p in created:shutil.rmtree(p,ignore_errors=True)
+            if isinstance(exc,HTTPException):raise
+            raise HTTPException(422,str(exc)) from exc
+        finally:file.file.close()
 
     return open_project

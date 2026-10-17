@@ -84,3 +84,11 @@ The preview is mounted above the workspace navigation and outside workspace visi
 ### Numeric entry follow-up
 
 Preprocessing fields now retain text while being edited, so deleting radius, ball height, Gaussian sigma or a channel offset leaves an empty input after blur. Empty active inputs disable Apply instead of becoming zero; the current applied recipe/preview stays unchanged. Valid entries are converted to numbers only for the applied recipe. Explicit sigma = 0 remains supported. Unused blank background fields do not prevent switching to another method. The complete frontend suite passes **53 tests**, and the production UI build passes. A live browser check confirmed all three reported fields were empty and Apply was disabled.
+
+## Restoration, geometry and inference — 0.2.0
+
+See [full definitions and measured limitations](RESTORATION_AND_INFERENCE.md), [direct Coloc_2 benchmark](COLOC2_BENCHMARK.json), [held-out synthetic N2V test](N2V_SYNTHETIC_BENCHMARK.json), [Gaussian posterior simulation](INFERENCE_SYNTHETIC_BENCHMARK.json), and [native 2048² four-channel stack workload](LARGE_STACK_BENCHMARK.json). The workload decoded 512 MiB across 16 Z planes and checked exact source cuboid sums, calibrated viewing, segmentation and full-plane processing diagnostics. It is one synthetic source-service test, not native Windows or real acquisition validation.
+
+New tests cover tensor-only model export/import, genuine training/tiled prediction, matched-source float artifacts, residual/QC values, Richardson–Lucy agreement with an independent library, known calibrated 3D masks, inclusive containment, proximity, radial shell counts, experiment/cell aggregation, paired-design rejection, analytic posterior parameters, multiple-comparison adjustment, project-archive integrity/path rejection and separate recovery persistence. Component tests cover restoration assumptions, shared-cuboid requests, stale-response protection and snapshot dimension/source preservation. Live visual checks remain blocked by browser access policy in this run.
+
+Final local checks for this source milestone: **132 backend tests, 59 interface tests, production UI build passed**. The signed application bundle’s service is checked separately from source execution. See PACKAGED_RUNTIME_BENCHMARK.json for the exact scope; visual and biological validation are not implied.
