@@ -6,7 +6,7 @@ Derived components from [Quick IF Line Profiler](https://github.com/mansonmyr/Qu
 
 [Probabilistic Colocalization Estimator](https://github.com/mansonmyr/Probabilistic_Colocalization_Estimator) is a predecessor and migration source; its original terms are retained in `Probabilistic_Colocalization_Estimator.LICENSE`.
 
-The new application license is undecided. These notices do not relicense predecessor code or third-party dependencies. Dependency and model license inventories must be completed before distribution. No N2V or LLM weights are tracked in Git or added to an installer by this milestone.
+The repository now contains the user-provided GNU GPLv3 LICENSE at its root. These notices do not relicense predecessor code or third-party dependencies. Dependency and model license inventories must be completed before distribution. No N2V or LLM weights are tracked in Git or added to an installer by this milestone.
 
 
 ## Local assistant development assets

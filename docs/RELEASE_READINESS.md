@@ -24,7 +24,7 @@ Install `backend[test]` plus PyInstaller and build normally. There is no restora
 | Large workload/memory | Explicit operational budgets; 2048² × four-channel real-stack stress data still needed |
 | Signed public macOS release | Developer ID/notarization credentials unavailable; development ad-hoc signing is not Apple notarization |
 | Offline LLM installer | Packaging options implemented; full installed/offline/model inference qualification pending |
-| Application licensing | User has not selected a new application license; predecessor noncommercial terms retained |
+| Application licensing | User added GNU GPLv3 LICENSE; predecessor noncommercial notices remain retained and component redistribution terms still require reconciliation |
 | Marketing/download website | Public launch awaits a verified downloadable release and accurate validation statements |
 
 No repository deletion, overwrite of the installed application, new installer publication or claim of publication certification occurs automatically with this source milestone. Keep exact release/version/checksum and validation status visible when distributing research builds.

@@ -529,7 +529,7 @@ Relevant checks are `python -m pytest backend/tests -q`, frontend `npm test`, UI
 
 Development workflows build Windows x64/macOS ARM64 artifacts and checksums. **GitHub Releases** is the appropriate user-facing place to attach installers; **Actions artifacts** are build outputs with their own retention/access behaviour. **GitHub Packages** is a package/container registry, not the usual DMG/EXE download page. Building an artifact does not attach it to a release automatically. Local `release/` outputs are ignored by Git and are not uploaded just by pushing source.
 
-Installer version and checksums must match. The currently verified compact installer is separate from later source work. The final application license remains undecided; predecessor PolyForm Noncommercial terms and third-party notices remain relevant. Public repository visibility does not itself grant unrestricted reuse. Model licenses, provider database terms and application code licenses are distinct. No KEGG/STRING database dump or model weights is committed to this repository.
+Installer version and checksums must match. The currently verified compact installer is separate from later source work. The repository now includes the user-provided [GNU GPLv3 LICENSE](LICENSE). Retained predecessor PolyForm Noncommercial notices and third-party terms remain relevant; the repository license alone does not settle redistribution rights for every component. Public repository visibility does not itself grant unrestricted reuse. Model licenses, provider database terms and application code licenses are distinct. No KEGG/STRING database dump or model weights is committed to this repository.
 
 ### 59. Comparison and future direction
 

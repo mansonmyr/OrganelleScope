@@ -39,4 +39,4 @@ See [development setup](MANUAL.md#57-development-setup). GitHub Actions can buil
 
 ## Licensing
 
-New application licensing remains undecided. Predecessor PolyForm Noncommercial terms and [third-party notices](third_party/NOTICE.md) remain relevant. Model/database terms are separate; KEGG access is academic-only in this application. Public source visibility is not an additional license grant. No experimental images, credentials or model weights belong in Git.
+The repository includes the user-provided [GNU GPLv3 license](LICENSE). Retained predecessor PolyForm Noncommercial notices and [third-party terms](third_party/NOTICE.md) must also be considered; adding a repository license does not itself relicense other rights holders' components. Model/database terms are separate; KEGG access is academic-only in this application. Public source visibility is not an additional license grant. No experimental images, credentials or model weights belong in Git.
