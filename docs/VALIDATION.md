@@ -63,3 +63,10 @@ Versioned local snapshots, source/metadata checks, revision conflicts, restored 
 ## Manual batch milestone 0.1.10
 
 [Batch verification and remaining limits](BATCH_ANALYSIS.md#development-verification--17-october-2026) documents calibrated circle masks, independent manually reviewed image queues, shared interactive/batch calculation checks, cancellation/failure preservation and Excel read-back. The small synthetic workload and software tests do not substitute for independent Fiji/reference-image comparison or biological controls.
+
+
+## UI and arithmetic follow-up 0.1.11
+
+[Independent cuboid verification](CUBOID_VERIFICATION.md) reproduces the reported sample coefficient and identifies its empty RGB component. Tests separately cover direct TIFF decoding/cropping, metric-specific undefined reasons, movement/bounds submission, current-context assistant requests and optional offline inference. Model fluency and a successful request without a saved project do not establish scientific correctness. A general-question smoke answer overclaimed the effect of brightness alone on Pearson; the application-method context now states the conditions for affine invariance. No biological accuracy improvement is inferred from that prompt change.
+
+The final 0.1.11 source run passed **109 backend tests and 44 frontend tests**, plus the UI production build. Live UI checks covered source-linked background help, preserved older ROI results after an import-quality-note update, moved cuboid bounds, the reported sample coefficient, explanations for zero-channel correlations, and general/current-image assistant requests without saving or online refresh. Missing-versus-undefined context and exact channel-label handling were corrected during those checks. Native installer qualification and biological/cross-software benchmarking remain outstanding.

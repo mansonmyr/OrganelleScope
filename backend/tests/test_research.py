@@ -89,3 +89,34 @@ def test_sensitivity_uses_matching_thresholds_and_spatial_requires_model_choice(
     assert spatial.json()['iterations']==25
     assert 'source_sha256' in spatial.json()
     assert client.get('/api/validation/reference',headers=h).json()['passed']
+
+
+def test_cuboid_rgb_decoder_and_all_pair_values_match_independent_array_reference(tmp_path):
+    from scipy.stats import spearmanr
+    rng=np.random.default_rng(52)
+    data=np.zeros((4,11,13,3),dtype=np.uint8)
+    data[...,0]=rng.integers(0,80,data.shape[:-1]);data[...,1]=rng.integers(0,70,data.shape[:-1])
+    stream=io.BytesIO();tifffile.imwrite(stream,data,photometric='rgb',metadata={'axes':'ZYXS'})
+    with TestClient(create_app(tmp_path,'test')) as client:
+        h={'X-Session-Token':'test'}
+        image=client.post('/api/images',headers=h,files={'file':('rgb.tif',stream.getvalue())}).json()
+        url='/api/images/'+image['id']
+        image=client.post(url+'/inspect',headers=h,json={'axes':'ZYXC','spacing_um':{'X':.1,'Y':.2,'Z':.4}}).json()
+        bounds={'x0':2,'x1':8,'y0':1,'y1':7,'z0':1,'z1':3}
+        response=client.post(url+'/cuboid',headers=h,json=bounds);assert response.status_code==200,response.text
+        out=response.json();assert out['voxel_count']==147
+        # Direct TIFF array read, independent of the application's plane reader/crop path.
+        with tifffile.TiffFile(io.BytesIO(stream.getvalue())) as tf:direct=tf.series[0].asarray()[1:4,1:8,2:9]
+        a,b=direct[...,0].astype(float).ravel(),direct[...,1].astype(float).ravel()
+        pair=out['pairs'][0]
+        assert pair['pcc']==pytest.approx(np.corrcoef(a,b)[0,1],abs=1e-12)
+        assert pair['spearman']==pytest.approx(spearmanr(a,b).statistic,abs=1e-12)
+        assert pair['m1']==pytest.approx(a[b>0].sum()/a.sum())
+        assert pair['m2']==pytest.approx(b[a>0].sum()/b.sum())
+        for i in range(3):
+            assert out['channels'][i]['sum']==float(direct[...,i].sum())
+            assert out['channels'][i]['std']==pytest.approx(direct[...,i].std())
+        assert out['channels'][2]['above_threshold_voxels']==0
+        assert out['pairs'][1]['pcc'] is None and out['pairs'][1]['m1']==0 and out['pairs'][1]['m2'] is None
+        assert 'only zero' in out['pairs'][1]['unavailable_reasons']['pcc']
+        assert any('RGB' in w for w in out['image_info']['warnings'])

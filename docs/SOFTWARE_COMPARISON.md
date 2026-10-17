@@ -1,6 +1,6 @@
 # Capability comparison and release-readiness criteria
 
-Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.10 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
+Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.11 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
 
 ## How to interpret the comparison
 
@@ -39,7 +39,7 @@ Sources: [napari quickstart](https://napari.org/stable/getting_started/quick_sta
 
 ## Biological evidence integration
 
-OrganelleScope currently provides human STRING identifier mapping and association-network tables, academic KEGG membership lookup and on-demand official pathway diagrams. It records identifiers, source versions/timestamps and response hashes, and keeps image measurements local. The experimental local assistant can inspect saved measurements/evidence and repeat a bounded saved query, with visible tool records. It is not validated biological interpretation, enrichment analysis, pathway activation measurement or a causal perturbation model.
+OrganelleScope currently provides human STRING identifier mapping and association-network tables, academic KEGG membership lookup and on-demand official pathway diagrams. It records identifiers, source versions/timestamps and response hashes, and keeps image measurements local. The experimental local assistant can inspect current-workspace measurements/evidence without requiring a saved project, answer general local questions and optionally repeat the selected bounded query, with visible tool records. It is not validated biological interpretation, enrichment analysis, pathway activation measurement or a causal perturbation model.
 
 Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed across every plugin and extension of the other applications. Accordingly, neither the README nor this document claims that they cannot provide them. The intended distinction is a guided, traceable combined workflow, not invention of correlation metrics or a proven exclusive capability.
 

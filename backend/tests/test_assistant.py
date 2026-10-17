@@ -186,3 +186,86 @@ def test_quantity_normalization_keeps_protein_names_dimensions_and_exact_ids():
  from organelle_scope.assistant import invalid_answer
  assert not invalid_answer('TP53, 53BP1 and 3D measurements require review. [project]',{'project':{}})
  assert not invalid_answer('hsa:7157 membership is not activation. [project]',{'project':{}},{'hsa:7157'})
+
+
+def test_questions_without_project_start_local_model_and_do_not_save(tmp_path,monkeypatch):
+ import organelle_scope.assistant as module
+ calls=[]
+ class ReadyFake(Fake):
+  def __init__(self,*a):super().__init__(response('General microscopy advice is available without an image. [project]'));self.ready=False
+  def status(self):return {'ready':self.ready,'running':self.ready}
+  def start(self):calls.append('start');self.ready=True
+  def stop(self):pass
+  def cleanup_after_success(self):pass
+ monkeypatch.setattr(module,'LocalModel',ReadyFake)
+ with TestClient(create_app(tmp_path/'images','token')) as client:
+  answer=client.post('/api/assistant/chat',headers={'X-Session-Token':'token'},json={'message':'What does correlation mean?','allow_online':False})
+  assert answer.status_code==200,answer.text
+  result=answer.json();assert result['project_id'] is None and result['project_revision'] is None
+  assert result['context_kind']=='workspace' and result['audit'][0]['result']['image'] is None
+  assert calls==['start'] and not list((tmp_path/'project-data').glob('*.json'))
+
+
+def test_workspace_context_uses_unsaved_settings_and_excludes_stale_measurements():
+ from organelle_scope.assistant import WorkspaceContext,workspace_record
+ image={'id':'11111111-1111-1111-1111-111111111111','sha256':'source','info':{'filename':'current.tif','calibration':{a:{'value_um':.1} for a in 'XYZ'}}}
+ report={'source_sha256':'source','image_info':image['info'],'results':[]}
+ context=WorkspaceContext(image_id=image['id'],expected_image_info=image['info'],state={'core':{'thresholdMode':'manual','thresholds':[42,51],'analysis':report},'workspaces':{'EvidencePanel.offline':True,'AssistantPanel.turns':['large conversation']}})
+ record=workspace_record(context,lambda _: (None,image,None))
+ assert record['state']['core']['thresholds']==[42,51]
+ assert record['state']['core']['analysis']==report
+ assert 'AssistantPanel.turns' not in record['state']['workspaces']
+ model=Fake(response('Inspect the current manual thresholds before interpreting overlap. [project]'))
+ result=run_agent(model,record,ChatRequest(message='Explain these settings',context=context),None)
+ assert result['context_kind']=='workspace' and result['project_revision'] is None
+ assert model.messages[0][0]['content'].find('Current workspace snapshot')>=0
+ context.expected_image_info={}
+ stale=workspace_record(context,lambda _: (None,image,None))
+ assert stale['state']['core']['analysis'] is None and 'calibration changed' in stale['context_note']
+ assert context.state['core']['analysis']==report  # never mutate caller's results
+
+
+def test_offline_current_evidence_never_requires_academic_permission_for_model():
+ from organelle_scope.assistant import WorkspaceContext,workspace_record
+ context=WorkspaceContext(state={'workspaces':{'EvidencePanel.academic':False,'EvidencePanel.offline':True}})
+ record=workspace_record(context,None)
+ def forbidden(_):pytest.fail('No lookup should be needed for a local question')
+ result=run_agent(Fake(response('I can explain general methodology without an online lookup. [project]')),record,ChatRequest(message='Explain microscopy',context=context),forbidden)
+ assert 'methodology' in result['answer']
+
+
+def test_general_workspace_advice_does_not_need_invented_project_citation():
+ from organelle_scope.assistant import workspace_record
+ record=workspace_record(None,None)
+ answer=run_agent(Fake(response('General advice: correlation describes intensity association and does not establish binding.')),record,ChatRequest(message='What does correlation mean?'),None)
+ assert answer['context_kind']=='workspace' and 'General advice' in answer['answer']
+ with pytest.raises(ValueError):
+  run_agent(Fake(response('See [invented]'),response('not JSON')),record,ChatRequest(message='Test'),None)
+
+
+def test_recorded_channel_and_roi_labels_are_identifiers_not_generated_quantities():
+ from organelle_scope.assistant import invalid_answer
+ identifiers={'Channel 3','Alexa Fluor 488','ROI 1'};sources={'measurements':{}}
+ assert not invalid_answer('Channel 3 is constant in ROI 1; Alexa Fluor 488 needs a control. [measurements]',sources,identifiers)
+ assert invalid_answer('The distance is 3 µm. [measurements]',sources,identifiers)
+ assert invalid_answer('Channel 4 is empty. [measurements]',sources,identifiers)
+ assert invalid_answer('The width is 20 pixels. [measurements]',sources,{'20 pixels'})
+
+
+def test_agent_accepts_a_real_channel_label_from_the_supplied_image():
+ record=json.loads(json.dumps(RECORD))
+ record['image']={'sha256':'source','info':{'channel_labels':['Channel 1','Channel 2','Channel 3'],'calibration':{a:{'value_um':None} for a in 'XYZ'}}}
+ model=Fake(response('Channel 3 needs its acquired signal checked; absence from the image is not proof of biological absence. [project]'))
+ result=run_agent(model,record,options(),None)
+ assert 'Channel 3' in result['answer'] and len(model.messages)==1
+
+
+def test_null_metrics_in_completed_report_are_not_described_as_unperformed():
+ from organelle_scope.assistant import measurement_context,bounded
+ analysis={'processing':{'settings':{'background':'none'}},'request':{'threshold_mode':'costes'},'results':[{'roi':{'id':'r'},'channel_summary':[{'label':'Channel 1','sum':40,'std':2},{'label':'Channel 3','sum':0,'std':0}],'pairs':[{'pcc':None,'warnings':['constant channel'],'thresholds':{'status':'constant','a':None,'b':None}}]}]}
+ context=measurement_context(analysis)
+ assert context['calculation_completed'] is True and 'NOT evidence' in context['null_semantics']
+ assert context['constant_channels'][0]['label']=='Channel 3' and context['constant_channels'][0]['all_zero'] is True
+ assert 'cannot repair' in context['constant_channels'][0]['explanation']
+ wrapped=bounded({'interpretation_context':context,'roi':'x'*20000})
+ assert wrapped['interpretation_context']['constant_channels'][0]['all_zero'] is True

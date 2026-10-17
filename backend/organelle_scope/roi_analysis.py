@@ -164,14 +164,30 @@ def pair_metrics(a: np.ndarray, b: np.ndarray, mode: str, ta: float = 0, tb: flo
     threshold = automatic_thresholds(a,b) if mode == "costes" else {"status": "provided", "a":ta, "b":tb, "background_pcc":None}
     m1, m2 = manders(threshold["a"], threshold["b"]) if threshold["a"] is not None else (None,None)
     warnings = []
+    reasons = {}
+    constant=[]
+    for label,values in (('A',a),('B',b)):
+        if np.std(values)==0:constant.append('channel '+label+(' contains only zero intensities' if not np.any(values) else ' has constant intensity'))
     if pcc is None:
-        warnings.append("Correlation is undefined because at least one channel is constant inside this ROI.")
+        reasons['pcc']=reasons['spearman']='Correlation is undefined: '+('; '.join(constant) or 'insufficient variation')+' in the selected region. The normalization denominator is zero; unavailable is not a correlation of zero.'
+    if not norm:reasons['moc']='Overlap is undefined because at least one channel has zero intensity energy in this region.'
+    if not total_a:reasons['m1']='M1 is undefined because the summed intensity in channel A is zero (zero denominator).'
+    if not total_b:reasons['m2']='M2 is undefined because the summed intensity in channel B is zero (zero denominator).'
+    if threshold['a'] is None:
+        reasons['thresholded_m1']=reasons['thresholded_m2']='Automatic thresholds were not obtained ('+threshold['status']+'). No fallback threshold is substituted.'
+    else:
+        if not total_a:reasons['thresholded_m1']=reasons['m1']
+        if not total_b:reasons['thresholded_m2']=reasons['m2']
+    if pcc is None:
+        warnings.append("Correlation is undefined because at least one channel is constant in the selected region.")
     if threshold["a"] is None:
         warnings.append("Automatic thresholds were not obtained. Thresholded Manders is unavailable; no fallback threshold was substituted.")
     gaussian_lrt = None
     if pcc is not None and abs(pcc) < 1-1e-12:
         gaussian_lrt = float(-len(a)*math.log1p(-pcc*pcc))
-    return {"pcc":pcc, "spearman":spearman, "moc":float(np.dot(a,b)/norm) if norm else None,
+    if gaussian_lrt is None:
+        reasons['gaussian_lrt_statistic']='The Gaussian covariance statistic is unavailable for constant channels or a singular, perfectly correlated covariance model.'
+    return {"unavailable_reasons":reasons,"pcc":pcc, "spearman":spearman, "moc":float(np.dot(a,b)/norm) if norm else None,
             "m1":raw_m1, "m2":raw_m2, "thresholded_m1":m1, "thresholded_m2":m2,
             "thresholds":threshold, "gaussian_lrt_statistic":gaussian_lrt,
             "gaussian_lrt_note":"Descriptive Gaussian likelihood ratio only; no calibrated p-value or probability of interaction. Spatial dependence is not modeled.",

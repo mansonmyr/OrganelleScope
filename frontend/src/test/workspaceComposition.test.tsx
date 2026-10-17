@@ -33,7 +33,7 @@ it('keeps an independent batch draft when a different single-image project is op
  fireEvent.change(screen.getByLabelText('Upload batch TIFF images'),{target:{files:[new File(['x'],'queued.tif')]}});
  await screen.findByText('Imported 1 image(s). Draw and review ROIs for each image.');
  fireEvent.change(screen.getByLabelText('Recent imports'),{target:{value:'other'}});
- await waitFor(()=>expect(screen.getByText(/New unsaved project/)).toBeTruthy());
+ await waitFor(()=>expect(screen.getByText(/Image open. Saving a project is optional/)).toBeTruthy());
  fireEvent.click(screen.getByRole('button',{name:'Batch analysis'}));
  expect(screen.getByRole('heading',{name:'queued.tif'})).toBeTruthy();
 });

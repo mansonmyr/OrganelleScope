@@ -55,7 +55,7 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     def stored(image_id: str) -> tuple[Path, dict, ImageInfo]:
         folder = image_dir(image_id)
         record = json.loads((folder / "metadata.json").read_text())
-        if record.get("import_schema") != 2:
+        if record.get("import_schema") != 2 or record.get("info",{}).get("acquisition",{}).get("color_model_checked") != "yes":
             options = InspectOptions.model_validate(record.get("options", {}))
             revised = inspect_tiff(folder / "source.tiff", options.series_index, options.axes, options.spacing_um)
             revised.filename = record["info"]["filename"]
@@ -137,8 +137,20 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
         if not path.exists():
             raise HTTPException(404, "No saved ROI analysis yet.")
         result = json.loads(path.read_text())
-        if result["source_sha256"] != record["sha256"] or result["image_info"] != record["info"]:
-            raise HTTPException(409, "Image settings changed; run the ROI analysis again.")
+        if result["source_sha256"] != record["sha256"]:
+            raise HTTPException(409, "Image source changed; run the ROI analysis again.")
+        if result["image_info"] != record["info"]:
+            def numerical_metadata(value):
+                value=json.loads(json.dumps(value));value.pop('warnings',None)
+                acquisition=value.get('acquisition',{})
+                for key in ('color_model_checked','stored_color_model'):acquisition.pop(key,None)
+                return value
+            if numerical_metadata(result['image_info'])!=numerical_metadata(record['info']):
+                raise HTTPException(409, "Image settings changed; run the ROI analysis again.")
+            # Enrich the returned view only. The original on-disk result and metadata remain intact.
+            result['original_image_info']=result['image_info']
+            result['image_info']=record['info']
+            result['metadata_notice']='Import quality notes updated; source hash, axes, calibration and numerical metadata are unchanged. Original report metadata is retained in original_image_info.'
         return result
 
     @app.post("/api/images/{image_id}/analysis", dependencies=[Depends(authorized)])
@@ -260,7 +272,7 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     from organelle_scope.projects import register_projects
     load_project = register_projects(app, data_dir, stored, authorized)
     from organelle_scope.assistant import register_assistant
-    register_assistant(app, data_dir, authorized, load_project, query_evidence)
+    register_assistant(app, data_dir, authorized, load_project, query_evidence, stored)
     from organelle_scope.batch import register_batch
     register_batch(app, data_dir, stored, image_dir, authorized)
     return app

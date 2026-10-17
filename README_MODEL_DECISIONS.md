@@ -55,3 +55,10 @@ Use the same versioned evaluation inputs and guards, add unseen cases, repeat st
 ## Future decision log
 
 Append the date, exact profile/hash, evaluation revision, scientific/task failures, resource observations, limitations, decision and link to the complete evidence for every new assessment. Do not silently convert historical exploratory results into a controlled model ranking.
+
+
+## Integration follow-up — 17 October 2026, source 0.1.11
+
+Gemma remains the selected profile. A live, general Pearson-methodology question completed without an image, project save or online refresh (42.83 seconds reported by the agent loop, excluding model startup). The answer distinguished correlation from binding but overgeneralized the effect of channel brightness and described shared organelle localization imprecisely. This is another observed scientific limitation, not a correctness pass. The application now supplies a short method reference that explicitly covers affine invariance and other known statistical interpretation pitfalls. Historical Liquid/Qwen/Gemma comparisons retain their original prompts and results; no new paired model ranking is implied by the interface or prompt change.
+
+The source 0.1.11 follow-up also exposed application-level issues. A recorded channel label containing a digit could be rejected as a generated measurement, and an overly broad tool note described null metrics as unperformed calculations. Both were corrected. Current summaries include completed-calculation status and recorded constant-channel facts. A targeted current-ROI retest then described undefined correlation and missing signal correctly without saving or internet access (57.65 seconds reported by the agent loop). A separate affine-invariance question was answered correctly with the method reference (29.31 seconds). These are targeted integration checks, not a fresh paired comparison, broad accuracy estimate or proof that Gemma is scientifically reliable.

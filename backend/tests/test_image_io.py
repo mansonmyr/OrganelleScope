@@ -143,3 +143,17 @@ def test_fiji_escaped_micrometre_units_are_calibrated(tmp_path,unit):
     assert info.dimensions['Z']==15 and info.dimensions['C']==4
     assert info.calibrated(volume=True)
     assert [info.calibration[a].value_um for a in 'XYZ']==pytest.approx([.315,.315,.315])
+
+
+def test_rgb_components_are_flagged_as_color_export_not_assumed_microscope_channels(tmp_path):
+ raw=np.zeros((3,8,9,3),dtype=np.uint8);raw[...,0]=10;raw[...,1]=20
+ path=tmp_path/'rgb-stack.tif'
+ tifffile.imwrite(path,raw,photometric='rgb',metadata={'axes':'ZYXS'})
+ info=inspect_tiff(path)
+ assert info.needs_axis_confirmation
+ info=inspect_tiff(path,axes_override='ZYXC')
+ assert info.dimensions['C']==3 and info.dimensions['Z']==3
+ assert info.acquisition['stored_color_model']=='RGB components'
+ assert any('independent raw microscope channels' in warning for warning in info.warnings)
+ for z in range(3):
+  for c in range(3):np.testing.assert_array_equal(read_plane(path,info,c,z),raw[z,:,:,c])

@@ -65,7 +65,7 @@ export default function App() {
 
   function accept(record: ImageRecord, restoring=false) {
     skipSaved.current=restoring?record.id:undefined;
-    setProject(null);setProjectName(record.info.filename.replace(/\.ome\.tiff?$|\.tiff?$/i,''));setProjectData({});setGeneration(g=>g+1);setProjectMessage('New unsaved project. Save before opening another image.');
+    setProject(null);setProjectName(record.info.filename.replace(/\.ome\.tiff?$|\.tiff?$/i,''));setProjectData({});setGeneration(g=>g+1);setProjectMessage('Image open. Saving a project is optional; save to retain this workspace.');
     setWorkspace("images");setImage(record); setProcessing({...rawProcessing});setMeasurementSource("raw"); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
     setSpacing(Object.fromEntries("XYZ".split("").map(a => [a, String(record.info.calibration[a].value_um ?? "")])));
     setRoi(null); setAreas([]); setAnalysis(null); setTarget(0); setProfile(null); setMode("slice"); setVolumeChannel(-1);
@@ -226,7 +226,7 @@ export default function App() {
       </div></div>
       <div hidden={workspace!=='validation'}>{image && available && <ValidationPanel key={`validation-${image.id}`} image={image} rois={areas} processing={processing} measurementProcessing={selectedProcessing} thresholds={thresholds} thresholdMode={thresholdMode} target={target}/>}</div>
       <div hidden={workspace!=='evidence'}><EvidencePanel/></div>
-      <div hidden={workspace!=='assistant'}><AssistantPanel projectId={project?.id??null}/></div>
+      <div hidden={workspace!=='assistant'}><AssistantPanel projectId={project?.id??null} context={{image_id:image?.id??null,expected_image_info:image?.info??null,state:{core:snapshot().core,workspaces:Object.fromEntries(Object.entries(projectData).filter(([key])=>!key.startsWith('AssistantPanel.')))}}}/></div>
       </ProjectStateProvider>
       <div hidden={workspace!=='batch'}><BatchPanel/></div>
       <footer><span>Research development · Local projects and experimental assistant; biological validation pending.</span><span>Source → calibration → measurement</span></footer>

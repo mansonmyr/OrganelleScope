@@ -49,3 +49,27 @@ describe('research workspaces',()=>{
   expect(vi.mocked(request).mock.calls.map(c=>c[0])).toEqual(expect.arrayContaining([expect.stringContaining('axis=XY'),expect.stringContaining('axis=XZ'),expect.stringContaining('axis=YZ')]));
  });
 });
+
+it('moves the cuboid from a section click and arrow key, then measures those exact bounds',async()=>{
+ const larger={...image,info:{...image.info,dimensions:{X:100,Y:100,Z:8,C:2}}};
+ vi.mocked(json).mockResolvedValue({voxel_count:32768,region_volume_um3:10,channels:[],pairs:[],scope:'source cuboid'});
+ render(<OrthogonalWorkspace image={larger} processing={rawProcessing}/>);
+ const section=screen.getByRole('img',{name:'XY linked source section'});
+ Object.defineProperty(section,'getBoundingClientRect',{value:()=>({left:0,top:0,width:100,height:100})});
+ Object.defineProperty(section,'setPointerCapture',{value:()=>{}});Object.defineProperty(section,'hasPointerCapture',{value:()=>false});
+ const Pointer=window.PointerEvent;window.PointerEvent=MouseEvent as typeof PointerEvent;
+ try{
+  fireEvent.pointerDown(section,{clientX:50,clientY:50,button:0});fireEvent.pointerMove(section,{clientX:60,clientY:55,button:0});fireEvent.pointerUp(section,{clientX:60,clientY:55,button:0});
+  expect((screen.getByLabelText('X start') as HTMLInputElement).value).toBe('28');
+  expect((screen.getByLabelText('Y start') as HTMLInputElement).value).toBe('23');
+  fireEvent.pointerDown(section,{clientX:95,clientY:95,button:0});fireEvent.pointerUp(section,{clientX:95,clientY:95,button:0});
+ }finally{window.PointerEvent=Pointer;}
+ expect((screen.getByLabelText('X start') as HTMLInputElement).value).toBe('36');
+ expect((screen.getByLabelText('Y start') as HTMLInputElement).value).toBe('36');
+ fireEvent.keyDown(section,{key:'ArrowLeft',shiftKey:true});
+ expect((screen.getByLabelText('X start') as HTMLInputElement).value).toBe('26');
+ fireEvent.click(screen.getByText('Measure 3D cuboid'));await screen.findByText('Export 3D report');
+ const call=vi.mocked(json).mock.calls.find(c=>c[0].endsWith('/cuboid'))!;
+ expect(JSON.parse(call[1]!.body as string)).toMatchObject({x0:26,x1:89,y0:36,y1:99,z0:0,z1:7});
+ fireEvent.keyDown(section,{key:'ArrowLeft'});expect(screen.queryByText('Export 3D report')).toBeNull();
+});

@@ -131,3 +131,13 @@ def test_multichannel_regression_recovers_known_standardized_coefficients():
     assert measured['betas'][0]['value']==pytest.approx(3/np.sqrt(13),abs=1e-12)
     assert measured['betas'][1]['value']==pytest.approx(-2/np.sqrt(13),abs=1e-12)
     assert measured['coefficient_ratio']==pytest.approx(1.5,abs=1e-12)
+
+
+def test_zero_channel_explains_each_undefined_metric_without_replacing_with_zero():
+ a=np.arange(1,13,dtype=float);b=np.zeros(12)
+ pair=pair_metrics(a,b,'zero')
+ assert pair['pcc'] is None and pair['spearman'] is None and pair['moc'] is None
+ assert pair['m1']==0 and pair['m2'] is None
+ assert 'only zero' in pair['unavailable_reasons']['pcc']
+ assert 'zero denominator' in pair['unavailable_reasons']['m2']
+ assert 'm1' not in pair['unavailable_reasons']

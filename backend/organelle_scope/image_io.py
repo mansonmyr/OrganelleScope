@@ -173,6 +173,10 @@ def inspect_tiff(path: Path, series_index: int = 0, axes_override: str | None = 
             candidates["Z"]["ImageJ spacing"] = v
         if ij:
             acquisition.setdefault("metadata_format", "ImageJ")
+        acquisition['color_model_checked']='yes'
+        if getattr(series.pages[0].photometric,'name','') == 'RGB':
+            acquisition['stored_color_model']='RGB components'
+            warnings.append('This TIFF stores RGB color components. They may be a rendered/composite export rather than independent raw microscope channels. Verify the acquisition channel mapping before quantitative biological interpretation; use the original channel data when available.')
         calibration = {a: _resolve(candidates[a], warnings, a) for a in "XYZ"}
         for a, v in (spacing_override or {}).items():
             if a not in "XYZ" or not math.isfinite(v) or v <= 0:

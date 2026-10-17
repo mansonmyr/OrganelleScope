@@ -86,3 +86,23 @@ def test_uncalibrated_voxel_preview_is_explicit_and_does_not_calibrate_source(tm
         np.testing.assert_array_equal(np.frombuffer(response.content,'<u2').reshape(3,87,9),data[:,::3,:])
         assert client.get(url,headers=h).json()['info']['calibration']['X']['value_um'] is None
         assert client.get(url+'/volume?units=wrong',headers=h).status_code==422
+
+
+def test_import_quality_notes_do_not_hide_legacy_roi_results_or_rewrite_saved_provenance(tmp_path):
+    import copy
+    with TestClient(create_app(tmp_path,'token')) as client:
+        h={'X-Session-Token':'token'}
+        buf=io.BytesIO();source=np.zeros((3,8,9,3),dtype=np.uint8);source[...,0]=np.arange(9);source[...,1]=np.arange(8)[:,None]
+        tifffile.imwrite(buf,source,photometric='rgb',metadata={'axes':'ZYXS'})
+        image=client.post('/api/images',headers=h,files={'file':('rgb.tif',buf.getvalue())}).json();url='/api/images/'+image['id']
+        image=client.post(url+'/inspect',headers=h,json={'axes':'ZYXC'}).json()
+        roi={'id':'r','kind':'circle','z':1,'points':[{'x':4,'y':4},{'x':6,'y':4}]}
+        result=client.post(url+'/analysis',headers=h,json={'rois':[roi],'threshold_mode':'zero'}).json()
+        old_info=copy.deepcopy(image['info']);old_info['acquisition'].pop('color_model_checked');old_info['acquisition'].pop('stored_color_model');old_info['warnings']=[w for w in old_info['warnings'] if 'RGB' not in w]
+        image['info']=old_info;result['image_info']=old_info
+        folder=tmp_path/image['id'];(folder/'metadata.json').write_text(json.dumps(image));(folder/'analysis.json').write_text(json.dumps(result))
+        response=client.get(url+'/analysis',headers=h);assert response.status_code==200,response.text
+        restored=response.json();assert restored['results']==result['results']
+        assert restored['original_image_info']==old_info and any('RGB' in w for w in restored['image_info']['warnings'])
+        assert 'metadata_notice' in restored
+        assert json.loads((folder/'analysis.json').read_text())==result

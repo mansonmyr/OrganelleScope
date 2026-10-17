@@ -52,3 +52,15 @@ it('ignores late workspace updates from a project that has been closed',async()=
  view.rerender(<Host generation={2}/>);old('stale response');
  expect(screen.getByText('empty')).toBeTruthy();expect(screen.getByText('{}')).toBeTruthy();
 });
+
+it('allows general questions without saving, ready status or online permission',async()=>{
+ vi.mocked(json).mockImplementation(async path=>path==='/api/assistant/status'?{model:{name:'Local test',bytes:1},ready:false,running:false,model_available:true,runtime_available:true}:{answer:'General methodological advice. [project]',status:'AI draft',project_revision:null,context_kind:'workspace',elapsed_seconds:1,sources:[],audit:[]});
+ render(<Saved><AssistantPanel projectId={null} context={{image_id:null,state:{core:{},workspaces:{}}}}/></Saved>);
+ await screen.findByText(/Local test/);
+ fireEvent.change(screen.getByLabelText('Ask the local assistant'),{target:{value:'Explain colocalization.'}});
+ const button=screen.getByText('Ask local assistant') as HTMLButtonElement;expect(button.disabled).toBe(false);fireEvent.click(button);
+ await screen.findByText('General methodological advice. [project]');
+ const call=vi.mocked(json).mock.calls.find(c=>c[0]==='/api/assistant/chat')!;
+ expect(JSON.parse(call[1]!.body as string)).toMatchObject({project_id:null,allow_online:false,context:{image_id:null}});
+ expect(screen.queryByText(/Save a project using the controls/)).toBeNull();
+});

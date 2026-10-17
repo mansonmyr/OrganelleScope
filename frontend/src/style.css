@@ -50,3 +50,10 @@ input[type=range]{accent-color:#ff7d00}
 .circle-size {flex:1;min-width:220px;}
 .batch-panel hr {border-color:#254650;}
 @media(max-width:900px) {.batch-grid {grid-template-columns:1fr;}}
+.section-image {touch-action:none;outline-offset:3px;}
+.section-image.move-cuboid {cursor:grab;}
+.section-image.move-cuboid:active {cursor:grabbing;}
+.section-image rect.outside-section {fill:none;stroke-dasharray:4 3;}
+button.metric-explanation {background:transparent;border:0;padding:0;color:#ffecd1;text-decoration:underline dotted;text-underline-offset:4px;font:inherit;}
+button.metric-explanation:hover {color:#ffb46d;}
+.metric-explanation + dialog {white-space:normal;}
