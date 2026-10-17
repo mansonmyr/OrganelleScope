@@ -6,10 +6,11 @@ from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--dmg',type=Path,required=True)
+parser.add_argument('--dmg',type=Path)
 parser.add_argument('--output',type=Path,required=True)
 args=parser.parse_args()
-dmg=args.dmg.resolve()
+version=json.loads((root/'package.json').read_text())['version']
+dmg=(args.dmg or root/'release'/f'OrganelleScope-{version}-macos-arm64.dmg').resolve()
 if sys.platform!='darwin' or not dmg.is_file():parser.error('Select an existing macOS disk image on a Mac.')
 
 def run(arguments,**kwargs):

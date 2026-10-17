@@ -24,5 +24,5 @@ def compute_analysis(folder,record,info,options,checkpoint=lambda:None):
             if roi.z==z:results.append(analyze_roi(channels,roi,info.channel_labels,options.target_channel,options.threshold_mode,thresholds,(info.calibration['X'].value_um,info.calibration['Y'].value_um)))
     return {'algorithm_version':'roi-3','processing':provenance(options.processing,folder.parent),'image_id':record['id'],'source_sha256':record['sha256'],'image_info':record['info'],
         'request':options.model_dump(),'results':results,'validation':{'status':'engineering-tested; biological validation pending','publication_ready':False,
-        'limitations':['No spatially calibrated significance or experiment-level inference.','Independent microscopy-software and real-control benchmarks pending.'],'methods_document':'docs/ROI_STATISTICS.md'},
+        'limitations':['No spatially calibrated significance or experiment-level inference.','Independent microscopy-software and real-control benchmarks pending.'],'methods_document':'MANUAL.md#part-vi--roi-measurements-and-channel-associations'},
         'scope':f"Separate XY-plane ROIs; {'processed float32' if options.processing.active else 'native source'} intensities; no 3D or pooled biological inference."}

@@ -35,3 +35,7 @@ batch-data/
 
 .dev-restoration-check/
 restoration-data/
+
+# Local maintenance instructions and retired documentation
+AGENTS.md
+local-archive/

@@ -5,7 +5,7 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Research development source 0.2.4.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
+**Research development source 0.2.5.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
 
 ## Main features
 
@@ -30,12 +30,14 @@ Open a TIFF, confirm channels/axes/calibration, inspect the image and draw ROIs.
 |---|---|
 | [Manual](MANUAL.md) | User guide and scientific interpretation |
 | [Software comparison](docs/SOFTWARE_COMPARISON.md) | napari, QuPath, CellProfiler, Fiji JaCoP/Coloc 2, Icy and Imaris |
-| [Model decisions](README_MODEL_DECISIONS.md) / [candidate assessment](docs/MODEL_SELECTION.md) | Why Gemma remains; GPT-OSS, Llama Vision and optional vision candidates |
-| [Validation](docs/VALIDATION.md) / [release readiness](docs/RELEASE_READINESS.md) | Numerical evidence and outstanding qualification |
+| [Model decisions](README_MODEL_DECISIONS.md) | Why Gemma remains; GPT-OSS, Llama Vision and optional vision candidates |
+| [Validation](docs/VALIDATION.md) | Numerical evidence and outstanding qualification |
 
 ## Development and downloads
 
-See [development setup](MANUAL.md#57-development-setup). GitHub Actions can build development installers; local output is in `release/` and is excluded from Git. Installers belong in GitHub Releases or Actions artifacts, not the Packages registry. See the [verified build record](docs/BUILD_VERIFICATION.json); this source update does not publish a new installer.
+Download Windows x64 or Apple Silicon macOS installers from **[Releases](https://github.com/mansonmyr/OrganelleScope/releases)**. Each release candidate includes checksums and platform verification records. Compact installers exclude the optional Gemma weights/runtime. macOS is ad-hoc signed and not notarized; Windows has no publisher certificate.
+
+See [source setup and publishing](docs/DEVELOPMENT.md). Native installation checks and biological validation remain incomplete; see [verification status](docs/VALIDATION.md).
 
 ## Licensing
 

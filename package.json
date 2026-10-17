@@ -1,6 +1,6 @@
 {
   "name": "organellescope",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": true,
   "description": "Calibrated spatial microscopy workbench",
   "author": "Kai Hong Ooi",
@@ -31,6 +31,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "build/notices",
+        "to": "notices",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
@@ -50,7 +57,8 @@
       "binaries": [
         "Contents/Resources/backend/organellescope-backend"
       ],
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "artifactName": "OrganelleScope-${version}-macos-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -61,7 +69,8 @@
           ]
         }
       ],
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "artifactName": "OrganelleScope-${version}-windows-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

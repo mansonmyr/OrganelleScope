@@ -27,4 +27,4 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-stack-check-') as temp:
         assert all(c['changed_pixels']==2048**2 for c in r.json()['channels'])
     rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     report={'shape_czyx':[4,16,2048,2048],'bit_depth':16,'decoded_bytes':4*16*2048**2*2,'compressed_file_bytes':source_bytes,'source_sha256':record['sha256'],'calibration_um_xyz':[.1,.1,.5],'z_extent_um':8,'cuboid_voxels':cube['voxel_count'],'exact_sum_check':True,'timings':timings,'process_peak_rss_bytes':int(rss if sys.platform=='darwin' else rss*1024),'scope':'One deterministic synthetic stack, local source service. Checks import, volume preparation, exact full-resolution cuboid sum, threshold mask and full-plane QC. Not a real acquisition, sustained batch stress test, native Windows result or quality validation.'}
-Path('docs/LARGE_STACK_BENCHMARK.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+Path('docs/validation/LARGE_STACK_BENCHMARK.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))

@@ -2,9 +2,9 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 0.2.4 · 18 October 2026 · research development software**
+**Edition 0.2.5 · 18 October 2026 · research development software**
 
-This manual describes the current source, including editable channel identities, selected-plane signal checks, native-range previews, report-aware assistant interpretation and independently checked manual-threshold conventions. An installed binary can contain an earlier feature set: check its version and the corresponding release notes. The [build verification record](docs/BUILD_VERIFICATION_0.2.4.json) identifies the separately verified installer version; it is not a certificate for later source changes.
+This manual describes the current source, including editable channel identities, selected-plane signal checks, native-range previews, report-aware assistant interpretation and independently checked manual-threshold conventions. An installed binary can contain an earlier feature set: check its version and the corresponding release notes. The [build verification record](docs/validation/BUILD_VERIFICATION_0.2.4.json) identifies the separately verified installer version; it is not a certificate for later source changes.
 
 OrganelleScope combines workflows from the Probabilistic Colocalization Estimator and Quick IF Line Profiler. It keeps microscopy images local, connects explicit measurement choices to saved results, and offers optional database context and a supervised local assistant. It does not convert conventional fluorescence images into validated super-resolution acquisitions, identify molecular binding from overlap, or certify publication readiness. Biological validation remains incomplete. Technical tests and developer-reviewed synthetic assistant assessments do not establish accuracy on independent biological experiments. Numerical verification and biological validation answer different questions.
 
@@ -43,7 +43,7 @@ The deployment targets are Apple Silicon macOS and Windows 11 x64. The developme
 
 A packaged installation contains an Electron interface and a local Python analysis executable; the user does not need to install Python for the packaged analysis service. The compact development installer does not contain the approximately 6.98 GB Gemma weight file or its separate llama.cpp runtime. Assistant setup is independent of image analysis. See [local assistant](docs/LOCAL_ASSISTANT.md).
 
-On macOS, open the DMG, copy the application into Applications and open it. Current development packaging verifies an ad-hoc signature. It is not Apple Developer ID signing or notarization. For an unidentified-developer message, use Apple's app-specific guidance only after checking that the download is the intended build. A damaged-app message can also reflect corruption or invalid signing; do not assume every such warning is harmless and do not disable Gatekeeper globally. Record the filename, version and checksum when reporting installation trouble. [Apple guidance](https://support.apple.com/en-us/102445); [packaging history](docs/MAC_INSTALLATION.md).
+On macOS, open the DMG, copy the application into Applications and open it. Current development packaging verifies an ad-hoc signature. It is not Apple Developer ID signing or notarization. For an unidentified-developer message, use Apple's app-specific guidance only after checking that the download is the intended build. A damaged-app message can also reflect corruption or invalid signing; do not assume every such warning is harmless and do not disable Gatekeeper globally. Record the filename, version and checksum when reporting installation trouble. [Apple guidance](https://support.apple.com/en-us/102445); [packaging history](MANUAL.md#2-platform-and-installation).
 
 ### 3. First complete workflow
 
@@ -219,7 +219,7 @@ In **ROI measurements**, review the regions, choose intensity source and thresho
 
 Thresholds are native intensities, not display brightness, LUT positions or probabilities. Options are zero, manual per channel, or an automatic Costes-style search. Comparisons use strict `>`: a value equal to the threshold is excluded from the other channel's above-threshold condition. Zero threshold includes every positive value, including positive background. Background preparation and thresholds therefore matter greatly for overlap fractions.
 
-The automatic method uses positive total-least-squares regression and searches downward for a valid below-threshold nonpositive correlation. It can be unavailable for nonpositive covariance, constant channels or an unsuccessful search. The secondary threshold is continuous; there is no fallback to the mean. It is **Costes-style**, not a claim of exact Fiji integer-threshold parity. It is currently restricted to raw intensities; processed floating data require zero/manual thresholds. [Exact conventions](docs/ROI_STATISTICS.md).
+The automatic method uses positive total-least-squares regression and searches downward for a valid below-threshold nonpositive correlation. It can be unavailable for nonpositive covariance, constant channels or an unsuccessful search. The secondary threshold is continuous; there is no fallback to the mean. It is **Costes-style**, not a claim of exact Fiji integer-threshold parity. It is currently restricted to raw intensities; processed floating data require zero/manual thresholds. [Exact conventions](MANUAL.md#part-vi--roi-measurements-and-channel-associations).
 
 ### 22. Per-channel quantities
 
@@ -250,7 +250,7 @@ The thresholded denominator in this implementation includes **all** ROI intensit
 
 Pearson is unchanged by a positive affine rescaling of each channel when nothing else changes. Real background correction with clipping and spatially varying estimates is not simply an affine rescaling. Spearman tolerates monotonic intensity transforms but is affected by ties and changing pixel sets. High M1/M2 with low Pearson can be entirely consistent: signals share positive pixels without proportional intensity variation. Interpreting merged colours alone cannot distinguish these situations. [ImageJ guidance](https://imagej.net/imaging/colocalization-analysis).
 
-Method provenance: directional intensity fractions originate in [Manders et al. 1993](#ref-manders1993), while automatic paired-threshold methodology is described in [Costes et al. 2004](#ref-costes2004). These citations do not imply identical software implementations. In the tested Coloc 2 version, its `Above` predicate includes equality at a positive threshold; OrganelleScope uses strict `>`. [The independent threshold benchmark](docs/COLOC2_THRESHOLD_BENCHMARK.json) retains unaligned differences and separately compares equivalent strict predicates using DoubleType next-representable thresholds. It covers manual boundaries, not automatic threshold-search parity or Costes randomization. Interpretation guidance is given by [Dunn et al.](#ref-dunn2011), [Bolte & Cordelières](#ref-bolte2006) and [Zinchuk & Grossenbacher-Zinchuk](#ref-zinchuk2011).
+Method provenance: directional intensity fractions originate in [Manders et al. 1993](#ref-manders1993), while automatic paired-threshold methodology is described in [Costes et al. 2004](#ref-costes2004). These citations do not imply identical software implementations. In the tested Coloc 2 version, its `Above` predicate includes equality at a positive threshold; OrganelleScope uses strict `>`. [The independent threshold benchmark](docs/validation/COLOC2_THRESHOLD_BENCHMARK.json) retains unaligned differences and separately compares equivalent strict predicates using DoubleType next-representable thresholds. It covers manual boundaries, not automatic threshold-search parity or Costes randomization. Interpretation guidance is given by [Dunn et al.](#ref-dunn2011), [Bolte & Cordelières](#ref-bolte2006) and [Zinchuk & Grossenbacher-Zinchuk](#ref-zinchuk2011).
 
 ### 24. Undefined values
 
@@ -280,7 +280,7 @@ Edit X/Y/Z start/end bounds or **Width X, Height Y, Depth Z**. Bounds are inclus
 
 **Measure 3D cuboid** uses all full-resolution source voxels satisfying the selected X, Y and Z bounds, including both end slices, and no voxel outside those bounds in the resulting summaries. Processing, if selected, is performed on the full source XY planes before cropping. The 3D preview's downsampled rays never enter these sums or correlations. A cuboid is limited to 3–500,000 voxels.
 
-Outputs include voxel count, calibrated region volume, per-channel mean/sum/population SD, count above threshold and pairwise correlations/Manders fractions. The UI uses zero Manders thresholds for this workflow. A voxel count of 64 × 64 × 36 is 147,456 selected source voxels; background elsewhere in the stack is not included in that region's summary. These are measurements of a rectangular sampling region, not a segmented mitochondrial/centrosomal volume. Export the 3D report and retain its bounds/recipe. [Implementation](backend/organelle_scope/volume_analysis.py); [independent containment checks](docs/CUBOID_VERIFICATION.md).
+Outputs include voxel count, calibrated region volume, per-channel mean/sum/population SD, count above threshold and pairwise correlations/Manders fractions. The UI uses zero Manders thresholds for this workflow. A voxel count of 64 × 64 × 36 is 147,456 selected source voxels; background elsewhere in the stack is not included in that region's summary. These are measurements of a rectangular sampling region, not a segmented mitochondrial/centrosomal volume. Export the 3D report and retain its bounds/recipe. [Implementation](backend/organelle_scope/volume_analysis.py); [independent containment checks](MANUAL.md#28-what-cuboid-measurement-includes).
 
 ### 29. Threshold-defined compartment masks
 
@@ -314,7 +314,7 @@ For each channel/shell, the engine reports voxel count, sampled physical volume,
 
 ### 33. Numerical reference checks
 
-**Validation** exposes deterministic checks against SciPy correlation functions and hand-derived examples. Passing confirms selected numerical cases, not acquisition quality or biological truth. A separate recorded Coloc 2 comparison covers 12 fixtures and Pearson, Spearman with ties and zero-threshold Manders with a stated numerical tolerance. It does not validate every Costes threshold, randomization test, JaCoP variant or real biological dataset. [Benchmark record](docs/COLOC2_BENCHMARK.json); [validation status](docs/VALIDATION.md).
+**Validation** exposes deterministic checks against SciPy correlation functions and hand-derived examples. Passing confirms selected numerical cases, not acquisition quality or biological truth. A separate recorded Coloc 2 comparison covers 12 fixtures and Pearson, Spearman with ties and zero-threshold Manders with a stated numerical tolerance. It does not validate every Costes threshold, randomization test, JaCoP variant or real biological dataset. [Benchmark record](docs/validation/COLOC2_BENCHMARK.json); [validation status](docs/VALIDATION.md).
 
 ### 34. Processing sensitivity
 
@@ -342,7 +342,7 @@ Use **paired experiments** when conditions belong to matched experimental units 
 
 ### 38. Bootstrap, permutation and multiple comparisons
 
-The hierarchical percentile bootstrap resamples experiments and then cells; paired resampling retains experiment pairing. The reported B-minus-A interval is nominally 95%, on the chosen analysis scale. Percentile intervals can under-cover with few experiments. A local synthetic nested Gaussian study observed coverage below 95%; it is not a universal calibration result. [Simulation record](docs/HIERARCHICAL_SYNTHETIC_BENCHMARK.json).
+The hierarchical percentile bootstrap resamples experiments and then cells; paired resampling retains experiment pairing. The reported B-minus-A interval is nominally 95%, on the chosen analysis scale. Percentile intervals can under-cover with few experiments. A local synthetic nested Gaussian study observed coverage below 95%; it is not a universal calibration result. [Simulation record](docs/validation/HIERARCHICAL_SYNTHETIC_BENCHMARK.json).
 
 The two-sided permutation test exchanges independent experiment assignments or swaps matched condition labels according to the chosen design. The result records exact versus randomized enumeration, possible assignments, seed and attainable p-value resolution. With few experiments, p ≤ 0.05 can be impossible even for a strongly separated result. Additional ROIs cannot improve that assignment resolution.
 
@@ -385,7 +385,7 @@ Optional condition, experiment and cell labels support later aggregation. Check 
 
 **Analyze reviewed batch** saves and freezes a revision into a separate run. If another workspace changed image calibration, review affected items again. Runs are sequential and retain per-image status. Cooperative cancellation is checked between bounded operations; an operation already running can take time to return. Completed results survive cancellation. Restart marks unfinished work interrupted and does not silently resume it.
 
-A later batch edit cannot rewrite an earlier frozen run. Select an earlier run to export it again. Removing a queue item does not delete the source microscopy data or saved run. Batch sessions are manual-save records; keep the saved batch/run as well as exported files. [Detailed batch methods](docs/BATCH_ANALYSIS.md).
+A later batch edit cannot rewrite an earlier frozen run. Select an earlier run to export it again. Removing a queue item does not delete the source microscopy data or saved run. Batch sessions are manual-save records; keep the saved batch/run as well as exported files. [Detailed batch methods](MANUAL.md#part-ix--batch-analysis-and-excel).
 
 ### 42. Excel workbook contents
 
@@ -415,7 +415,7 @@ Candidate symbols can be ambiguous. Explicitly select the correct gene/protein b
 
 Choose functional or physical association mode and the minimum score. The implementation queries selected proteins without silently adding neighbouring nodes; STRING is pinned to the documented version 12.5 endpoint. Request thresholds use a 0–1000 scale; response scores use 0–1. Component evidence scores are shown when returned. A “physical” association record is still database evidence, not an experiment-specific proof of direct binding.
 
-An association score is not `P(binding | this microscopy ROI)`. Network edges may reflect different evidence types and biological contexts. Lack of a returned edge can reflect thresholding, mapping or incomplete evidence rather than absence of interaction. No STRING database dump is bundled. [Provider documentation and access terms](https://string-db.org/help/api/); [application evidence methods](docs/RESEARCH_WORKSPACES.md).
+An association score is not `P(binding | this microscopy ROI)`. Network edges may reflect different evidence types and biological contexts. Lack of a returned edge can reflect thresholding, mapping or incomplete evidence rather than absence of interaction. No STRING database dump is bundled. [Provider documentation and access terms](https://string-db.org/help/api/); [application evidence methods](MANUAL.md#part-x--string-kegg-and-pathway-diagrams).
 
 ### 45. KEGG pathways and diagrams
 
@@ -445,19 +445,19 @@ The assistant now receives an application-generated reading guide before answeri
 
 The assistant's qualitative draft is distinct from engine-derived numbers, which the app presents separately. Citation checks, tool allowlists, source hashes, exact-identifier handling and numeric-prose guards reduce some failures, but do not verify all scientific statements. The model can overstate a control's necessity, confuse a statistical model or infer unsupported directional pathway effects. A cited source can be real yet not support every sentence. Review source-claim agreement and label measured findings, methodological advice and hypotheses separately.
 
-No saved documentation of a control is not proof that the control was never performed. A suggested experiment has not been run simply because the assistant mentions it. Hypothetical knockdown reasoning should state assumptions and alternatives; it is not a measured or calibrated causal prediction. The bounded tool loop allows at most four tool calls and qualitative response checks; it is not an autonomous wet-lab agent. [Observed Gemma failures](docs/GEMMA_EVALUATION.md); [assistant behaviour](docs/LOCAL_ASSISTANT.md).
+No saved documentation of a control is not proof that the control was never performed. A suggested experiment has not been run simply because the assistant mentions it. Hypothetical knockdown reasoning should state assumptions and alternatives; it is not a measured or calibrated causal prediction. The bounded tool loop allows at most four tool calls and qualitative response checks; it is not an autonomous wet-lab agent. [Observed Gemma failures](README_MODEL_DECISIONS.md#preserved-assessment-gemma-evaluation); [assistant behaviour](docs/LOCAL_ASSISTANT.md).
 
 Each new answer includes expandable **Measurement context · application checks**. These deterministic notes are generated from report scope and settings independently of model prose. They identify missing calibration, constant channels, zero-threshold overlap, boundary limitations, batch scope and the distinction between database context and measured activation. The assistant should answer the actual question first, separate observations, explanations, advice and hypotheses, and propose a check that can distinguish alternatives. These notes do not certify that every generated sentence is correct.
 
 For example, a threshold mask's high conditional proximity fraction can support an image-scale spatial description. It cannot establish molecular binding. A constant-channel correlation is undefined despite a completed calculation; changing a threshold does not restore missing variation. KEGG membership can motivate a hypothesis for knockdown studies, but does not establish that a pathway was active or predict a causal direction in the imaged cells. Review measurement interpretation against [Dunn et al.](#ref-dunn2011), acquisition limitations against [Jost & Waters](#ref-jost2019), and replicate claims against [Lazic et al.](#ref-lazic2018).
 
-Local generation can take minutes on a CPU or a busy computer. Each completion request has a five-minute timeout; a timeout is an operational failure and is not evidence for an answer. The synthetic assessment records both accepted drafts and timeouts. See [current interpretation/QC verification](docs/INTERPRETATION_AND_QC_0.2.4.md) and [qualitative model review](docs/ASSISTANT_INTERPRETATION_REVIEW.md).
+Local generation can take minutes on a CPU or a busy computer. Each completion request has a five-minute timeout; a timeout is an operational failure and is not evidence for an answer. The synthetic assessment records both accepted drafts and timeouts. See [current interpretation/QC verification](docs/VALIDATION.md) and [qualitative model review](README_MODEL_DECISIONS.md#preserved-assessment-assistant-interpretation-review).
 
 ### 49. One model, vision options and GPT-OSS
 
 If one model is selected today, keep Gemma because its integration has been assessed locally. This is not proof it is universally superior. Google describes the upstream Gemma 4 12B as multimodal; **our application currently uses text only**, without sending microscopy pixels. Its existing GGUF/runtime image path needs separate qualification. Previous shorthand calling it a text-only model referred to this deployed use, not upstream capability. [Google model card](https://huggingface.co/google/gemma-4-12B-it).
 
-Llama 3.2 Vision 11B **could replace Gemma**, after adapting model loading, prompt/image formatting and tools and passing an application trial. It is not a drop-in weight swap and is not currently recommended as an evidence-backed improvement. Qwen2-VL-7B is a candidate for image questions, not the same model as the earlier retired Qwen3.5-4B text profile. Optional image support and a two-model design remain proposals, not current features. The [model selection assessment](docs/MODEL_SELECTION.md) records MicroVQA results, LLaVA-Med deployment concerns, Pixtral and the BioVLM naming ambiguity.
+Llama 3.2 Vision 11B **could replace Gemma**, after adapting model loading, prompt/image formatting and tools and passing an application trial. It is not a drop-in weight swap and is not currently recommended as an evidence-backed improvement. Qwen2-VL-7B is a candidate for image questions, not the same model as the earlier retired Qwen3.5-4B text profile. Optional image support and a two-model design remain proposals, not current features. The [model selection assessment](README_MODEL_DECISIONS.md#preserved-assessment-model-selection) records MicroVQA results, LLaVA-Med deployment concerns, Pixtral and the BioVLM naming ambiguity.
 
 GPT-OSS-20B is a text/tool-use challenger, not a vision upgrade; GPT-OSS-120B is outside the current 24 GB target. Official documentation's approximately 16 GB MXFP4 GPU guidance for 20B is precision/hardware-specific, not a guarantee on an M3 alongside image rendering. Harmony formatting needs qualification. Neither GPT-OSS candidate has been downloaded or locally compared. No benchmark-based claim of superior microscopy interpretation is made. [OpenAI model documentation](https://developers.openai.com/api/docs/models/gpt-oss-20b); [hardware guide](https://developers.openai.com/cookbook/articles/gpt-oss/run-transformers).
 
@@ -559,15 +559,15 @@ Relevant checks are `python -m pytest backend/tests -q`, frontend `npm test`, UI
 
 ### 58. Installers, GitHub Actions and licensing
 
-Development workflows build Windows x64/macOS ARM64 artifacts and checksums. **GitHub Releases** is the appropriate user-facing place to attach installers; **Actions artifacts** are build outputs with their own retention/access behaviour. **GitHub Packages** is a package/container registry, not the usual DMG/EXE download page. Building an artifact does not attach it to a release automatically. Local `release/` outputs are ignored by Git and are not uploaded just by pushing source.
+Development workflows build Windows x64/macOS ARM64 artifacts and checksums. **GitHub Releases** is the appropriate user-facing place to attach installers; **Actions artifacts** are build outputs with their own retention/access behaviour. **GitHub Packages** is a package/container registry, not the usual DMG/EXE download page. The tagged installer workflow publishes both verified platform builds together as a prerelease after both packaging jobs pass. Manual workflow runs retain build artifacts without publishing a release. Local `release/` outputs are ignored by Git and are not uploaded just by pushing source.
 
 Installer version and checksums must match. The currently verified compact installer is separate from later source work. The repository now includes the user-provided [GNU GPLv3 LICENSE](LICENSE). Retained predecessor PolyForm Noncommercial notices and third-party terms remain relevant; the repository license alone does not settle redistribution rights for every component. Public repository visibility does not itself grant unrestricted reuse. Model licenses, provider database terms and application code licenses are distinct. No KEGG/STRING database dump or model weights is committed to this repository.
 
-### 59. Comparison and future direction
+### 59. Comparison and scope
 
 See the [detailed software comparison](docs/SOFTWARE_COMPARISON.md) for napari, QuPath, CellProfiler, Fiji JaCoP/Coloc 2, Icy and Imaris. Compare actual versions, enabled modules/plugins and matched metric/threshold/mask conventions. This is a workflow comparison, not an accuracy ranking or assertion of unique algorithms.
 
-Future viewer improvements will be considered against specific user tasks and tested independently. The application uses established scientific viewing conventions; references to other viewers are comparisons, not claims that their features originated here. No third-party viewer code or dependency was added by these layout changes. The UI uses #6DB1BF for the Workspace/header, #FFEAEC for panels, #FDF0D5 for the page/inputs and #83BCFF for primary/selected controls, with dark readable text. Image LUTs and scientific overlays are independent of this interface theme.
+The application uses established scientific viewing conventions; references to other viewers are comparisons, not claims that their features originated here. No third-party viewer code or dependency was added by these layout changes. The UI uses #6DB1BF for the Workspace/header, #FFEAEC for panels, #FDF0D5 for the page/inputs and #83BCFF for primary/selected controls, with dark readable text. Image LUTs and scientific overlays are independent of this interface theme.
 
 ---
 
@@ -765,7 +765,7 @@ These papers support the concepts identified below. A citation is not an endorse
 
 ### Application-specific methods and evidence
 
-- [ROI definitions](docs/ROI_STATISTICS.md), [preparation](docs/PREPROCESSING.md), [current masks/inference methods](docs/PROCESSING_AND_INFERENCE.md), [batch export](docs/BATCH_ANALYSIS.md), [evidence/sections](docs/RESEARCH_WORKSPACES.md).
-- [Validation](docs/VALIDATION.md), [Coloc 2 fixtures](docs/COLOC2_BENCHMARK.json), [cuboid checks](docs/CUBOID_VERIFICATION.md), [hierarchical simulation](docs/HIERARCHICAL_SYNTHETIC_BENCHMARK.json), [Gaussian simulation](docs/INFERENCE_SYNTHETIC_BENCHMARK.json).
-- [Gemma evaluation](docs/GEMMA_EVALUATION.md), [Liquid comparison](docs/LIQUID_COMPARISON.md), [cumulative decisions](README_MODEL_DECISIONS.md), [new candidate assessment](docs/MODEL_SELECTION.md).
-- [Software comparison](docs/SOFTWARE_COMPARISON.md), [release readiness](docs/RELEASE_READINESS.md), [build environment](docs/BUILD_ENVIRONMENT.json), [third-party notices](third_party/NOTICE.md).
+- [Verification status](docs/VALIDATION.md) and [build process](docs/DEVELOPMENT.md).
+- [Coloc 2 fixtures](docs/validation/COLOC2_BENCHMARK.json), [manual-threshold comparisons](docs/validation/COLOC2_THRESHOLD_BENCHMARK.json), [hierarchical simulation](docs/validation/HIERARCHICAL_SYNTHETIC_BENCHMARK.json) and [Gaussian simulation](docs/validation/INFERENCE_SYNTHETIC_BENCHMARK.json).
+- [Cumulative model decisions and preserved assessments](README_MODEL_DECISIONS.md), [assistant setup](docs/LOCAL_ASSISTANT.md) and [software comparison](docs/SOFTWARE_COMPARISON.md).
+- [Third-party notices](third_party/NOTICE.md) and [release notes](docs/RELEASE_NOTES.md).

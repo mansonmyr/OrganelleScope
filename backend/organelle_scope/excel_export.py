@@ -80,7 +80,7 @@ def export_batch(run):
            ['Missing values','Blank numeric cells mean unavailable or undefined, never zero. Inspect warnings and threshold status.'],
            ['Interpretation','Separate XY-plane ROI measurements. No pooled p-values, biological replicate inference, binding probability or super-resolution claim. Gaussian LRT is a descriptive covariance statistic.'],
            ['Review','Every image requires manual ROI and settings review before starting. Processing does not change source TIFF pixels.'],
-           ['Reproducibility','Export full JSON alongside this workbook for complete engine results, image metadata and provenance. See docs/ROI_STATISTICS.md and docs/BATCH_ANALYSIS.md.'],
+           ['Reproducibility','Export full JSON alongside this workbook for complete engine results, image metadata and provenance. See MANUAL.md#part-vi--roi-measurements-and-channel-associations and MANUAL.md#part-ix--batch-analysis-and-excel.'],
            ['Validation','Engineering tested; independent microscopy benchmarks and biological validation remain pending.']]
     summary=[['Image ID','Filename','Source SHA-256','Status','Error','Experiment','Cell','Condition','ROI count','Reviewed']]
     settings=[['Image ID','Axes','Series index (zero based)','X µm/pixel','Y µm/pixel','Z µm/plane','Calibration details JSON','Channel labels JSON','Threshold mode','Manual thresholds JSON','Target channel (one based)','Processing JSON','Algorithm version']]

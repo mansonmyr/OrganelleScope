@@ -10,6 +10,9 @@ const mac=process.platform==='darwin';
 if(!mac && process.platform!=='win32')throw new Error('Build desktop installers on macOS or Windows.');
 const output=mac?await mkdtemp(path.join(os.tmpdir(),'OrganelleScope-package-')):path.join(root,'release');
 const cli=path.join(root,'node_modules','electron-builder','cli.js');
+const python=process.env.ORGANELLESCOPE_PYTHON||(process.platform==='win32'?'python':'python3');
+const notices=spawnSync(python,['scripts/dependency-notices.py'],{cwd:root,stdio:'inherit'});
+if(notices.status!==0)process.exit(notices.status??1);
 const fullAI=process.env.ORGANELLESCOPE_INCLUDE_ASSISTANT==='1';
 const extra=[];
 if(fullAI){

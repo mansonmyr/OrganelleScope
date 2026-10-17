@@ -12,4 +12,4 @@ for n in [5,20,50]:
             p=normal_posterior(r.normal(mu,sigma,n),o);lo,hi=p['credible_interval_95'];covered+=lo<=mu<=hi;biased+=p['posterior_mean']-mu
         out.append({'experiments':n,'true_mean':mu,'true_sigma':sigma,'coverage_fraction':covered/1000,'mean_posterior_bias':biased/1000})
 report={'seed':20261017,'simulations_per_case':1000,'prior':o.model_dump(include={'prior_mean','prior_kappa','prior_alpha','prior_beta'}),'cases':out,'scope':'Gaussian experiment means with known simulated truth. Coverage is conditional on this model and prior; no biological or non-Gaussian guarantee. Small-n prior sensitivity is expected. Not a calibration of hierarchical bootstrap intervals.'}
-Path('docs/INFERENCE_SYNTHETIC_BENCHMARK.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+Path('docs/validation/INFERENCE_SYNTHETIC_BENCHMARK.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))

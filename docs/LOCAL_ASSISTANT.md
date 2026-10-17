@@ -1,6 +1,6 @@
-# Local assistant and project persistence — source milestone 0.1.11
+# Local assistant setup and operation
 
-This milestone adds a working **experimental** local assistant and manually saved projects. It does not publish a new installer, certify biological conclusions, or enable autonomous analysis changes.
+The experimental local assistant interprets supplied measurements and evidence. It does not certify biological conclusions or change analysis settings. The [manual](../MANUAL.md#part-xi--local-assistant-and-model-decisions) describes its user-facing workflow.
 
 ## Save and reopen a project
 
@@ -8,7 +8,7 @@ Use **Project name → Save project**. **Save as new** creates an independent sn
 
 Snapshots preserve source identity, axes/calibration, XY ROIs and the selected line, processing recipes and measurement source, thresholds, XY results, Z/workspace selection, 3D channel/opacity/cutoff/Z-stretch, orthogonal positions/cuboid settings and reports, validation inputs/reports, molecular selections/reports/diagram provenance and the last twenty assistant turns with tool records. Line profiles are recomputed from the restored source and selected line. A rotated camera position, in-progress polygon vertices, unapplied preparation edits, temporary dialogs and running jobs are not saved.
 
-The imported TIFF already resides in the local image store; project JSON references it rather than duplicating a large stack. Source SHA-256 is checked when reopening. If another import-setting edit changed its calibration/axes, reopening creates an isolated import association with the saved metadata, preserving the other association. Atomic JSON replacement avoids partial writes, and revisions prevent silent overwriting by a second window. A project whose original source is missing or changed is rejected; source recovery and portable project archives are future work. Back up the image store **and** its sibling `project-data` folder together. Project metadata/reports are currently capped at 16 MiB. The selector lists the fifty most recently saved projects; older project files are retained on disk. Pagination is a future project-browser improvement.
+The imported TIFF already resides in the local image store; project JSON references it rather than duplicating a large stack. Source SHA-256 is checked when reopening. If another import-setting edit changed its calibration/axes, reopening creates an isolated import association with the saved metadata, preserving the other association. Atomic JSON replacement avoids partial writes, and revisions prevent silent overwriting by a second window. A project whose original source is missing or changed is rejected. Portable project archives and the separate workspace recovery copy are documented in the manual. Back up the image store **and** its sibling `project-data` folder together. Project metadata/reports are currently capped at 16 MiB. The selector lists the fifty most recently saved projects; older project files are retained on disk.
 
 Development locations: `.dev-images/`, `project-data/`, `evidence-cache/` and `assistant/` in the repository directory. Packaged applications use their existing application-data location and sibling folders. None of these folders belongs in Git. Saved evidence reports remain in the project; diagram pixels are in the bounded evidence cache and can be re-fetched with their provenance. A project snapshot is not an archival copy of the entire KEGG database.
 
@@ -43,7 +43,7 @@ backend/.venv/bin/python scripts/setup-local-assistant.py --download
 
 On native Windows x64 use `backend\.venv\Scripts\python.exe`. The script selects the pinned Apple Silicon Metal runtime or Windows x64 CPU runtime, verifies downloaded bytes before installation, and stores them under ignored `.local-runtime/` and `.local-models/`. Running without `--download` only prints the manifest. Downloading model/runtime assets is never an automatic side effect of importing an image or starting the application.
 
-Apple Silicon has been smoke-tested on the development M3/24 GB system. Native Windows CPU runtime execution and installation are **not yet qualified**; Parallels/Windows ARM is not a native Windows x64 qualification. Custom bundled locations can be supplied using `ORGANELLESCOPE_LLAMA_SERVER` and `ORGANELLESCOPE_MODEL`; the pinned model checksum still applies. The desktop installer does not bundle these assets in this milestone. Full offline installer integration remains a release task, including complete dependency notices and platform signing.
+Apple Silicon has been smoke-tested on the development M3/24 GB system. Native Windows CPU runtime execution and installation are **not yet qualified**; Parallels/Windows ARM is not a native Windows x64 qualification. Custom bundled locations can be supplied using `ORGANELLESCOPE_LLAMA_SERVER` and `ORGANELLESCOPE_MODEL`; the pinned model checksum still applies. Compact release installers do not bundle these assets. Optional full-offline packaging has not been qualified for distribution.
 
 Start the development app and open **Local assistant**. Enter a question and choose **Ask local assistant**; an installed model starts automatically. **Start local model** is also available to load it in advance. No project save or online lookup is required. **Unload model** releases the owned process. The app also stops its owned model on normal backend shutdown. No subscription, cloud inference service, API key or Ollama installation is needed. The loopback server uses a random port/session secret; no arbitrary remote inference endpoint is accepted.
 
@@ -66,7 +66,7 @@ The allowlist has no shell, arbitrary filesystem, arbitrary URL, image modificat
 
 An automatic bounded measurement summary supplies selected ROI settings and metrics before generation; the full report remains available through read_measurements. Compact interpretation context retains selected threshold/background settings even when a large raw report is truncated. Missing documentation must be described as undocumented, rather than proof a control was never performed. General methodological advice must be distinguished from claims supported by database records. These are prompt/data improvements, not enforced scientific guarantees.
 
-Engineering tests cover revisions/source integrity, restoration isolation, persisted workspace reports, tool permissions, offline query boundaries, model context format and invalid-reference/quantitative-answer rejection. Real model tests and their limitations are recorded in `docs/ASSISTANT_EVALUATION.md`. Curated biological interpretation, citation-entailment assessment, prompt-injection robustness and native platform qualification remain release gates.
+Engineering tests cover revisions/source integrity, restoration isolation, persisted workspace reports, tool permissions, offline query boundaries, model context format and invalid-reference/quantitative-answer rejection. Real model tests and their limitations are recorded in the [preserved assessment](../README_MODEL_DECISIONS.md#preserved-assessment-assistant-evaluation). Curated biological interpretation, citation-entailment assessment, prompt-injection robustness and native platform qualification remain release gates.
 
 
 ## Disk-space policy
@@ -77,7 +77,7 @@ The cleanup allowlist does not remove images, saved projects, conversations, ROI
 
 ## Candidate assessment
 
-Gemma remains the selected model after [the Liquid comparison](LIQUID_COMPARISON.md). The pinned Liquid profile is retained only for reproducible assessment; its temporary weights are removed after review. `scripts/setup-local-assistant.py --candidate liquid --download` explicitly downloads it without changing the app model. Run `scripts/evaluate-local-assistant.py --model gemma` or `--model liquid`, with a local `--output` path, sequentially against the named development fixtures. Both use the same application safeguards; different vendor sampling/thinking profiles are documented. This is not a model-selection setting exposed to application users or an installer change.
+Gemma remains the selected model after [the Liquid comparison](../README_MODEL_DECISIONS.md#preserved-assessment-liquid-comparison). The pinned Liquid profile is retained only for reproducible assessment; its temporary weights are removed after review. `scripts/setup-local-assistant.py --candidate liquid --download` explicitly downloads it without changing the app model. Run `scripts/evaluate-local-assistant.py --model gemma` or `--model liquid`, with a local `--output` path, sequentially against the named development fixtures. Both use the same application safeguards; different vendor sampling/thinking profiles are documented. This is not a model-selection setting exposed to application users or an installer change.
 
 ## Current-context smoke checks — 17 October 2026
 
@@ -89,4 +89,4 @@ The repeated current-ROI question, still without saving or online refresh, corre
 
 ## Current modality and selection clarification — 0.2.2
 
-Text-only describes this application input path, not an inherent limit of upstream Gemma 4 12B. No image pixels are sent to the current assistant. The [model assessment](MODEL_SELECTION.md) records Google's multimodal card, possible Llama Vision replacement, optional Qwen2-VL and GPT-OSS comparisons; none has replaced the active model.
+Text-only describes this application input path, not an inherent limit of upstream Gemma 4 12B. No image pixels are sent to the current assistant. The [model assessment](../README_MODEL_DECISIONS.md#preserved-assessment-model-selection) records Google's multimodal card, possible Llama Vision replacement, optional Qwen2-VL and GPT-OSS comparisons; none has replaced the active model.
