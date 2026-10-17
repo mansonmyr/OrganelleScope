@@ -1,136 +1,40 @@
 # OrganelleScope
 
-A desktop microscopy workbench bringing together the Probabilistic Colocalization Estimator and Quick IF Line Profiler, with image measurements, processing sensitivity, calibrated 3D inspection and molecular evidence in one local workflow.
+A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Source milestone 0.2.1 — research software in development. Numerical checks and working features do not constitute biological or publication validation. Installed binaries may lag the source; a local macOS development installer is built for evaluation, but no new installer is published on GitHub by this milestone.**
+**Research development source 0.2.2.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
 
-## Current functionality
+## Main features
 
-| Area | Implemented | Current boundary |
-| --- | --- | --- |
-| Image import | TIFF, OME-TIFF and ImageJ TIFF; 8/16-bit; up to four channels; axes/calibration provenance and manual correction | Static images/stacks; unsupported layouts fail explicitly; no time-lapse analysis |
-| ROI and profiles | Circular/polygonal XY ROIs per Z plane; calibrated line profiles and single-peak FWHM | Numeric circle diameter in µm; manual review required in batches; threshold-defined 3D masks in selected cuboids |
-| Colocalization | Pearson, Spearman, overlap and Manders measures; per-channel summaries and standardized regression | No molecular-binding probability; formulas/threshold conventions must be matched before comparing software |
-| Preprocessing | Constant per-channel, square-opening or rolling-ball background subtraction; optional Gaussian smoothing; raw/processed measurement selection and matched-contrast comparison | Noise2Void and deconvolution removed; background subtraction and Gaussian smoothing retained |
-| Statistical controls | Independent numeric references, processing sensitivity and seeded whole-plane toroidal shifts for one ROI/channel pair | Stationarity-dependent, unadjusted spatial control; experiment-level paired/independent permutation tests, hierarchical bootstrap, BH correction and optional explicit Gaussian MLE/Bayesian uncertainty; no general significance certification |
-| 3D inspection | All-channel volume rendering, physical/voxel-space labeling, linked XY/XZ/YZ sections and display-only Z stretch | Downsampled rendering is separate from measurement; no claim of super-resolution |
-| 3D measurement | Inclusive full-resolution cuboid summaries, calibrated region volume and channel associations | Up to 500,000 voxels; editable threshold masks, surfaces, object volumes/intensities, proximity and radial enrichment; marker-defined masks need biological review |
-| Molecular evidence | Human STRING identifier selection/association networks and academic KEGG gene/pathway lookup; on-demand KEGG pathway diagrams with zoom and provenance | Identifier/species queries only; reference maps do not show experimentally inferred activation or knockdown effects |
-| Reproducibility | Source SHA-256, calibration, processing recipes/versions, ROI requests, seeds, evidence dates/hashes and JSON reports | Versioned local projects restore workspace settings, ROI/3D/validation reports and evidence; one image per project, portable archives and a separate latest-workspace recovery copy; batch experiments retain per-image review |
-| Local assistant | Gemma 4 12B Instruct official QAT Q4_0 via owned llama.cpp; current-workspace questions without saving, deterministic reference tools and bounded STRING/KEGG refresh with visible tool records | Experimental; qualitative drafts with recorded numeric values shown separately; model/runtime setup separate; native Windows and biological interpretation validation pending |
-| Desktop distribution | Electron/local Python service; macOS ARM64 and Windows x64 packaging configuration | Development distribution; image-restoration runtimes excluded and opt-in bundled Gemma configuration; no Developer ID notarization or production certification |
+- TIFF / OME-TIFF / ImageJ TIFF, native 8/16-bit data, static images/Z stacks and up to four channels, with metadata review and physical calibration.
+- Persistent XY/3D preview, per-channel LUTs, trackpad zoom/panning, linked sections and PNG snapshots with display provenance.
+- Circular/polygonal ROIs, physical circle diameters, line profiles, FWHM and defined Pearson/Spearman/Manders measurements.
+- Background subtraction and optional Gaussian smoothing, matched-contrast previews and processing diagnostics. Noise2Void and deconvolution have been removed.
+- Full-resolution cuboids, inspectable threshold masks/objects, image-based proximity and radial enrichment.
+- Reviewed per-image batches, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
+- Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant for recorded results and evidence.
+- Local versioned projects, portable archives, recovery state and source/settings/evidence provenance.
 
-Methods: [batch workflow and Excel export](docs/BATCH_ANALYSIS.md), [ROI statistics](docs/ROI_STATISTICS.md), [preprocessing](docs/PREPROCESSING.md), [research workspaces and evidence](docs/RESEARCH_WORKSPACES.md), [validation status](docs/VALIDATION.md).
+## Start here
 
-## Functional comparison with other applications
+Read the **[complete manual](MANUAL.md)** for installation, step-by-step use, every current workspace, formulas, interpretation, limits, troubleshooting, glossary and references.
 
-Reviewed **16 October 2026** against the primary documentation linked below. This is a capability and workflow comparison, not an accuracy, speed or usability benchmark. Host applications, bundled modules and optional plugins are identified separately. A feature not described in the reviewed sources is not proof that no extension can provide it. Versions, enabled plugins and commercial packages matter.
+Open a TIFF, confirm channels/axes/calibration, inspect the image and draw ROIs. Select analysis settings explicitly, calculate and export the full results. Saving is optional for asking the assistant; model setup is separate from image analysis. Neither overlap nor a rendered volume establishes molecular binding or super-resolution.
 
-| Application / component | Main workflow | Colocalization and quantitative analysis | 3D and object analysis | Automation / reproducibility | Fit relative to OrganelleScope |
-| --- | --- | --- | --- | --- | --- |
-| **OrganelleScope 0.2.1 source** | Guided local fluorescence inspection, measurements and biological context | Built-in XY/cuboid intensity metrics, profiles, processing sensitivity and a conditional translation control | Volume preview, linked sections, adjustable cuboids and inspectable threshold masks/surfaces | Versioned local projects and source/recipe/seed/evidence records; bounded experimental local assistant; reviewed sequential batch jobs and Excel/JSON export | Combines these steps in one interface; scientific and production validation remain incomplete |
-| **[napari](https://napari.org/stable/getting_started/quick_start.html)** | Extensible multidimensional image viewer and annotation platform | Analysis supplied through Python and domain-specific plugins; capabilities depend on the selected tools | Native n-dimensional layers, 3D visualization and annotations | Python API and plugins | Stronger general-purpose viewer ecosystem; compare a specified plugin configuration rather than treating the viewer as a fixed colocalization package |
-| **[QuPath](https://github.com/qupath/qupath/blob/main/README.md)** / [multiplex analysis](https://qupath.readthedocs.io/en/latest/docs/tutorials/multiplex_analysis.html) | Large-image, whole-slide, tissue/cell and multiplex analysis | Cell/object intensity measurements and classification; custom workflows through scripting/extensions | Rich tissue/object workflows; the reviewed documentation focuses on these rather than a confocal volume-rendering suite | Projects, scripting and extensibility | Stronger established tissue-analysis and project workflows; different primary focus from subcellular stack colocalization |
-| **[CellProfiler](https://cellprofiler.org/introduction)** / [MeasureColocalization](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.2.8/modules/measurement.html#measurecolocalization) | Reusable image-analysis pipelines and high-content measurements | Dedicated image/object colocalization module, including 2D and 3D support | Segmentation and object measurements; module-specific dimensional support | Configurable pipelines and export workflows | Stronger established automated analysis; assess the chosen modules/settings rather than assuming all metrics are equivalent |
-| **Fiji/ImageJ + [JaCoP](https://imagej.net/imaging/colocalization-analysis)** | Dedicated colocalization plugin within ImageJ | Pearson, Manders/overlap, Li/Van Steensel approaches, Costes tools and object-based options | Stack/object capabilities depend on the JaCoP variant and settings; host supplies additional tools | ImageJ workflows; reproducibility depends on recording plugin version, masks and parameters | A broader established colocalization toolbox; classic JaCoP and BIOP variants must be distinguished in benchmarks |
-| **Fiji/ImageJ + [Coloc 2](https://imagej.net/plugins/coloc-2)** | Pixel-intensity colocalization with scatterplots and reports | Pearson, Manders, Costes, Li, automatic thresholds and significance testing | Z-stack support; Coloc 2 explicitly does not provide object-based colocalization | Host workflows and numerical/report output | Direct 12-fixture comparison passed for Pearson, Spearman and zero-threshold Manders; Costes-style thresholds and toroidal test are not claimed to reproduce Coloc 2 |
-| **[Icy](https://icy.bioimageanalysis.org/)** + [ColocalizationStudio protocol](https://icy.bioimageanalysis.org/protocol/spot-detection-and-colocalization-object-analysis/) | Extensible bioimage processing with reusable protocols | Documented spot-detection/object-colocalization workflow; additional analysis depends on plugins/protocols | Detection/ROI workflows depend on the chosen components | Visual protocols, plugins and scripts | A relevant comparator for future object/spot analysis; matching methods and segmentation settings is essential |
-| **[Imaris Essentials / Coloc](https://imaris.oxinst.com/products/imaris-essentials)** | Commercial interactive 3D microscopy visualization and analysis | Colocalization/co-distribution analysis within the Imaris product ecosystem | Volume/surface rendering, object distances and overlaps | Package-dependent analysis workflows and reporting | A stronger established 3D-analysis comparator; current OrganelleScope cuboids do not replace surface segmentation or object-distance workflows |
+## Documentation
 
-OrganelleScope's present emphasis is the connection between calibrated images, explicit measurement/processing choices and traceable STRING/KEGG context. This is an integration goal, not a claim that individual methods are unique or outperform existing tools. No exhaustive plugin-market survey or head-to-head validation has been performed. See the [detailed comparison and release-readiness criteria](docs/SOFTWARE_COMPARISON.md).
+| Guide | Contents |
+|---|---|
+| [Manual](MANUAL.md) | User guide and scientific interpretation |
+| [Software comparison](docs/SOFTWARE_COMPARISON.md) | napari, QuPath, CellProfiler, Fiji JaCoP/Coloc 2, Icy and Imaris |
+| [Model decisions](README_MODEL_DECISIONS.md) / [candidate assessment](docs/MODEL_SELECTION.md) | Why Gemma remains; GPT-OSS, Llama Vision and optional vision candidates |
+| [napari-inspired roadmap](docs/NAPARI_INSPIRED_ROADMAP.md) | Prioritized proposals, clearly separated from implemented LUTs |
+| [Validation](docs/VALIDATION.md) / [release readiness](docs/RELEASE_READINESS.md) | Numerical evidence and outstanding qualification |
 
-## KEGG pathway diagrams
+## Development and downloads
 
-1. Open **Molecular evidence**, select **KEGG**, and indicate academic research use.
-2. Enter a human gene symbol (for example `TP53`), find candidates, and explicitly select the correct gene.
-3. Retrieve its pathway memberships, then choose **View diagram** beside a pathway.
-4. The official human KEGG PNG opens in a zoomable, scrollable dialog. The interactive KEGG website remains available through a source link.
+See [development setup](MANUAL.md#57-development-setup). GitHub Actions can build development installers; local output is in `release/` and is excluded from Git. Installers belong in GitHub Releases or Actions artifacts, not the Packages registry. See the [verified build record](docs/BUILD_VERIFICATION.json); this source update does not publish a new installer.
 
-Diagrams download only when requested. They share the bounded local evidence cache and can be reopened in **Offline only** mode after a successful fetch. No KEGG diagrams or database dumps are included in the repository/installer. Retrieval time, source URL and image hash accompany the evidence export; image colours are KEGG reference annotations, not measured signalling activity. Access requires an available provider or a matching cached result. [KEGG API documentation and academic-use restriction](https://www.kegg.jp/kegg/rest/), [image endpoint](https://www.kegg.jp/kegg/rest/keggapi.html).
+## Licensing
 
-## Current validation and release gates
-
-Source 0.2.1 removes Noise2Void and deconvolution, adds persistent XY/3D zoom controls and separate Background correction, ROI measurements and Channel associations tabs, and retains processing diagnostics, preview PNG/details capture, inspectable 3D masks/surfaces and proximity/radial measurements, experiment-level comparisons, portable project archives and separate recovery autosave. See [methods, benchmark results and limitations](docs/PROCESSING_AND_INFERENCE.md).
-
-Direct Fiji Coloc_2 checks passed on 12 seeded native-intensity fixtures for Pearson, Spearman and zero-threshold Manders (maximum difference 4.44×10⁻¹⁶). Historical N2V assessments remain archived; that feature and its heavy runtime have been removed. Bayesian small-sample prior sensitivity is documented openly; credible intervals are not certified confidence intervals.
-
-Biological validation is deferred at the user’s request because the control images are unavailable. Remaining qualification includes held-out acquisitions, real-world bootstrap coverage/model checks, large-stack stress tests, visual interaction verification, native Windows installation testing, signing/notarization when credentials are available, and public marketing/download launch. Separate conventional/SR samples cannot provide matched reconstruction ground truth. [Release checklist](docs/RELEASE_READINESS.md), [development plan](docs/DEVELOPMENT_PLAN.md).
-
-## Local projects and assistant
-
-Use **Save project** to retain the imported source association, calibration, analysis settings, ROIs, 3D/validation reports and molecular evidence. Reopen from **Open saved project**. Save before switching images or quitting. This is one local image per project; portable archives and autosave are not yet implemented. Independent image queues and reviewed batch runs are available in **Batch analysis**; see [batch workflow and Excel export](docs/BATCH_ANALYSIS.md).
-
-The **Local assistant** uses the current workspace without requiring a project save, and can answer general questions without an image. Gemma 4 12B Instruct QAT Q4_0 runs locally; asking starts an installed model automatically. Numeric values are displayed directly from matching engine reports, alongside a qualitative AI draft and an inspectable tool record. Model/runtime files are a separate, explicit development download (about 6.99 GB total), not a cloud API or part of the current installer. After a successful inference, the app removes known retired model weights and temporary evaluation files; scientific data remains intact. See [setup, privacy and limitations](docs/LOCAL_ASSISTANT.md) and [evaluation](docs/ASSISTANT_EVALUATION.md).
-
-## Development setup
-
-Requires Python 3.11+ and Node.js 24. The planned user-facing installer will bundle its runtimes; these steps are for contributors.
-
-```sh
-python3 -m venv backend/.venv
-backend/.venv/bin/python -m pip install -e 'backend[test]'
-npm ci
-npm ci --prefix frontend
-```
-
-On Windows use `backend\.venv\Scripts\python.exe`. Set `ORGANELLESCOPE_PYTHON` to the interpreter if it is not on PATH.
-
-To start the browser development workspace and local backend:
-
-```sh
-ORGANELLESCOPE_PYTHON=backend/.venv/bin/python npm run dev
-```
-
-The development workspace is at `http://127.0.0.1:5173`. It uses a fixed **development-only** local token. Packaged desktop sessions generate a fresh random token. The service binds only to localhost, does not use cookie authentication, and requires the session header for image operations.
-
-For the actual desktop workspace:
-
-```sh
-npm run build:ui
-ORGANELLESCOPE_PYTHON=backend/.venv/bin/python npm run desktop
-```
-
-Use an absolute interpreter path if launching outside the repository. Imported images are copied to local application storage; originals are not modified. Development-mode imports live in `.dev-images/`, which is excluded from Git. Only open trusted TIFF files in this early build. Supported page layouts are explicit; unsupported layouts fail rather than load a misleading subset.
-
-## Checks
-
-```sh
-backend/.venv/bin/python -m pytest backend/tests -q
-npm test --prefix frontend
-npm run build:ui
-```
-
-Synthetic tests cover basic import/calibration correctness and profile regressions. They do not establish biological validity, reconstruction fidelity, real-data performance or clinical suitability.
-
-## Packaging
-
-`npm run package` builds the UI and a PyInstaller backend, then packages with Electron Builder. Install PyInstaller in the selected Python environment first. Initial targets are macOS ARM64 and Windows x64; Windows ARM and native GPU support require further evaluation. The GitHub packaging workflow runs manually or on explicit `v*-dev*` tags and generates unsigned development artifacts, not a complete production release. No LLM or restoration weights are bundled at this stage.
-
-## Sources and license status
-
-The original repositories remain independent and have been backed up outside this repository. See [migration notes](docs/MIGRATION.md) and [third-party notices](third_party/NOTICE.md). The original projects use PolyForm Noncommercial 1.0.0. A final license for newly written OrganelleScope code has not been chosen; public availability alone does not grant an additional license.
-
-No experimental TIFFs, credentials, model weights, or local environments belong in this repository.
-
-## ROI statistics
-
-Choose Circular ROI or Polygonal ROI from the drawing tool, draw one or more regions, select the threshold method, and press **Calculate ROI statistics**. The line profiler remains a separate drawing tool. ROIs use pixel-center coordinates; legacy dragged circles are circular in XY pixel coordinates. **Apply diameter** sets a physical circle in µm and accounts for unequal X/Y pixel spacing. Measurements use the explicitly selected raw or processed intensities, independently for each ROI on its recorded Z plane; raw is the default. ROI area uses confirmed X/Y scale. Deleting or adding an ROI or changing analysis settings clears the displayed results until recalculation. The last successfully calculated analysis is restored when reopening a saved import. Unsaved edits do not replace it.
-
-See [ROI measurement definitions](docs/ROI_STATISTICS.md) for formulas and limitations. No probability of molecular binding, calibrated significance or nanoscale resolution is inferred from these descriptive measurements.
-
-## macOS development installation
-
-Version 0.1.2 adds explicit ad-hoc development signing of the Mac app and its bundled analysis executable, plus strict signature checks before producing an installer. This is not Apple Developer ID signing or notarization. Mac development builds may still require an app-specific approval in **System Settings → Privacy & Security → Open Anyway** after attempting to open the app. See [Apple's instructions](https://support.apple.com/en-us/102445). A successful signature check is not a malware or scientific-validation certificate.
-
-If a 0.1.1 installer reports that the app is damaged, replace it with the rebuilt 0.1.2 app rather than disabling Gatekeeper globally. Drag OrganelleScope from the new DMG into Applications and choose Replace. Imported images and analyses are stored separately in the app's user-data directory. The signing hooks clean only FinderInfo/ResourceFork metadata in generated build output and do not remove quarantine from installed apps.
-
-A local packaging run writes installers into `release/` (excluded from Git). CI installers remain available as Actions artifacts until attached to a GitHub Release. Publication-ready Mac distribution requires a Developer ID certificate and notarization configured separately; these credentials are not present in the project.
-
-For the accumulating rationale behind retaining Gemma rather than the assessed Liquid/Qwen profiles, see [the model decision README](README_MODEL_DECISIONS.md). It preserves observed failures and comparison limits, not a claim of validated biological interpretation.
-
-
-Source 0.1.12 adds full-resolution rolling-ball subtraction with XY radius and native-intensity ball height, source-linked method guidance, and cuboid width/height/Z-depth controls. Cuboid tests verify selected Z endpoints and exclusion of all out-of-bounds source voxels. Background correction runs on full XY planes before the corrected cuboid is cropped. See [preprocessing details](docs/PREPROCESSING.md) and the [independent cuboid/sample check](docs/CUBOID_VERIFICATION.md). A new installer has not been published for this source milestone.
-
-Source 0.2.1 places the shared image preview above the workspace tabs. Switching workspaces changes only the panels below the tabs; XY/3D preview mode, slice, drawing tool and an active volume camera remain in place. Choose XY slice or 3D preview directly in the viewer. Older projects that used the combined image/volume workspace are mapped to the separate 3D workspace when reopened. No new installer is published by this source update.
-
-XY preview navigation: pinch or scroll to zoom at the pointer; enable **Pan image** to drag. Space-drag and middle-drag also pan. Turn Pan image off to draw ROIs; **Fit image** resets the view.
+New application licensing remains undecided. Predecessor PolyForm Noncommercial terms and [third-party notices](third_party/NOTICE.md) remain relevant. Model/database terms are separate; KEGG access is academic-only in this application. Public source visibility is not an additional license grant. No experimental images, credentials or model weights belong in Git.

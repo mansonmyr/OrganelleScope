@@ -1,3 +1,4 @@
+import {LUTS,channelLuts,lutCss} from './channelLuts';
 import {PreviewZoom} from './PreviewZoom';
 import {RoiSummaryPanel} from './RoiSummaryPanel';
 import {hasRetiredProcessing,rawProcessingCopy} from './retiredProcessing';
@@ -68,6 +69,8 @@ export default function App() {
   const [measurementSource,setMeasurementSource]=useState<"raw"|"processed">("raw");
   const selectedProcessing=measurementSource==="processed"?processing:rawProcessing;
   const info = image?.info;
+  const displayLuts=channelLuts(projectData['Display.luts'],info?.dimensions.C??0),lutQuery=displayLuts.join(',');
+  function changeLut(index:number,name:string){const next=[...displayLuts];next[index]=name as typeof next[number];setProjectData(data=>({...data,'Display.luts':next}));}
   const available = !!info && !info.needs_axis_confirmation && info.dimensions.T === 1;
 
   useEffect(() => { json<ImageRecord[]>("/api/images").then(setRecent).catch(e => setError(String(e))); }, []);
@@ -102,14 +105,14 @@ export default function App() {
   }
 
   useEffect(() => {
-    setPreview(undefined); setProfile(null);
+    setPreview(undefined);
     if (!image || !available) return;
     const abort = new AbortController(); let href: string | undefined;
-    request(`/api/images/${image.id}/preview?z=${z}`, { signal: abort.signal })
+    request(`/api/images/${image.id}/preview?z=${z}&luts=${lutQuery}`, { signal: abort.signal })
       .then(r => r.blob()).then(blob => { if (!abort.signal.aborted) { href = URL.createObjectURL(blob); setPreview(href); } })
       .catch(e => { if (!abort.signal.aborted) setError(String(e)); });
     return () => { abort.abort(); if (href) URL.revokeObjectURL(href); };
-  }, [image, z, available]);
+  }, [image, z, available, lutQuery]);
 
   useEffect(() => {
     setProfile(null);
@@ -182,7 +185,7 @@ export default function App() {
     if(!image)return;setBusy(true);setError("");
     try {
       const recipe=await json(`/api/images/${image.id}/processing/recipe`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(processing)});
-      download({...image,selected_z:z,roi,profile,profile_source:measurementSource,processing_recipe:recipe,measurement_source:measurementSource,area_rois:areas,analysis},"OrganelleScope-inspection.json");
+      download({...image,selected_z:z,display_luts:displayLuts,roi,profile,profile_source:measurementSource,processing_recipe:recipe,measurement_source:measurementSource,area_rois:areas,analysis},"OrganelleScope-inspection.json");
     } catch(e){setError(String(e));}finally{setBusy(false);}
   }
   async function capturePreview(){
@@ -190,7 +193,7 @@ export default function App() {
     setSnapshotBusy(true);setSnapshotMessage('');
     const capturedImage=image,capturedMode=mode,capturedZ=z;
     try{
-      const capture=capturedMode==='volume'?await (volumeCapture.current?volumeCapture.current():Promise.reject(new Error('Wait for the 3D preview to finish loading.'))):{dataUrl:await sliceSnapshot(snapshotStage.current!,includeSnapshotRois),details:{z_index:capturedZ,xy_display_zoom_percent:projectData['PreviewZoom.zoom']??100,capture_extent:'Whole XY plane; inspection zoom does not crop the exported PNG',includes_overlays:includeSnapshotRois,contrast:'Per-channel raw preview intensity scaling; display PNG, not native TIFF intensities',rois:includeSnapshotRois?areas.filter(r=>r.z===capturedZ):[],line:includeSnapshotRois?roi:null}};
+      const capture=capturedMode==='volume'?await (volumeCapture.current?volumeCapture.current():Promise.reject(new Error('Wait for the 3D preview to finish loading.'))):{dataUrl:await sliceSnapshot(snapshotStage.current!,includeSnapshotRois),details:{z_index:capturedZ,channel_luts:displayLuts,xy_display_zoom_percent:projectData['PreviewZoom.zoom']??100,capture_extent:'Whole XY plane; inspection zoom does not crop the exported PNG',includes_overlays:includeSnapshotRois,contrast:'Per-channel raw preview intensity scaling; display PNG, not native TIFF intensities',rois:includeSnapshotRois?areas.filter(r=>r.z===capturedZ):[],line:includeSnapshotRois?roi:null}};
       const details={schema:'organelle-preview-snapshot-1',created_utc:new Date().toISOString(),source_sha256:capturedImage.sha256,image_id:capturedImage.id,image_info:capturedImage.info,preview_mode:capturedMode,measurement_source:'raw',display_only:true,scope:'Display snapshot, not native quantitative image data. XY contrast is per-channel; 3D is downsampled. See recorded display settings.',...capture.details};
       downloadSnapshot(capture.dataUrl,`OrganelleScope-${capturedImage.info.filename.replace(/\.tiff?$/i,'')}-${capturedMode==='slice'?`Z${capturedZ+1}`:'3D'}-${Date.now()}.png`);
       setSnapshotDetails(details);setSnapshotMessage('PNG captured. Export snapshot details to retain calibration, source identity and display settings.');
@@ -222,7 +225,7 @@ export default function App() {
             {(info.calibration[a].conflict || info.calibration[a].value_um == null) && <small>{Object.entries(info.calibration[a].candidates).map(([s,v])=>`${s}: ${v} µm (not applied)`).join("; ")}</small>}</label>)}
           <button disabled={busy} onClick={confirmImport}>Apply import settings</button><p className="hint">Spacing calibrates coordinates; it does not establish optical resolution.</p>
         </section>
-        <section><p className="eyebrow">CHANNELS</p>{info.channel_labels.map((name,i)=><div className="channel" key={i}><i style={{background:colors[i]}}/>{name}</div>)}</section>
+        <section><p className="eyebrow">CHANNELS</p>{info.channel_labels.map((name,i)=><div className="channel channel-lut" key={i}><i style={{background:lutCss(displayLuts[i])}}/><label>{name}<select aria-label={`${name} display LUT`} value={displayLuts[i]} onChange={e=>changeLut(i,e.target.value)}>{Object.entries(LUTS).map(([key,lut])=><option value={key} key={key}>{lut.label}</option>)}</select></label></div>)}<p className="hint">LUTs change preview colours only. Measurements use source intensities.</p><button className="secondary" onClick={()=>setProjectData(data=>({...data,'Display.luts':undefined}))}>Reset channel LUTs</button></section>
         <button className="secondary" disabled={busy||loadingSaved} onClick={exportInspection}>Export measurements & ROIs</button>
       </> : <section className="muted"><p>Original 8/16-bit intensities are preserved.</p><p>Ambiguous axes and missing calibration are shown for review.</p><p>Images stay on this computer.</p></section>}
     </aside><main>
@@ -231,7 +234,7 @@ export default function App() {
       <ProjectStateProvider key={generation} data={projectData} setData={setProjectData}>
       <section className="viewer panel" aria-label="Image preview"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
       <div className="snapshot-controls"><button disabled={!available||snapshotBusy} onClick={capturePreview}>{snapshotBusy?'Capturing…':'Capture PNG'}</button>{mode==='slice'&&<label className="check-label"><input type="checkbox" checked={includeSnapshotRois} onChange={e=>setIncludeSnapshotRois(e.target.checked)}/> Include visible ROIs</label>}<button disabled={!snapshotDetails} onClick={()=>download(snapshotDetails,'OrganelleScope-snapshot-details.json')}>Export snapshot details</button><span className="hint" role="status">{snapshotMessage||'Capture the displayed view; native pixels remain in the TIFF.'}</span></div>
-      {!info ? <div className="empty"><img className="empty-logo" src="./branding/brand-logo.jpg" alt="OrganelleScope — Cellular Exploration & Analysis"/><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel} captureRef={volumeCapture} maskMesh={projectData['Segmentation.mesh'] as Record<string,any>|undefined}/> : <>
+      {!info ? <div className="empty"><img className="empty-logo" src="./branding/brand-logo.jpg" alt="OrganelleScope — Cellular Exploration & Analysis"/><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView luts={lutQuery} image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel} captureRef={volumeCapture} maskMesh={projectData['Segmentation.mesh'] as Record<string,any>|undefined}/> : <>
         <div className="slice-toolbar"><label>Z plane <strong>{z+1} / {info.dimensions.Z}</strong><input aria-label="Z plane" type="range" min={0} max={info.dimensions.Z-1} value={z} onChange={e=>{setZ(Number(e.target.value));setRoi(null);}}/></label><span>{info.calibration.Z.value_um != null ? `${(z*info.calibration.Z.value_um).toFixed(3)} µm from first plane` : "Z spacing unknown"}</span></div>
 
         <PreviewZoom width={info.dimensions.X} height={info.dimensions.Y}><div className="image-stage" ref={snapshotStage} style={{aspectRatio:`${info.dimensions.X}/${info.dimensions.Y}`}}>{preview ? <img src={preview} alt={`Composite Z plane ${z+1}`}/> : <p>Loading source plane…</p>}
@@ -242,8 +245,8 @@ export default function App() {
         <p className="hint viewer-note">ROIs belong to their selected Z plane. Display contrast is adjusted per channel; select raw or processed intensities in ROI measurements below.</p>
       </>}</section>
       <nav className="workspace-nav" aria-label="Workspaces"><button aria-pressed={workspace==='images'} onClick={()=>setWorkspace('images')}>Image & ROI</button><button disabled={!available} aria-pressed={workspace==='processing'} onClick={()=>setWorkspace('processing')}>Background correction</button><button disabled={!available} aria-pressed={workspace==='roi'} onClick={()=>setWorkspace('roi')}>ROI measurements</button><button disabled={!available} aria-pressed={workspace==='associations'} onClick={()=>setWorkspace('associations')}>Channel associations</button><button disabled={!available||!info||info.dimensions.Z<2} aria-pressed={workspace==='volume'} onClick={()=>setWorkspace('volume')}>3D workspace</button><button disabled={!available} aria-pressed={workspace==='validation'} onClick={()=>setWorkspace('validation')}>Validation</button><button aria-pressed={workspace==='evidence'} onClick={()=>setWorkspace('evidence')}>Molecular evidence</button><button aria-pressed={workspace==='batch'} onClick={()=>setWorkspace('batch')}>Batch analysis</button><button aria-pressed={workspace==='assistant'} onClick={()=>setWorkspace('assistant')}>Local assistant</button></nav>
-      <div hidden={workspace!=='volume'}>{image && available && info!.dimensions.Z>=2 && <OrthogonalWorkspace key={`orthogonal-${image.id}`} image={image} processing={processing}/>} {image && available && <SegmentationPanel key={`segment-${image.id}`} image={image} processing={processing} rois={areas}/>}</div>
-      <div hidden={workspace!=='processing'}>{image && available && <ProcessingPanel key={`processing-${image.id}`} imageId={image.id} z={z} labels={info!.channel_labels} bitDepth={info!.bit_depth} value={processing} disabled={busy||loadingSaved} onChange={config=>{setProcessing(config);setAnalysis(null);if(!isProcessed(config))setMeasurementSource("raw");}}/>}
+      <div hidden={workspace!=='volume'}>{image && available && info!.dimensions.Z>=2 && <OrthogonalWorkspace luts={lutQuery} key={`orthogonal-${image.id}`} image={image} processing={processing}/>} {image && available && <SegmentationPanel key={`segment-${image.id}`} image={image} processing={processing} rois={areas}/>}</div>
+      <div hidden={workspace!=='processing'}>{image && available && <ProcessingPanel luts={lutQuery} key={`processing-${image.id}`} imageId={image.id} z={z} labels={info!.channel_labels} bitDepth={info!.bit_depth} value={processing} disabled={busy||loadingSaved} onChange={config=>{setProcessing(config);setAnalysis(null);if(!isProcessed(config))setMeasurementSource("raw");}}/>}
       </div><div hidden={workspace!=='roi'}>{image && available && <section className="panel statistics"><p className="eyebrow">AREA ANALYSIS</p><h2>ROI measurements</h2><p className="hint">Draw circular or polygonal ROIs above. Each region is measured separately on its own plane.</p>
         <label>Measurement source<select aria-label="Measurement source" disabled={busy||loadingSaved} value={measurementSource} onChange={e=>{const source=e.target.value as 'raw'|'processed';setMeasurementSource(source);setAnalysis(null);if(source==='processed'&&thresholdMode==='costes')setThresholdMode('manual');}}><option value="raw">Raw source intensities</option><option value="processed" disabled={!isProcessed(processing)}>Processed intensities (applied recipe)</option></select></label><p className="hint">This selection applies to line profiles and ROI statistics. Raw images remain visible in the image explorer and 3D preview.</p>
         <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} {r.kind==='circle'&&<CircleSizeEditor roi={r} sx={info!.calibration.X.value_um} sy={info!.calibration.Y.value_um} width={info!.dimensions.X} height={info!.dimensions.Y} disabled={busy||loadingSaved} onChange={updated=>{setAreas(a=>a.map(x=>x.id===r.id?updated:x));setAnalysis(null);}}/>}<button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>
@@ -254,7 +257,7 @@ export default function App() {
       {analysis && <><RoiSummaryPanel analysis={analysis}/><button onClick={()=>setWorkspace('associations')}>View channel association results</button></>}
       </div><div hidden={workspace!=='associations'}>{analysis?<StatisticsPanel analysis={analysis}/>:<section className="panel statistics"><h2>Channel associations</h2><p>Draw regions in the shared preview, then calculate their statistics in ROI measurements.</p><button onClick={()=>setWorkspace('roi')}>Go to ROI measurements</button></section>}</div><div hidden={workspace!=='images'}>
       {image && available && !profile && <section className="panel statistics"><h2>Image & ROI</h2><p>Draw a line in the preview for its intensity profile. Use ROI measurements for region intensities and Channel associations for colocalization statistics.</p></section>}
-      {profile && <><SignalChart title={`${measurementSource==='processed'?'Processed':'Source'} intensity profile`} subtitle="Selected measurement intensities · approximate 3 px smoothing for peak widths only" distances={profile.distances} xUnit={profile.unit} yLabel={measurementSource==='processed'?"Processed gray value":"Source gray value"} traces={profile.traces}/><div className="widths">{profile.widths.map((w,i)=><span key={i}>{info!.channel_labels[i]} · single-peak FWHM: {w==null?"not available":`${w.toFixed(3)} ${profile.unit}`}</span>)}</div></>}
+      {profile && <><SignalChart title={`${measurementSource==='processed'?'Processed':'Source'} intensity profile`} subtitle="Selected measurement intensities · approximate 3 px smoothing for peak widths only" distances={profile.distances} xUnit={profile.unit} yLabel={measurementSource==='processed'?"Processed gray value":"Source gray value"} traces={profile.traces.map((trace,i)=>({...trace,color:lutCss(displayLuts[i])}))}/><div className="widths">{profile.widths.map((w,i)=><span key={i}>{info!.channel_labels[i]} · single-peak FWHM: {w==null?"not available":`${w.toFixed(3)} ${profile.unit}`}</span>)}</div></>}
       </div>
       <div hidden={workspace!=='validation'}>{image && available && <ValidationPanel key={`validation-${image.id}`} image={image} rois={areas} processing={processing} measurementProcessing={selectedProcessing} thresholds={thresholds} thresholdMode={thresholdMode} target={target}/>}</div>
       <div hidden={workspace!=='evidence'}><EvidencePanel/></div>

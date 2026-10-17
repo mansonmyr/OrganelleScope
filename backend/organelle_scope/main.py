@@ -19,6 +19,7 @@ from fastapi.responses import Response
 from PIL import Image
 from pydantic import BaseModel, Field
 
+from organelle_scope.display_luts import display_colors
 from organelle_scope.roi_analysis import AnalysisRequest
 from organelle_scope.processing import ProcessingConfig, process_plane, provenance, estimate_background, processing_diagnostics, prepared_plane
 from organelle_scope import __version__
@@ -178,11 +179,11 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
         return Response(np.ascontiguousarray(data, dtype=dtype).tobytes(), media_type="application/octet-stream")
 
     @app.get("/api/images/{image_id}/preview", dependencies=[Depends(authorized)])
-    def preview(image_id: str, z: int = 0) -> Response:
+    def preview(image_id: str, z: int = 0, luts: str | None = None) -> Response:
         folder, _, info = stored(image_id)
-        colors = np.array([[1, .12, .25], [.1, 1, .65], [.2, .45, 1], [.8, .8, .8]])
         output = np.zeros((info.dimensions["Y"], info.dimensions["X"], 3), np.float32)
         try:
+            colors = display_colors(luts, info.dimensions["C"])
             for c in range(info.dimensions["C"]):
                 plane_data = read_plane(folder / "source.tiff", info, c, z)
                 high = float(np.percentile(plane_data[::4, ::4], 99.5)) or float(plane_data.max()) or 1.
@@ -220,10 +221,10 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
         return Response(np.ascontiguousarray(data, dtype="<f4").tobytes(), media_type="application/octet-stream")
 
     @app.post("/api/images/{image_id}/processing/preview", dependencies=[Depends(authorized)])
-    def processing_preview(image_id: str, config: ProcessingConfig, z: int = 0, view: Literal['comparison','background','residual'] = 'comparison') -> Response:
+    def processing_preview(image_id: str, config: ProcessingConfig, z: int = 0, view: Literal['comparison','background','residual'] = 'comparison', luts: str | None = None) -> Response:
         try:
             info, channels = processing_channels(image_id, z, config)
-            colors = np.array([[1, .12, .25], [.1, 1, .65], [.2, .45, 1], [.8, .8, .8]])
+            colors = display_colors(luts, info.dimensions["C"])
             raw = np.zeros((info.dimensions["Y"], info.dimensions["X"], 3), np.float32)
             corrected = np.zeros_like(raw)
             auxiliary = np.zeros_like(raw)

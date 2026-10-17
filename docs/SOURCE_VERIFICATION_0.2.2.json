@@ -1,0 +1,17 @@
+{
+  "source_version": "0.2.2",
+  "backend_tests": 132,
+  "frontend_tests": 65,
+  "production_ui_build": "passed",
+  "local_document_links": "passed",
+  "browser_checks": [
+    "independent magenta/cyan XY LUTs",
+    "live 3D LUT recolouring",
+    "XY PNG capture",
+    "3D PNG capture"
+  ],
+  "measurement_invariance": "API test: native plane bytes, source hash and ROI results identical before/after LUT requests",
+  "model_change": "none; assessment only",
+  "installer": "not rebuilt; see BUILD_VERIFICATION.json for the separate 0.2.1 installer",
+  "biological_validation": "deferred; not established by these tests"
+}

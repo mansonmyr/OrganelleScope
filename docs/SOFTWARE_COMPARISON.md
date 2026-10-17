@@ -67,3 +67,7 @@ Source 0.1.12 adds a full-resolution rolling-ball lower-envelope background filt
 ## 0.2.0 evidence update
 
 Historical 0.2.0 included N2V/RL, removed in 0.2.1. Current OrganelleScope provides matched-contrast residual/QC views, snapshot capture, mask editing/export, calibrated conditional proximity and radial enrichment, and explicit experiment-level comparisons. These additions do not establish superiority over napari plugins, QuPath, CellProfiler, Fiji or Imaris. Threshold masks are less general than trained organelle classification and can merge adjacent objects. See [measured validation and assumptions](PROCESSING_AND_INFERENCE.md). A native Windows installation, actual image-quality and biological benchmarks remain required.
+
+## Source 0.2.2 viewer follow-up
+
+Independent single-image channel LUTs are now implemented. The [napari-inspired roadmap](NAPARI_INSPIRED_ROADMAP.md) distinguishes those controls from proposed layers, object inspection, edit history, calibration context, sensitivity records and multiscale previews. This is a workflow/design assessment, not proof of unique capability or superiority over napari plugins. See [MANUAL.md](../MANUAL.md) for the current feature-by-feature guide.

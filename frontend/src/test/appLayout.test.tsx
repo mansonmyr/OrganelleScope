@@ -68,3 +68,15 @@ it('retains inspection zoom across workspace changes without rescaling source co
  expect(screen.getByRole('heading',{name:'Channel associations'})).toBeTruthy();
  expect(screen.queryByRole('heading',{name:'Background correction & smoothing'})).toBeNull();
 });
+it('keeps per-channel display LUTs through workspace changes and sends them to preview only',async()=>{
+ await openImage();
+ fireEvent.change(screen.getByRole('combobox',{name:'A display LUT'}),{target:{value:'cyan'}});
+ await waitFor(()=>expect(vi.mocked(request).mock.calls.some(([url])=>url==='/api/images/test/preview?z=0&luts=cyan,mint')).toBe(true));
+ fireEvent.click(screen.getByRole('button',{name:'Background correction'}));
+ expect((screen.getByRole('combobox',{name:'A display LUT'}) as HTMLSelectElement).value).toBe('cyan');
+ await waitFor(()=>expect(vi.mocked(request).mock.calls.some(([url])=>url.includes('/processing/preview?z=0&luts=cyan,mint'))).toBe(true));
+ fireEvent.click(screen.getByRole('button',{name:'Save project'}));
+ await waitFor(()=>expect(vi.mocked(json).mock.calls.some(([url,options])=>url==='/api/projects'&&options?.body&&JSON.parse(options.body as string).state.workspaces['Display.luts']?.[0]==='cyan')).toBe(true));
+ fireEvent.click(screen.getByRole('button',{name:'Reset channel LUTs'}));
+ expect((screen.getByRole('combobox',{name:'A display LUT'}) as HTMLSelectElement).value).toBe('rose');
+});

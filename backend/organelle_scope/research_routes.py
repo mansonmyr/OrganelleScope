@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException
 from fastapi.responses import Response
 from PIL import Image
 from organelle_scope import __version__
+from organelle_scope.display_luts import display_colors
 from organelle_scope.image_io import ImageError, read_plane
 from organelle_scope.processing import process_plane, provenance
 from organelle_scope.roi_analysis import AnalysisRequest, analyze_roi
@@ -68,14 +69,14 @@ def register_research(app, stored, authorized):
         except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
 
     @app.get('/api/images/{image_id}/orthogonal', dependencies=[Depends(authorized)])
-    def orthogonal(image_id: str, axis: str='XY', x: int=0, y: int=0, z: int=0, channel: int=-1):
+    def orthogonal(image_id: str, axis: str='XY', x: int=0, y: int=0, z: int=0, channel: int=-1, luts: str | None=None):
         folder,_,info=stored(image_id)
         try:
             if axis not in ('XY','XZ','YZ') or any(v<0 or v>=info.dimensions[a] for a,v in zip('XYZ',(x,y,z))):
                 raise ImageError('Choose a supported plane and coordinates inside the source volume.')
             if channel < -1 or channel>=info.dimensions['C']:raise ImageError('Invalid channel.')
             channels=range(info.dimensions['C']) if channel==-1 else [channel]
-            colors=np.array([[1,.12,.25],[.1,1,.65],[.2,.45,1],[.8,.8,.8]])
+            colors=display_colors(luts,info.dimensions['C'])
             shape=(info.dimensions['Y'],info.dimensions['X']) if axis=='XY' else (info.dimensions['Z'],info.dimensions['X' if axis=='XZ' else 'Y'])
             output=np.zeros((*shape,3),np.float32)
             for c in channels:

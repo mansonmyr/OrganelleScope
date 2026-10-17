@@ -75,3 +75,7 @@ The user could not locate the original control images and explicitly authorized 
 ## Scope change — source 0.2.1
 
 The user withdrew Noise2Void denoising and deconvolution. Both are removed from execution, UI, dependencies and installer workflows; Gaussian smoothing/background subtraction explicitly remain. Small historical evaluation records and research artifacts are preserved, with old restored measurements excluded from new inference. Added requested XY/camera zoom and separate correction/ROI/association tabs, retaining a shared persistent preview. Earlier restoration status entries are historical, not the active roadmap.
+
+## 0.2.2 viewer and documentation milestone
+
+Independent per-channel LUTs are implemented for the single-image XY/volume/linked-section/preparation views and snapshot provenance. Measurement intensities remain unchanged. README is a concise entry point and MANUAL.md is the detailed current guide. Keep Gemma; no candidate download/model swap. [napari-inspired work](NAPARI_INSPIRED_ROADMAP.md) remains a prioritized proposal, per user clarification. Next priorities are source-aware layers and linked object review, not automatic ROI drawing.

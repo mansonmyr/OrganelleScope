@@ -6,7 +6,7 @@ import {isProcessed,rawProcessing,type ProcessingConfig} from './ProcessingPanel
 import {downloadReport,formatMetric as fmt} from './reportDownload';
 import {translateCuboid,centerCuboid,cuboidCenter,initialCuboid,resizeCuboid,type Position,type Bounds} from './cuboidMovement';
 import {MetricValue,metricReason} from './MetricValue';
-export function OrthogonalWorkspace({image,processing}:{image:ImageRecord;processing:ProcessingConfig}){
+export function OrthogonalWorkspace({image,processing,luts}:{image:ImageRecord;processing:ProcessingConfig;luts?:string}){
  const d=image.info.dimensions;
  const [position,setPosition]=useProjectState<Position>('OrthogonalWorkspace.position',{X:Math.floor(d.X/2),Y:Math.floor(d.Y/2),Z:Math.floor(d.Z/2)}),[channel,setChannel]=useProjectState('OrthogonalWorkspace.channel',-1),[stretch,setStretch]=useProjectState('OrthogonalWorkspace.stretch',1);
  const [bounds,setBounds]=useProjectState<Bounds>('OrthogonalWorkspace.bounds',initialCuboid(d));
@@ -17,9 +17,9 @@ export function OrthogonalWorkspace({image,processing}:{image:ImageRecord;proces
  const physical=['X','Y','Z'].every(a=>image.info.calibration[a].value_um!=null);
  useEffect(()=>{active.current?.abort();setBusy(false);const next=[bounds,processed,processing,image];if(next.some((value,index)=>value!==previousInputs.current[index])){setReport(undefined);}previousInputs.current=next;return()=>active.current?.abort();},[bounds,processed,processing,image]);
  useEffect(()=>{setLoading(true);setError('');setImages({});const abort=new AbortController();const hrefs:string[]=[];
-  const timer=setTimeout(()=>Promise.all(['XY','XZ','YZ'].map(async axis=>{const response=await request(`/api/images/${image.id}/orthogonal?axis=${axis}&x=${position.X}&y=${position.Y}&z=${position.Z}&channel=${channel}`,{signal:abort.signal});const blob=await response.blob();if(abort.signal.aborted)return [axis,''];const href=URL.createObjectURL(blob);hrefs.push(href);return [axis,href];})).then(entries=>{if(!abort.signal.aborted)setImages(Object.fromEntries(entries));}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setLoading(false);}),300);
+  const timer=setTimeout(()=>Promise.all(['XY','XZ','YZ'].map(async axis=>{const response=await request(`/api/images/${image.id}/orthogonal?axis=${axis}&x=${position.X}&y=${position.Y}&z=${position.Z}&channel=${channel}${luts?`&luts=${luts}`:''}`,{signal:abort.signal});const blob=await response.blob();if(abort.signal.aborted)return [axis,''];const href=URL.createObjectURL(blob);hrefs.push(href);return [axis,href];})).then(entries=>{if(!abort.signal.aborted)setImages(Object.fromEntries(entries));}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setLoading(false);}),300);
   return()=>{abort.abort();clearTimeout(timer);hrefs.forEach(URL.revokeObjectURL);};
- },[image,position,channel]);
+ },[image,position,channel,luts]);
  const voxels=(bounds.x1-bounds.x0+1)*(bounds.y1-bounds.y0+1)*(bounds.z1-bounds.z0+1);
  const valid=['x','y','z'].every(a=>{const b=bounds as Record<string,number>;return Number.isInteger(b[a+'0'])&&Number.isInteger(b[a+'1'])&&b[a+'0']>=0&&b[a+'1']>=b[a+'0']&&b[a+'1']<d[a.toUpperCase()];})&&voxels>=3&&voxels<=500000;
  async function measure(){active.current?.abort();const abort=new AbortController();active.current=abort;setBusy(true);setError('');try{const result=await json<Record<string,any>>(`/api/images/${image.id}/cuboid`,{signal:abort.signal,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...bounds,processing:processed&&isProcessed(processing)?processing:rawProcessing})});if(!abort.signal.aborted)setReport(result);}catch(e){if(!abort.signal.aborted)setError(String(e));}finally{if(!abort.signal.aborted)setBusy(false);}}

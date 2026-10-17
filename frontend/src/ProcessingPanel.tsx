@@ -7,14 +7,14 @@ export const rawProcessing:ProcessingConfig={background:'none',offsets:[],radius
 type ProcessingDraft=Omit<ProcessingConfig,'radius_px'|'sigma_px'|'rolling_height'|'offsets'> & {radius_px:string;sigma_px:string;rolling_height?:string|null;offsets:string[]};
 function editing(config:ProcessingConfig):ProcessingDraft{return {...config,radius_px:String(config.radius_px),sigma_px:String(config.sigma_px),offsets:config.offsets.map(String),rolling_height:config.rolling_height==null?config.rolling_height:String(config.rolling_height)};}
 export const isProcessed=(config:ProcessingConfig)=>config.background!=='none'||config.sigma_px>0;
-export function ProcessingPanel({imageId,z,labels,bitDepth,value,onChange,disabled}:{imageId:string;z:number;labels:string[];bitDepth:number;value:ProcessingConfig;onChange:(config:ProcessingConfig)=>void;disabled:boolean}) {
+export function ProcessingPanel({imageId,z,labels,bitDepth,value,onChange,disabled,luts}:{luts?:string;imageId:string;z:number;labels:string[];bitDepth:number;value:ProcessingConfig;onChange:(config:ProcessingConfig)=>void;disabled:boolean}) {
  const [view,setView]=useState<'comparison'|'background'|'residual'>('comparison');
  const [draft,setDraft]=useState(()=>editing(value)),[preview,setPreview]=useState<string>(),[error,setError]=useState(''),[working,setWorking]=useState(false);
  useEffect(()=>setDraft(editing(value)),[value]);
  useEffect(()=>{setPreview(undefined);setError('');setWorking(true);const abort=new AbortController();let href:string|undefined;
-  const timer=setTimeout(()=>request(`/api/images/${imageId}/processing/preview?z=${z}${view==='comparison'?'':`&view=${view}`}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value),signal:abort.signal}).then(r=>r.blob()).then(blob=>{if(!abort.signal.aborted){href=URL.createObjectURL(blob);setPreview(href);}}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setWorking(false);}),200);
+  const timer=setTimeout(()=>request(`/api/images/${imageId}/processing/preview?z=${z}${luts?`&luts=${luts}`:''}${view==='comparison'?'':`&view=${view}`}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value),signal:abort.signal}).then(r=>r.blob()).then(blob=>{if(!abort.signal.aborted){href=URL.createObjectURL(blob);setPreview(href);}}).catch(e=>{if(!abort.signal.aborted)setError(String(e));}).finally(()=>{if(!abort.signal.aborted)setWorking(false);}),200);
   return()=>{abort.abort();clearTimeout(timer);if(href)URL.revokeObjectURL(href);};
- },[imageId,z,value,view]);
+ },[imageId,z,value,view,luts]);
  const radiusNeeded=draft.background==='opening'||draft.background==='rolling_ball';
  const height=draft.rolling_height??draft.radius_px;
  const numeric=(text:string,min:number,max:number)=>text.trim()!==''&&Number.isFinite(Number(text))&&Number(text)>=min&&Number(text)<=max;

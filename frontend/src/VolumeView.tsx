@@ -1,3 +1,4 @@
+import {channelLuts,lutColor} from './channelLuts';
 import type {VolumeCaptureRef} from './previewSnapshot';
 import {useProjectState} from './ProjectContext';
 import { useEffect, useRef, useState } from "react";
@@ -6,12 +7,14 @@ import { request } from "./api";
 import { interleaveChannels, volumeSampleDistance } from "./volumeData";
 
 type Controls = { cutoff: number; opacity: number; stretch: number };
-const colors = [[1,.2,.35],[.15,1,.65],[.3,.5,1],[.9,.9,.9]];
 
-export function VolumeView({ image, channel, onChannelChange, captureRef, maskMesh }: {
-  image: ImageRecord; channel: number; onChannelChange: (channel: number) => void; captureRef?:VolumeCaptureRef;maskMesh?:Record<string,any>
+
+export function VolumeView({ image, channel, onChannelChange, captureRef, maskMesh, luts }: {
+  luts?:string; image: ImageRecord; channel: number; onChannelChange: (channel: number) => void; captureRef?:VolumeCaptureRef;maskMesh?:Record<string,any>
 }) {
   const container = useRef<HTMLDivElement>(null);
+  const recolor=useRef<(()=>void)|null>(null),currentLuts=useRef(luts);currentLuts.current=luts;
+  useEffect(()=>{recolor.current?.();},[luts]);
   const apply = useRef<((settings: Controls) => void) | null>(null);
   const meshActor=useRef<any>(null);
   const meshUpdate=useRef<(()=>void)|null>(null);
@@ -85,14 +88,16 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
           const ct=colorTransfer.default.newInstance();const op=piecewise.default.newInstance();
           const sorted=Array.from(values.filter((v,i)=>v>0 && i%8===0)).sort((a,b)=>a-b);
           const high=sorted[Math.floor((sorted.length-1)*.995)] || values.reduce((a,b)=>Math.max(a,b),1);
-          const color=colors[c];
+          const color=lutColor(channelLuts(currentLuts.current?.split(','),image.info.dimensions.C)[c]);
           ct.addRGBPoint(0,0,0,0);ct.addRGBPoint(high,...color as [number,number,number]);
           actor.getProperty().setRGBTransferFunction(component,ct);actor.getProperty().setScalarOpacity(component,op);
           actor.getProperty().setScalarOpacityUnitDistance(component,Math.min(...spacing));
           actor.getProperty().setComponentWeight(component,1);
           cleanups.push(()=>{ct.delete();op.delete();});
-          return {op,high};
+          return {ct,op,high,channel:c};
         });
+        recolor.current=()=>{const names=channelLuts(currentLuts.current?.split(','),image.info.dimensions.C);for(const {ct,high,channel:c} of components){ct.removeAllPoints();ct.addRGBPoint(0,0,0,0);ct.addRGBPoint(high,...lutColor(names[c]));}window.getRenderWindow().render();};
+        cleanups.push(()=>{recolor.current=null;});
         function frame() {
           const bounds=actor.getBounds();
           const center=[(bounds[0]+bounds[1])/2,(bounds[2]+bounds[3])/2,(bounds[4]+bounds[5])/2];
@@ -109,7 +114,7 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
           if(!capture)throw new Error('3D image capture is unavailable.');
           window.getRenderWindow().render();
           const camera=renderer.getActiveCamera();
-          return {dataUrl:await capture,details:{camera:{position:camera.getPosition(),focal_point:camera.getFocalPoint(),view_up:camera.getViewUp(),parallel_projection:camera.getParallelProjection(),view_angle:camera.getViewAngle(),parallel_scale:camera.getParallelScale()},mask_surface:meshData.current?{image_id:meshData.current.image_id,source_bounds:meshData.current.source_bounds,units:meshData.current.units}:null,display_settings:{...settings.current},channels:indices,display_shape:shape,display_spacing:spacing,units:physical?'um':'voxel',downsampled:true}};
+          return {dataUrl:await capture,details:{camera:{position:camera.getPosition(),focal_point:camera.getFocalPoint(),view_up:camera.getViewUp(),parallel_projection:camera.getParallelProjection(),view_angle:camera.getViewAngle(),parallel_scale:camera.getParallelScale()},mask_surface:meshData.current?{image_id:meshData.current.image_id,source_bounds:meshData.current.source_bounds,units:meshData.current.units}:null,display_settings:{...settings.current,channel_luts:channelLuts(currentLuts.current?.split(','),image.info.dimensions.C)},channels:indices,display_shape:shape,display_spacing:spacing,units:physical?'um':'voxel',downsampled:true}};
         };
         apply.current=({cutoff,opacity,stretch})=>{
           for(const {op,high} of components){
