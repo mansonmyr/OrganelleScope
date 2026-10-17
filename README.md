@@ -1,5 +1,8 @@
 # OrganelleScope
 
+<img width="1408" height="768" alt="Gemini_Generated_Image_dqzhhvdqzhhvdqzh" src="https://github.com/user-attachments/assets/83f9f9c1-0c57-4a9f-b3f3-c910ade41f6e" />
+
+
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
 **Research development source 0.2.3.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
