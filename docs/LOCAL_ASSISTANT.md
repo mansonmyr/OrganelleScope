@@ -1,4 +1,4 @@
-# Local assistant and project persistence — source milestone 0.1.8
+# Local assistant and project persistence — source milestone 0.1.9
 
 This milestone adds a working **experimental** local assistant and manually saved projects. It does not publish a new installer, certify biological conclusions, or enable autonomous analysis changes.
 
@@ -14,12 +14,12 @@ Development locations: `.dev-images/`, `project-data/`, `evidence-cache/` and `a
 
 ## Exact local model
 
-- Upstream: [mistralai/Ministral-3-8B-Instruct-2512](https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512), Apache-2.0.
-- Quantization: **official Mistral GGUF**, [mistralai/Ministral-3-8B-Instruct-2512-GGUF](https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512-GGUF), revision `0102285ad796bd99af90f58de616092e5630e970`.
-- File: `Ministral-3-8B-Instruct-2512-Q4_K_M.gguf`, **5,198,911,904 bytes** (5.20 GB / 4.84 GiB).
-- SHA-256: `33e7a72cf5e6e2cfc2f2847075acc013d68bba023e35310cef86b5cf8fdca761`.
+- Upstream: [google/gemma-4-12B-it](https://huggingface.co/google/gemma-4-12B-it), Apache-2.0.
+- Quantization: **official Google QAT GGUF**, [google/gemma-4-12B-it-qat-q4_0-gguf](https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf), revision `29d097773436b69ff9feafd636ab4cf873786537`.
+- File: `gemma-4-12b-it-qat-q4_0.gguf`, **6,975,879,296 bytes** (6.98 GB / 6.50 GiB).
+- SHA-256: `93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b`.
 - Runtime: official [llama.cpp b11669](https://github.com/ggml-org/llama.cpp/releases/tag/b11669); archive size/hash pinned in `scripts/setup-local-assistant.py`.
-- Text-only use; no vision projector or raw image input. Context: 8,192 tokens; one request at a time; at most four model-selected tool calls plus the supplied project context. Temperature is 0.05, following Mistral's recommendation below 0.1. Quantitative values remain engine-derived, independent of the language model.
+- Text-only use; no vision projector or raw image input. Context: 8,192 tokens; one request at a time; at most four model-selected tool calls plus the supplied project context. Google's recommended sampling settings are used: temperature 1.0, top-p 0.95 and top-k 64. Thinking is disabled for the bounded interactive tool loop; no internal reasoning is displayed or saved. The answer budget is 1,600 tokens (1,200 for a validation rewrite), with a prompt limit of three hundred words. Quantitative values remain engine-derived, independent of the language model.
 
 These weights are **not** the full-precision model evaluated in upstream benchmarks. A successful local test does not transfer all upstream benchmark claims to this quantization or to microscopy interpretation.
 
@@ -49,15 +49,17 @@ The tool record is visible with each response. Only selected identifiers and evi
 
 ## Interpretation safeguards and limits
 
-Calculations remain in the deterministic engine. The assistant's interpretation is a draft. Recorded calibration/ROI quantities are displayed separately from generated prose, using saved engine values and matching source/metadata provenance. The assistant is instructed to describe them qualitatively. The response checker rejects numeric value patterns, fabricated source identifiers and model-provided URLs; one schema-constrained rewrite is attempted with citations restricted to supplied source IDs, then an invalid response is withheld. Protein identifiers such as TP53 and TUBG1 and source identifiers can contain digits. These checks are practical constraints, **not a semantic proof that every sentence is correct**. Spelled-out values or qualitative overclaims still require evaluation and human review.
+Calculations remain in the deterministic engine. The assistant's interpretation is a draft. Recorded calibration/ROI quantities are displayed separately from generated prose, using saved engine values and matching source/metadata provenance. The assistant is instructed to describe them qualitatively. The response checker rejects numeric value patterns, fabricated source identifiers and model-provided URLs; one schema-constrained rewrite is attempted with citations restricted to supplied source IDs, then an invalid response is withheld. Protein identifiers such as TP53 and TUBG1 and source identifiers can contain digits. Exact human KEGG gene IDs read from evidence tools are permitted verbatim despite containing digits; altered or unknown human KEGG gene IDs are rejected. This is not a general gene-symbol validator or citation-entailment check. These checks are practical constraints, **not a semantic proof that every sentence is correct**. Spelled-out values or qualitative overclaims still require evaluation and human review.
 
 The allowlist has no shell, arbitrary filesystem, arbitrary URL, image modification or setting-write tool. Tool arguments/roles/budgets are validated. Retrieved data is treated as untrusted context. Provider association scores are not binding probabilities; pathway membership is not measured activation; hypothetical perturbations are hypotheses, not causal predictions. Missing measurements are not zero effects. No autonomous search for significance is allowed.
+
+An automatic bounded measurement summary supplies saved ROI settings and metrics before generation; the full report remains available through read_measurements. Compact interpretation context retains saved threshold/background settings even when a large raw report is truncated. Missing documentation must be described as undocumented, rather than proof a control was never performed. General methodological advice must be distinguished from claims supported by database records. These are prompt/data improvements, not enforced scientific guarantees.
 
 Engineering tests cover revisions/source integrity, restoration isolation, persisted workspace reports, tool permissions, offline query boundaries, model context format and invalid-reference/quantitative-answer rejection. Real model tests and their limitations are recorded in `docs/ASSISTANT_EVALUATION.md`. Curated biological interpretation, citation-entailment assessment, prompt-injection robustness and native platform qualification remain release gates.
 
 
 ## Disk-space policy
 
-One active model is retained. After the first valid assistant response, known superseded Qwen weights, their incomplete download and obsolete development scratch files are removed from the managed local folders. Downloaded runtime archives are removed too; setup retains an integrity receipt for the installed runtime so a repeat setup can verify it without downloading the archive again. Model hashes/revisions and small evaluation summaries remain in source control. The current runtime, model and licence records are retained.
+One active model is retained. After the first valid assistant response, known superseded Qwen/Ministral weights, their incomplete download and obsolete development scratch files are removed from the managed local folders. Downloaded runtime archives are removed too; setup retains an integrity receipt for the installed runtime so a repeat setup can verify it without downloading the archive again. Model hashes/revisions and small evaluation summaries remain in source control. The current runtime, model and licence records are retained.
 
 The cleanup allowlist does not remove images, saved projects, conversations, ROI/measurement reports, scientific evidence, user exports, custom models or unrelated files. Symlinked managed directories are skipped. Source updates also remove obsolete generated builds and superseded installers after identifying them, while keeping the most recent usable installer until it is replaced.

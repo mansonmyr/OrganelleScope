@@ -1,10 +1,14 @@
 # Preliminary local assistant evaluation
 
-Development observations, **17 October 2026**, source milestone 0.1.8. This is a small engineering smoke test, not a biological benchmark, model ranking or a claim of validated interpretation.
+Development observations, **17 October 2026**, source milestone 0.1.9. This is a small engineering smoke test, not a biological benchmark, model ranking or a claim of validated interpretation.
 
-## Current model: Ministral 3 8B (0.1.8)
+## Current model: Gemma 4 12B (0.1.9)
 
-The active model is official Mistral Ministral 3 8B Instruct Q4_K_M, 5,198,911,904 bytes, pinned revision and SHA-256 in [LOCAL_ASSISTANT.md](LOCAL_ASSISTANT.md). The complete downloaded file passed SHA-256 verification before installation. On Apple M3 / 24 GB, llama.cpp b11669 uses Metal, four CPU threads, one slot, an 8,192-token context and temperature 0.05. This is text-only evidence interpretation; no microscopy image or vision projector is passed to the model.
+The selected replacement is official Google Gemma 4 12B Instruct QAT Q4_0. See [the complete Gemma evaluation](GEMMA_EVALUATION.md) for real answers, observed failures, integration corrections and retests. This is an experimental interpreter, not a validated biological agent.
+
+## Historical model: Ministral 3 8B (0.1.8)
+
+The previous model was official Mistral Ministral 3 8B Instruct Q4_K_M, 5,198,911,904 bytes, historical pinned revision and SHA-256 in Git revision c63e4d6. The complete downloaded file passed SHA-256 verification before installation. On Apple M3 / 24 GB, llama.cpp b11669 uses Metal, four CPU threads, one slot, an 8,192-token context and temperature 0.05. This is text-only evidence interpretation; no microscopy image or vision projector is passed to the model.
 
 Three real local API requests used saved development projects with online access disabled:
 

@@ -13,13 +13,13 @@ from pathlib import Path
 from threading import Lock
 
 MODEL={
- 'name':'Ministral 3 8B Instruct Q4_K_M','filename':'Ministral-3-8B-Instruct-2512-Q4_K_M.gguf','bytes':5198911904,
- 'sha256':'33e7a72cf5e6e2cfc2f2847075acc013d68bba023e35310cef86b5cf8fdca761',
- 'upstream':'https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512',
- 'quantization':'https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512-GGUF',
- 'revision':'0102285ad796bd99af90f58de616092e5630e970','license':'Apache-2.0',
+ 'name':'Gemma 4 12B Instruct QAT Q4_0','filename':'gemma-4-12b-it-qat-q4_0.gguf','bytes':6975879296,
+ 'sha256':'93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b',
+ 'upstream':'https://huggingface.co/google/gemma-4-12B-it',
+ 'quantization':'https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf',
+ 'revision':'29d097773436b69ff9feafd636ab4cf873786537','license':'Apache-2.0',
  'runtime':'llama.cpp b11669','context_tokens':8192,
- 'vision_enabled':False,'temperature':0.05,
+ 'vision_enabled':False,'thinking_enabled':False,'temperature':1.0,
 }
 
 
@@ -92,10 +92,10 @@ class LocalModel:
 
  def completion(self,messages,tools=None,response_format=None):
   if not self.status()['ready']:raise ValueError('The local model is not ready. Start it and wait for Ready.')
-  body={'model':'organellescope-local','messages':messages,'temperature':MODEL['temperature'],'top_p':0.9,'max_tokens':600,
-        'stream':False}
+  body={'model':'organellescope-local','messages':messages,'temperature':MODEL['temperature'],'top_p':0.95,'top_k':64,'max_tokens':1600,
+        'stream':False,'chat_template_kwargs':{'enable_thinking':False}}
   if tools:body.update(tools=tools,parallel_tool_calls=False)
-  if response_format:body.update(response_format=response_format,max_tokens=350)
+  if response_format:body.update(response_format=response_format,max_tokens=1200)
   return self._request('/v1/chat/completions',body)
 
  def cleanup_after_success(self):

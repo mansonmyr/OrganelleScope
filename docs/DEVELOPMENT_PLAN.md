@@ -53,3 +53,7 @@ Manual versioned local projects now restore source associations and workspace re
 ## Active model update (0.1.8 source)
 
 The selected evaluation candidate is now the official Ministral 3 8B Instruct Q4_K_M (5.20 GB), replacing Qwen. Known retired development model assets are cleaned only after valid inference. Historical Qwen evaluation observations remain as provenance; they are not measurements of Ministral performance. Current model evidence and limitations are recorded in ASSISTANT_EVALUATION.md.
+
+## Gemma evaluation update (0.1.9 source)
+
+Gemma 4 12B Instruct official QAT Q4_0 is the selected replacement evaluation candidate. It uses the same owned local runtime and read-only tool boundaries. The evaluation also expands answer budgets and preserves critical threshold/background context, so observed differences must not be attributed solely to model weights. Current results belong in ASSISTANT_EVALUATION.md; no replacement installer is published by this source milestone.

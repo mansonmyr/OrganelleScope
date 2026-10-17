@@ -34,7 +34,7 @@ def download(url,path,size,digest):
  temp.replace(path)
 
 def main():
- parser=argparse.ArgumentParser(description='Install pinned llama.cpp and Ministral 3 8B for local development (about 5.22 GB download).')
+ parser=argparse.ArgumentParser(description='Install pinned llama.cpp and Gemma 4 12B for local development (about 6.99 GB download).')
  parser.add_argument('--download',action='store_true',help='Explicitly download and verify the model/runtime.')
  args=parser.parse_args();key=platform.system()+'-'+platform.machine()
  if key not in RUNTIMES:parser.error('Supported setup: Apple Silicon macOS or native Windows x64. Windows ARM/emulation and other targets need separate qualification.')

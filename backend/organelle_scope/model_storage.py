@@ -1,7 +1,7 @@
 """Conservative cleanup of explicitly managed, superseded assistant assets only."""
 from pathlib import Path
 
-RETIRED_MODELS=('Qwen3.5-4B-Q4_K_M.gguf',)
+RETIRED_MODELS=('Qwen3.5-4B-Q4_K_M.gguf','Ministral-3-8B-Instruct-2512-Q4_K_M.gguf')
 # Development-only scratch files from the previous model evaluation. Projects are elsewhere.
 RETIRED_SCRATCH=('smoke-project-id.txt','debug-calls.json','evidence-smoke-result.json','final-local-smoke.json','smoke-results.json')
 RUNTIME_ARCHIVES=('llama-b11669-bin-macos-arm64.tar.gz','llama-b11669-bin-win-cpu-x64.zip')

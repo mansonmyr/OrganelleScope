@@ -104,17 +104,59 @@ def test_schema_request_does_not_replace_application_validation():
  with pytest.raises(ValueError,match='valid cited draft'):run_agent(model,RECORD,options(),None)
 
 
-def test_ministral_request_uses_selected_model_settings_without_qwen_specific_flags(tmp_path,monkeypatch):
+def test_gemma_request_uses_selected_model_settings(tmp_path,monkeypatch):
  from organelle_scope.local_model import LocalModel,MODEL
  model=LocalModel(tmp_path);monkeypatch.setattr(model,'status',lambda:{'ready':True})
  calls=[];monkeypatch.setattr(model,'_request',lambda path,body:(calls.append((path,body)) or {}))
  model.completion([{'role':'user','content':'Test'}])
- assert MODEL['name'].startswith('Ministral') and MODEL['bytes']==5198911904
- assert calls[0][1]['temperature']==.05
- assert 'chat_template_kwargs' not in calls[0][1] and 'reasoning_effort' not in calls[0][1]
+ assert MODEL['name'].startswith('Gemma') and MODEL['bytes']==6975879296
+ assert calls[0][1]['temperature']==1.0
+ assert calls[0][1]['chat_template_kwargs']=={'enable_thinking':False} and calls[0][1]['max_tokens']==1600
 
 
 def test_bounded_tool_results_keep_source_ids_visible():
  from organelle_scope.assistant import bounded
  result=bounded({'source_ids':['evidence-1-1'],'records':['x'*10000]})
  assert result['truncated'] and result['source_ids']==['evidence-1-1']
+
+
+def test_interpretation_settings_survive_large_report_truncation():
+ from organelle_scope.assistant import bounded,measurement_context
+ analysis={'processing':{'settings':{'background':'none'}},'request':{'threshold_mode':'zero'},'results':[{'roi':{'id':'r'},'pairs':[{'thresholds':{'a':0,'b':0},'thresholded_m1':1}]}]}
+ result=bounded({'source_id':'measurements','interpretation_context':measurement_context(analysis),'roi':'x'*10000})
+ context=result['interpretation_context']
+ assert result['truncated'] and context['processing']['background']=='none'
+ assert context['threshold_mode']=='zero' and context['pairs'][0]['thresholds']=={'a':0,'b':0}
+ assert 'not proof' in context['controls_note']
+
+
+def test_large_interpretation_context_remains_bounded():
+ from organelle_scope.assistant import bounded
+ result=bounded({'interpretation_context':{'processing':{'background':'none'},'pairs':['x'*10000]},'roi':'y'*20000})
+ assert result['interpretation_context']['truncated']
+ assert len(json.dumps(result))<8500
+
+
+def test_saved_measurement_summary_is_supplied_before_model_answers():
+ record=json.loads(json.dumps(RECORD));record['state']['core']['analysis']={'processing':{'settings':{'background':'none'}},'request':{'threshold_mode':'zero'}}
+ model=Fake(response('The saved thresholds require sensitivity checks. [measurements]'))
+ result=run_agent(model,record,options(),None)
+ assert result['audit'][1]['trigger']=='application summary context'
+ assert 'Saved measurement summary' in model.messages[0][0]['content']
+ assert 'threshold_mode' in model.messages[0][0]['content']
+
+
+def test_exact_kegg_identifiers_are_not_measurements_and_alterations_are_rejected():
+ from organelle_scope.assistant import invalid_answer
+ sources={'evidence-1-1':{}}
+ assert not invalid_answer('Membership of hsa:7157 does not establish activation. [evidence-1-1]',sources,{'hsa:7157'})
+ assert invalid_answer('Membership of hsa:T157 does not establish activation. [evidence-1-1]',sources,{'hsa:7157'})
+ assert invalid_answer('Membership of hsa:7158 does not establish activation. [evidence-1-1]',sources,{'hsa:7157'})
+ assert invalid_answer('hsa:7157 has a binding probability of 0.95. [evidence-1-1]',sources,{'hsa:7157'})
+
+
+def test_evidence_gene_identifiers_are_collected_from_actual_tool_records():
+ record=json.loads(json.dumps(RECORD));record['state']['workspaces']={'EvidencePanel.result':{'provider':'kegg','rows':[{'gene':'hsa:7157'}],'sources':[{'source_url':'https://rest.kegg.jp/link/pathway/hsa:7157'}]}}
+ model=Fake(response(name='read_evidence'),response('hsa:7157 membership is not measured activation. [evidence-1-1]'))
+ result=run_agent(model,record,options(),None)
+ assert 'hsa:7157' in result['answer']

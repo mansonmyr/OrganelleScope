@@ -6,12 +6,13 @@ def test_cleanup_removes_only_known_superseded_assets(tmp_path):
  models=tmp_path/'.local-models';models.mkdir();runtime=tmp_path/'.local-runtime';runtime.mkdir()
  active=models/'Ministral.gguf';active.write_bytes(b'current')
  (models/'Qwen3.5-4B-Q4_K_M.gguf').write_bytes(b'retired')
+ (models/'Ministral-3-8B-Instruct-2512-Q4_K_M.gguf').write_bytes(b'old M')
  (models/'debug-calls.json').write_bytes(b'old')
  (runtime/'llama-b11669-bin-macos-arm64.tar.gz').write_bytes(b'archive')
  other=models/'my-custom-model.gguf';other.write_bytes(b'keep')
  project=tmp_path/'project-data';project.mkdir();(project/'experiment.json').write_text('keep')
  report=cleanup_superseded(tmp_path,active)
- assert report['freed_bytes']==7+3+7 and len(report['removed'])==3
+ assert report['freed_bytes']==7+5+3+7 and len(report['removed'])==4
  assert active.read_bytes()==b'current' and other.exists() and (project/'experiment.json').exists()
  assert cleanup_superseded(tmp_path,active)['freed_bytes']==0
 
