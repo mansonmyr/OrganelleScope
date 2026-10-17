@@ -17,8 +17,8 @@ class SpatialRequest(BaseModel):
     processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
 
 
-def spatial_shift(a, b, roi, iterations, seed):
-    mask, warnings = roi_mask(roi, a.shape)
+def spatial_shift(a, b, roi, iterations, seed, spacing=(None,None)):
+    mask, warnings = roi_mask(roi, a.shape, spacing)
     yy, xx = np.nonzero(mask)
     if len(yy)*iterations > 25_000_000:
         raise ImageError("Choose a smaller ROI or fewer shifts (limit: 25 million pixel comparisons).")

@@ -51,3 +51,10 @@ describe('area drawing workflow',()=>{
     click(10,10);fireEvent.pointerUp(screen.getByLabelText('ROI drawing surface'),{clientX:30,clientY:20});expect(onAdd).not.toHaveBeenCalled();
   });
 });
+
+it('places a manually clicked physical circle and renders anisotropic pixel radii',()=>{
+ const onAdd=vi.fn();const physical:AreaROI={id:'p',kind:'circle',z:3,diameter_um:2,points:[{x:20,y:20},{x:25,y:20}]};
+ const {container}=render(<RoiOverlay {...base} tool="circle" spacing={{x:.2,y:.4}} fixedDiameterUm={2} rois={[physical]} onAdd={onAdd}/>);
+ const ellipse=container.querySelector('ellipse')!;expect(ellipse.getAttribute('rx')).toBe('5');expect(ellipse.getAttribute('ry')).toBe('2.5');
+ click(40,30);expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({diameter_um:2,z:3,points:[{x:40,y:30},{x:45,y:30}]}));
+});

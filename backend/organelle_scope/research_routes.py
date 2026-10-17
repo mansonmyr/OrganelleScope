@@ -64,7 +64,7 @@ def register_research(app, stored, authorized):
             options.processing.validate_channels(info.dimensions['C'],info.bit_depth)
             channels=[process_plane(read_plane(folder/'source.tiff',info,c,options.roi.z),options.processing,c) for c in (options.channel_a,options.channel_b)]
             return {**stamp(record),'request':options.model_dump(),'processing':provenance(options.processing),
-                    **spatial_shift(*channels,options.roi,options.iterations,options.seed)}
+                    **spatial_shift(*channels,options.roi,options.iterations,options.seed,(info.calibration['X'].value_um,info.calibration['Y'].value_um))}
         except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
 
     @app.get('/api/images/{image_id}/orthogonal', dependencies=[Depends(authorized)])

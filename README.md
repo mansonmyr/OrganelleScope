@@ -2,14 +2,14 @@
 
 A desktop microscopy workbench bringing together the Probabilistic Colocalization Estimator and Quick IF Line Profiler, with image measurements, processing sensitivity, calibrated 3D inspection and molecular evidence in one local workflow.
 
-**Source milestone 0.1.9 — research software in development. Numerical checks and working features do not constitute biological or publication validation. Installed binaries may lag the source; this milestone does not publish a new installer.**
+**Source milestone 0.1.10 — research software in development. Numerical checks and working features do not constitute biological or publication validation. Installed binaries may lag the source; this milestone does not publish a new installer.**
 
 ## Current functionality
 
 | Area | Implemented | Current boundary |
 | --- | --- | --- |
 | Image import | TIFF, OME-TIFF and ImageJ TIFF; 8/16-bit; up to four channels; axes/calibration provenance and manual correction | Static images/stacks; unsupported layouts fail explicitly; no time-lapse analysis |
-| ROI and profiles | Circular/polygonal XY ROIs per Z plane; calibrated line profiles and single-peak FWHM | Selected lines/ROIs are retained in local projects; batch workflows remain pending |
+| ROI and profiles | Circular/polygonal XY ROIs per Z plane; calibrated line profiles and single-peak FWHM | Numeric circle diameter in µm; manual review required in batches; volumetric object ROIs pending |
 | Colocalization | Pearson, Spearman, overlap and Manders measures; per-channel summaries and standardized regression | No molecular-binding probability; formulas/threshold conventions must be matched before comparing software |
 | Preprocessing | Constant per-channel or square-opening background subtraction; optional Gaussian smoothing; raw/processed measurement selection and matched-contrast comparison | Noise2Void, deconvolution and learned reconstruction are pending |
 | Statistical controls | Independent numeric references, processing sensitivity and seeded whole-plane toroidal shifts for one ROI/channel pair | Stationarity-dependent, unadjusted spatial control; no experiment-level inference or general significance certification |
@@ -20,7 +20,7 @@ A desktop microscopy workbench bringing together the Probabilistic Colocalizatio
 | Local assistant | Gemma 4 12B Instruct official QAT Q4_0 via owned llama.cpp; saved-project inspection, deterministic reference tools and bounded STRING/KEGG refresh with visible tool records | Experimental; qualitative drafts with recorded numeric values shown separately; model/runtime setup separate; native Windows and biological interpretation validation pending |
 | Desktop distribution | Electron/local Python service; macOS ARM64 and Windows x64 packaging configuration | Development distribution; no Developer ID notarization, production certification or bundled LLM |
 
-Methods: [ROI statistics](docs/ROI_STATISTICS.md), [preprocessing](docs/PREPROCESSING.md), [research workspaces and evidence](docs/RESEARCH_WORKSPACES.md), [validation status](docs/VALIDATION.md).
+Methods: [batch workflow and Excel export](docs/BATCH_ANALYSIS.md), [ROI statistics](docs/ROI_STATISTICS.md), [preprocessing](docs/PREPROCESSING.md), [research workspaces and evidence](docs/RESEARCH_WORKSPACES.md), [validation status](docs/VALIDATION.md).
 
 ## Functional comparison with other applications
 
@@ -28,7 +28,7 @@ Reviewed **16 October 2026** against the primary documentation linked below. Thi
 
 | Application / component | Main workflow | Colocalization and quantitative analysis | 3D and object analysis | Automation / reproducibility | Fit relative to OrganelleScope |
 | --- | --- | --- | --- | --- | --- |
-| **OrganelleScope 0.1.9 source** | Guided local fluorescence inspection, measurements and biological context | Built-in XY/cuboid intensity metrics, profiles, processing sensitivity and a conditional translation control | Volume preview, linked sections and cuboids; organelle segmentation pending | Versioned local projects and source/recipe/seed/evidence records; bounded experimental local assistant; batch jobs pending | Combines these steps in one interface; scientific and production validation remain incomplete |
+| **OrganelleScope 0.1.10 source** | Guided local fluorescence inspection, measurements and biological context | Built-in XY/cuboid intensity metrics, profiles, processing sensitivity and a conditional translation control | Volume preview, linked sections and cuboids; organelle segmentation pending | Versioned local projects and source/recipe/seed/evidence records; bounded experimental local assistant; reviewed sequential batch jobs and Excel/JSON export | Combines these steps in one interface; scientific and production validation remain incomplete |
 | **[napari](https://napari.org/stable/getting_started/quick_start.html)** | Extensible multidimensional image viewer and annotation platform | Analysis supplied through Python and domain-specific plugins; capabilities depend on the selected tools | Native n-dimensional layers, 3D visualization and annotations | Python API and plugins | Stronger general-purpose viewer ecosystem; compare a specified plugin configuration rather than treating the viewer as a fixed colocalization package |
 | **[QuPath](https://github.com/qupath/qupath/blob/main/README.md)** / [multiplex analysis](https://qupath.readthedocs.io/en/latest/docs/tutorials/multiplex_analysis.html) | Large-image, whole-slide, tissue/cell and multiplex analysis | Cell/object intensity measurements and classification; custom workflows through scripting/extensions | Rich tissue/object workflows; the reviewed documentation focuses on these rather than a confocal volume-rendering suite | Projects, scripting and extensibility | Stronger established tissue-analysis and project workflows; different primary focus from subcellular stack colocalization |
 | **[CellProfiler](https://cellprofiler.org/introduction)** / [MeasureColocalization](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.2.8/modules/measurement.html#measurecolocalization) | Reusable image-analysis pipelines and high-content measurements | Dedicated image/object colocalization module, including 2D and 3D support | Segmentation and object measurements; module-specific dimensional support | Configurable pipelines and export workflows | Stronger established automated analysis; assess the chosen modules/settings rather than assuming all metrics are equivalent |
@@ -50,7 +50,7 @@ Diagrams download only when requested. They share the bounded local evidence cac
 
 ## Next development priorities
 
-1. **Project hardening and batch execution:** portable archives, autosave/recovery, multi-image experiments, cancellation and large-data workflows. Manual local project snapshots are now implemented.
+1. **Project and batch hardening:** portable archives, autosave/recovery, experiment-level inference and large-data validation. Manual local snapshots, independent per-image batch ROIs, cancellation and Excel/JSON export are implemented; real-data workload validation remains pending.
 2. **Independent scientific benchmarking:** matched JaCoP/Coloc 2/CellProfiler masks and threshold conventions; known controls, channel-registration sensitivity and false-positive calibration.
 3. **Organelle segmentation and spatial measurements:** inspectable 3D masks, surfaces, enrichment and distances with explicit calibration/resolution limitations.
 4. **Experiment-level inference:** condition/cell/experiment identifiers, effect sizes, confidence intervals and appropriate multiplicity control.
@@ -61,7 +61,7 @@ The remaining capabilities listed above are planned; existing manual projects an
 
 ## Local projects and assistant
 
-Use **Save project** to retain the imported source association, calibration, analysis settings, ROIs, 3D/validation reports and molecular evidence. Reopen from **Open saved project**. Save before switching images or quitting. This is one local image per project; portable archives, autosave and batch runs are not yet implemented.
+Use **Save project** to retain the imported source association, calibration, analysis settings, ROIs, 3D/validation reports and molecular evidence. Reopen from **Open saved project**. Save before switching images or quitting. This is one local image per project; portable archives and autosave are not yet implemented. Independent image queues and reviewed batch runs are available in **Batch analysis**; see [batch workflow and Excel export](docs/BATCH_ANALYSIS.md).
 
 The **Local assistant** reads the last saved revision and uses Gemma 4 12B Instruct QAT Q4_0 locally. Numeric values are displayed directly from saved engine results, alongside a qualitative AI draft and an inspectable tool record. Model/runtime files are a separate, explicit development download (about 6.99 GB total), not a cloud API or part of the current installer. After a successful inference, the app removes known retired model weights and temporary evaluation files; scientific data remains intact. See [setup, privacy and limitations](docs/LOCAL_ASSISTANT.md) and [evaluation](docs/ASSISTANT_EVALUATION.md).
 
@@ -117,7 +117,7 @@ No experimental TIFFs, credentials, model weights, or local environments belong 
 
 ## ROI statistics
 
-Choose Circular ROI or Polygonal ROI from the drawing tool, draw one or more regions, select the threshold method, and press **Calculate ROI statistics**. The line profiler remains a separate drawing tool. ROIs use pixel-center coordinates; circular masks are circular in XY pixel coordinates. Measurements use the explicitly selected raw or processed intensities, independently for each ROI on its recorded Z plane; raw is the default. ROI area uses confirmed X/Y scale. Deleting or adding an ROI or changing analysis settings clears the displayed results until recalculation. The last successfully calculated analysis is restored when reopening a saved import. Unsaved edits do not replace it.
+Choose Circular ROI or Polygonal ROI from the drawing tool, draw one or more regions, select the threshold method, and press **Calculate ROI statistics**. The line profiler remains a separate drawing tool. ROIs use pixel-center coordinates; legacy dragged circles are circular in XY pixel coordinates. **Apply diameter** sets a physical circle in µm and accounts for unequal X/Y pixel spacing. Measurements use the explicitly selected raw or processed intensities, independently for each ROI on its recorded Z plane; raw is the default. ROI area uses confirmed X/Y scale. Deleting or adding an ROI or changing analysis settings clears the displayed results until recalculation. The last successfully calculated analysis is restored when reopening a saved import. Unsaved edits do not replace it.
 
 See [ROI measurement definitions](docs/ROI_STATISTICS.md) for formulas and limitations. No probability of molecular binding, calibrated significance or nanoscale resolution is inferred from these descriptive measurements.
 
@@ -128,3 +128,5 @@ Version 0.1.2 adds explicit ad-hoc development signing of the Mac app and its bu
 If a 0.1.1 installer reports that the app is damaged, replace it with the rebuilt 0.1.2 app rather than disabling Gatekeeper globally. Drag OrganelleScope from the new DMG into Applications and choose Replace. Imported images and analyses are stored separately in the app's user-data directory. The signing hooks clean only FinderInfo/ResourceFork metadata in generated build output and do not remove quarantine from installed apps.
 
 A local packaging run writes installers into `release/` (excluded from Git). CI installers remain available as Actions artifacts until attached to a GitHub Release. Publication-ready Mac distribution requires a Developer ID certificate and notarization configured separately; these credentials are not present in the project.
+
+For the accumulating rationale behind retaining Gemma rather than the assessed Liquid/Qwen profiles, see [the model decision README](README_MODEL_DECISIONS.md). It preserves observed failures and comparison limits, not a claim of validated biological interpretation.

@@ -58,3 +58,8 @@ KEGG diagram tests cover session authentication, academic-use gating, strict hum
 ## Source milestone 0.1.7 — projects and experimental local assistant
 
 Versioned local snapshots, source/metadata checks, revision conflicts, restored validation/3D workspace state, stale-callback isolation, a pinned local llama.cpp/Qwen3.5-4B integration, bounded read-only tools and response checks have engineering tests. These additions do not validate biological interpretation. Real local-model smoke tests identified a unit error in generated prose, leading to a qualitative-answer design with recorded numeric values displayed separately. See ASSISTANT_EVALUATION.md for observations and remaining gates. This source milestone does not change previously installed binaries or publish a new installer.
+
+
+## Manual batch milestone 0.1.10
+
+[Batch verification and remaining limits](BATCH_ANALYSIS.md#development-verification--17-october-2026) documents calibrated circle masks, independent manually reviewed image queues, shared interactive/batch calculation checks, cancellation/failure preservation and Excel read-back. The small synthetic workload and software tests do not substitute for independent Fiji/reference-image comparison or biological controls.

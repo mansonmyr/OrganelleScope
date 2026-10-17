@@ -1,6 +1,6 @@
 # Capability comparison and release-readiness criteria
 
-Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.9 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
+Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.10 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
 
 ## How to interpret the comparison
 
@@ -53,7 +53,7 @@ Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed 
 | Biological experiments | Descriptive image/ROI results | Independent experiment/cell identifiers, effect sizes and uncertainty without pseudoreplication |
 | 3D quantification | Source cuboids and linked sections | Inspectable organelle masks, surfaces and distances; registration/resolution uncertainty |
 | Preprocessing/restoration | Deterministic background subtraction and smoothing | Noise2Void/model validation, residuals, held-out acquisitions and downstream measurement bias |
-| Projects / automation | Manual versioned local projects retain source associations, settings and workspace reports; round-trip tests | Portable archives, multi-image experiments, batch runs, cancellation, autosave and recovery |
+| Projects / automation | Manual versioned projects; independent per-image ROI batch queues; reviewed frozen runs, cancellation, failure reports and Excel/JSON export; synthetic workflow checks | Portable archives, experiment-level inference, autosave, crash-resume and large real-data batch validation |
 | Evidence reliability | Explicit mapping, live checks, caching, diagrams and provenance | Provider failure/changed-schema handling, rights review, stable exports and evidence review |
 | Local agent | Experimental pinned Gemma 4 12B Instruct QAT Q4_0 / llama.cpp; local tool loop, response checks, recorded quantities, visible audit; M3 smoke tests | Curated biological/citation-entailment and adversarial evaluation; native Windows qualification; offline installer and dependency review |
 | Distribution | Development packaging and Mac signing fixes | Native platform installations, memory/performance budgets, production signing and release procedures |

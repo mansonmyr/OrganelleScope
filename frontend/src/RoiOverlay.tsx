@@ -3,10 +3,10 @@ import { createPortal } from 'react-dom';
 import type { PointerEvent } from 'react';
 import type { LineRoi } from './types';
 export type Point = { x: number; y: number };
-export type AreaROI = { id: string; kind: 'circle' | 'polygon'; z: number; points: Point[] };
+export type AreaROI = { id: string; kind: 'circle' | 'polygon'; z: number; points: Point[]; diameter_um?: number | null };
 export type DrawTool = 'line' | 'circle' | 'polygon';
-export function RoiOverlay({ width, height, z, tool, rois, line, onLine, onAdd, disabled=false, controlsContainer }: {
-  controlsContainer?: HTMLElement | null; disabled?: boolean; width: number; height: number; z: number; tool: DrawTool; rois: AreaROI[]; line: LineRoi | null;
+export function RoiOverlay({ width, height, z, tool, rois, line, onLine, onAdd, disabled=false, controlsContainer, spacing, fixedDiameterUm }: {
+  fixedDiameterUm?:number; spacing?:{x:number|null;y:number|null}; controlsContainer?: HTMLElement | null; disabled?: boolean; width: number; height: number; z: number; tool: DrawTool; rois: AreaROI[]; line: LineRoi | null;
   onLine: (line: LineRoi | null) => void; onAdd: (roi: AreaROI) => void;
 }) {
   const svg = useRef<SVGSVGElement>(null);
@@ -19,16 +19,17 @@ export function RoiOverlay({ width, height, z, tool, rois, line, onLine, onAdd, 
   }
   function add(points: Point[], kind: AreaROI['kind']) { onAdd({id:crypto.randomUUID(),kind,z,points}); setDraft([]); }
   const stroke = Math.max(1,width/400);
-  function shape(points: Point[], kind: AreaROI['kind'], key: string, draft=false) {
+  function shape(points: Point[], kind: AreaROI['kind'], key: string, draft=false, diameter?:number|null) {
+    if(kind==='circle'&&diameter&&spacing?.x&&spacing?.y)return <ellipse key={key} cx={points[0].x} cy={points[0].y} rx={diameter/(2*spacing.x)} ry={diameter/(2*spacing.y)} fill="#31d6a020" stroke="#31d6a0" strokeWidth={stroke}/>;
     return kind==='circle' && points.length===2 ? <circle key={key} cx={points[0].x} cy={points[0].y} r={Math.hypot(points[1].x-points[0].x,points[1].y-points[0].y)} fill="#31d6a020" stroke="#31d6a0" strokeWidth={stroke}/> : <polygon key={key} points={points.map(p=>`${p.x},${p.y}`).join(' ')} fill="#31d6a020" stroke={draft?'#fff':'#31d6a0'} strokeWidth={stroke}/>;
   }
   function polygonActions() { return <div className="polygon-actions"><button disabled={disabled || draft.length<3} onClick={()=>add(draft,'polygon')}>Finish polygon ({draft.length})</button><button disabled={disabled} onClick={()=>setDraft([])}>Cancel polygon</button></div>; }
   return <><svg ref={svg} aria-label="ROI drawing surface" viewBox={`0 0 ${width} ${height}`}
-    onPointerDown={e=>{ if(disabled || e.button!==0)return; const p=point(e); if(tool==='polygon'){setDraft(d=>[...d,p]);return;} drag.current=p;e.currentTarget.setPointerCapture(e.pointerId);if(tool==='line')onLine({start:p,end:p,sampleSpacingPx:1});else setDraft([p,p]); }}
+    onPointerDown={e=>{ if(disabled || e.button!==0)return; const p=point(e); if(tool==='circle'&&fixedDiameterUm&&spacing?.x&&spacing?.y){onAdd({id:crypto.randomUUID(),kind:'circle',z,diameter_um:fixedDiameterUm,points:[p,{x:p.x+fixedDiameterUm/(2*spacing.x),y:p.y}]});return;} if(tool==='polygon'){setDraft(d=>[...d,p]);return;} drag.current=p;e.currentTarget.setPointerCapture(e.pointerId);if(tool==='line')onLine({start:p,end:p,sampleSpacingPx:1});else setDraft([p,p]); }}
     onPointerMove={e=>{if(!drag.current)return;const p=point(e);if(tool==='line')onLine({start:drag.current,end:p,sampleSpacingPx:1});else setDraft([drag.current,p]);}}
     onPointerUp={e=>{if(!drag.current)return;const p=point(e);if(tool==='circle' && Math.hypot(p.x-drag.current.x,p.y-drag.current.y)>0)add([drag.current,p],'circle');else if(tool==='line')onLine({start:drag.current,end:p,sampleSpacingPx:1});drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}
     onPointerCancel={()=>{drag.current=null;setDraft([]);}}>
-    {rois.map((r,i)=>r.z===z?<g key={r.id}>{shape(r.points,r.kind,r.id)}<text x={r.points[0].x} y={r.points[0].y} fill="white" fontSize={width/40}>ROI {i+1}</text></g>:null)}
+    {rois.map((r,i)=>r.z===z?<g key={r.id}>{shape(r.points,r.kind,r.id,false,r.diameter_um)}<text x={r.points[0].x} y={r.points[0].y} fill="white" fontSize={width/40}>ROI {i+1}</text></g>:null)}
     {draft.length>0 && shape(draft,tool==='circle'?'circle':'polygon','draft',true)}
     {line && <line x1={line.start.x} y1={line.start.y} x2={line.end.x} y2={line.end.y} stroke="#fff" strokeWidth={stroke}/>}
   </svg>{tool==='polygon' && (controlsContainer ? createPortal(polygonActions(),controlsContainer) : polygonActions())}</>;

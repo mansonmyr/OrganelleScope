@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
-import math
 import json
 import os
 import secrets
@@ -19,7 +18,7 @@ from fastapi.responses import Response
 from PIL import Image
 from pydantic import BaseModel, Field
 
-from organelle_scope.roi_analysis import AnalysisRequest, analyze_roi
+from organelle_scope.roi_analysis import AnalysisRequest
 from organelle_scope.processing import ProcessingConfig, process_plane, provenance
 from organelle_scope import __version__
 from organelle_scope.image_io import ImageError, ImageInfo, inspect_tiff, read_plane
@@ -146,35 +145,9 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     def measure(image_id: str, options: AnalysisRequest) -> dict:
         with lock:
             folder, record, info = stored(image_id)
-            count = info.dimensions["C"]
-            if count < 2 or options.target_channel >= count:
-                raise HTTPException(422, "Select an image with at least two channels and a valid target channel.")
-            if len({r.id for r in options.rois}) != len(options.rois):
-                raise HTTPException(422, "ROI identifiers must be unique.")
-            thresholds = options.thresholds if options.threshold_mode == "manual" else [0.] * count
-            if len(thresholds) != count or any(not math.isfinite(t) or t < 0 or t > 2**info.bit_depth-1 for t in thresholds):
-                raise HTTPException(422, "Provide one finite threshold per channel within the source intensity range.")
-            results = []
-            try:
-                options.processing.validate_channels(count, info.bit_depth)
-                if options.processing.active and options.threshold_mode == "costes":
-                    raise ImageError("Automatic thresholds currently support raw integer intensities only. Select manual or zero thresholds for processed measurements.")
-                for z in sorted({r.z for r in options.rois}):
-                    channels = [process_plane(read_plane(folder / "source.tiff", info, c, z), options.processing, c) if options.processing.active else read_plane(folder / "source.tiff", info, c, z) for c in range(count)]
-                    for roi in options.rois:
-                        if roi.z == z:
-                            results.append(analyze_roi(channels, roi, info.channel_labels, options.target_channel,
-                                options.threshold_mode, thresholds, (info.calibration["X"].value_um, info.calibration["Y"].value_um)))
-            except (ImageError, ValueError) as exc:
-                raise HTTPException(422, str(exc)) from exc
-            result = {"algorithm_version": "roi-2", "processing": provenance(options.processing), "image_id": image_id, "source_sha256": record["sha256"],
-                      "image_info": record["info"], "request": options.model_dump(), "results": results,
-                      "validation": {"status": "engineering-tested; biological validation pending",
-                                     "publication_ready": False,
-                                     "limitations": ["No spatially calibrated significance or experiment-level inference.",
-                                                     "Independent microscopy-software and real-control benchmarks pending."],
-                                     "methods_document": "docs/ROI_STATISTICS.md"},
-                      "scope": f"Separate XY-plane ROIs; {'processed float32' if options.processing.active else 'native source'} intensities; no 3D or pooled biological inference."}
+            from organelle_scope.analysis_service import compute_analysis
+            try:result=compute_analysis(folder,record,info,options)
+            except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
             temp = folder / "analysis.tmp"
             temp.write_text(json.dumps(result, indent=2, allow_nan=False))
             temp.replace(folder / "analysis.json")
@@ -288,6 +261,8 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     load_project = register_projects(app, data_dir, stored, authorized)
     from organelle_scope.assistant import register_assistant
     register_assistant(app, data_dir, authorized, load_project, query_evidence)
+    from organelle_scope.batch import register_batch
+    register_batch(app, data_dir, stored, image_dir, authorized)
     return app
 
 

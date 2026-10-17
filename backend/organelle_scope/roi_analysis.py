@@ -12,7 +12,7 @@ from itertools import combinations
 from typing import Literal
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from scipy.stats import rankdata
 
 from organelle_scope.image_io import ImageError
@@ -29,6 +29,13 @@ class AreaROI(BaseModel):
     kind: Literal["circle", "polygon"]
     z: int = Field(ge=0)
     points: list[Point] = Field(min_length=2, max_length=512)
+    diameter_um: float | None = Field(default=None,gt=0,allow_inf_nan=False)
+
+    @model_validator(mode='after')
+    def physical_circle_only(self):
+        if self.diameter_um is not None and self.kind!='circle':
+            raise ValueError('A physical diameter applies only to circular ROIs.')
+        return self
 
 
 class AnalysisRequest(BaseModel):
@@ -49,10 +56,10 @@ def _intersects(a, b, c, d):
     return _cross(a,b,c)*_cross(a,b,d) <= 0 and _cross(c,d,a)*_cross(c,d,b) <= 0
 
 
-def roi_mask(roi: AreaROI, shape: tuple[int, int]) -> tuple[np.ndarray, list[str]]:
+def roi_mask(roi: AreaROI, shape: tuple[int, int], spacing=(None,None)) -> tuple[np.ndarray, list[str]]:
     h, w = shape
     points = roi.points
-    if any(p.x < 0 or p.y < 0 or p.x > w-1 or p.y > h-1 for p in points):
+    if any(p.x < 0 or p.y < 0 or p.x > w-1 or p.y > h-1 for p in (points[:1] if roi.diameter_um is not None else points)):
         raise ImageError("ROI points must lie within the image pixel-center coordinates.")
     yy, xx = np.ogrid[:h, :w]
     warnings = []
@@ -60,11 +67,17 @@ def roi_mask(roi: AreaROI, shape: tuple[int, int]) -> tuple[np.ndarray, list[str
         if len(points) != 2:
             raise ImageError("A circular ROI needs a center and an edge point.")
         a, b = points
-        radius = math.hypot(b.x-a.x, b.y-a.y)
-        if radius <= 0:
+        if roi.diameter_um is not None:
+            sx,sy=spacing
+            if sx is None or sy is None or not all(math.isfinite(v) and v>0 for v in (sx,sy)):
+                raise ImageError('A diameter in micrometers requires valid X and Y calibration.')
+            rx,ry=roi.diameter_um/(2*sx),roi.diameter_um/(2*sy)
+        else:
+            rx=ry=math.hypot(b.x-a.x,b.y-a.y)
+        if rx <= 0 or ry <= 0:
             raise ImageError("Draw a circle with a nonzero radius.")
-        mask = (xx-a.x)**2+(yy-a.y)**2 <= radius**2
-        if a.x-radius < 0 or a.y-radius < 0 or a.x+radius > w-1 or a.y+radius > h-1:
+        mask = (((xx-a.x)/rx)**2+((yy-a.y)/ry)**2 <= 1+1e-12) if roi.diameter_um is not None else ((xx-a.x)**2+(yy-a.y)**2 <= rx**2)
+        if a.x-rx < 0 or a.y-ry < 0 or a.x+rx > w-1 or a.y+ry > h-1:
             warnings.append("The circle extends outside the image; measurements use its intersection with the image.")
     else:
         if len(points) < 3:
@@ -196,7 +209,7 @@ def regression(channels: list[np.ndarray], target: int, labels: list[str]) -> di
 
 def analyze_roi(channels: list[np.ndarray], roi: AreaROI, labels: list[str], target: int,
                 mode: str, thresholds: list[float], spacing: tuple[float | None, float | None]) -> dict:
-    mask, warnings = roi_mask(roi, channels[0].shape)
+    mask, warnings = roi_mask(roi, channels[0].shape, spacing)
     values = [c[mask].astype(np.float64) for c in channels]
     count = int(mask.sum())
     sx, sy = spacing

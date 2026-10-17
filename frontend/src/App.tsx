@@ -14,6 +14,8 @@ import {AssistantPanel} from './AssistantPanel';
 import { VolumeView } from "./VolumeView";
 
 import { RoiOverlay, type AreaROI, type DrawTool } from "./RoiOverlay";
+import {BatchPanel} from './BatchPanel';
+import {CircleSizeEditor} from "./CircleSizeEditor";
 import { StatisticsPanel, type AnalysisResult } from "./StatisticsPanel";
 
 type ProjectRecord={id:string;name:string;revision:number;image:ImageRecord|null;state:{core:Record<string,any>;workspaces:WorkspaceData}};
@@ -34,7 +36,7 @@ export default function App() {
   const [image, setImage] = useState<ImageRecord | null>(null);
   const [recent, setRecent] = useState<ImageRecord[]>([]);
   const [z, setZ] = useState(0);
-  const [workspace,setWorkspace]=useState<"images"|"validation"|"evidence"|"assistant">("images");
+  const [workspace,setWorkspace]=useState<"images"|"validation"|"evidence"|"assistant"|"batch">("images");
   const [mode, setMode] = useState<"slice" | "volume">("slice");
   const [volumeChannel, setVolumeChannel] = useState(-1);
   const [axes, setAxes] = useState("");
@@ -171,7 +173,7 @@ export default function App() {
     try { setAnalysis(await json<AnalysisResult>(`/api/images/${image.id}/analysis`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({processing:selectedProcessing,rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})})); }
     catch(e){setError(String(e));}finally{setBusy(false);}
   }
-  return <ProjectStateProvider key={generation} data={projectData} setData={setProjectData}><div className="shell">
+  return <div className="shell">
     <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
       <span className="badge">Development build · ROI statistics</span><span className="local"><i /> Local processing</span></header>
     <div className="project-bar" aria-label="Project controls"><label>Project name<input aria-label="Project name" value={projectName} maxLength={120} onChange={e=>setProjectName(e.target.value)}/></label><button disabled={projectBusy||busy||loadingSaved||!projectName.trim()} onClick={()=>saveProject()}>{projectBusy?'Working…':'Save project'}</button><button className="secondary" disabled={projectBusy||busy||loadingSaved} onClick={()=>saveProject(true)}>Save as new</button><label>Open saved project<select aria-label="Open saved project" disabled={projectBusy||busy} value={project?.id??''} onChange={e=>openProject(e.target.value)}><option value="">Select project</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name} · r{p.revision}</option>)}</select></label><span className="hint" role="status">{project&&JSON.stringify(snapshot())!==JSON.stringify(project.state)?`Unsaved changes · assistant reads saved revision ${project.revision}.`:projectMessage||'Projects keep the imported image and analysis on this computer. Save before switching images.'}</span></div>
@@ -195,15 +197,16 @@ export default function App() {
         <button className="secondary" disabled={busy||loadingSaved} onClick={exportInspection}>Export measurements & ROIs</button>
       </> : <section className="muted"><p>Original 8/16-bit intensities are preserved.</p><p>Ambiguous axes and missing calibration are shown for review.</p><p>Images stay on this computer.</p></section>}
     </aside><main>
-      <nav className="workspace-nav" aria-label="Workspaces"><button aria-pressed={workspace==='images'&&mode==='slice'} onClick={()=>{setWorkspace('images');setMode('slice');}}>Image & ROI</button><button disabled={!available||!info||info.dimensions.Z<2} aria-pressed={workspace==='images'&&mode==='volume'} onClick={()=>{setWorkspace('images');setMode('volume');}}>3D workspace</button><button disabled={!available} aria-pressed={workspace==='validation'} onClick={()=>setWorkspace('validation')}>Validation</button><button aria-pressed={workspace==='evidence'} onClick={()=>setWorkspace('evidence')}>Molecular evidence</button><button aria-pressed={workspace==='assistant'} onClick={()=>setWorkspace('assistant')}>Local assistant</button></nav>
+      <nav className="workspace-nav" aria-label="Workspaces"><button aria-pressed={workspace==='images'&&mode==='slice'} onClick={()=>{setWorkspace('images');setMode('slice');}}>Image & ROI</button><button disabled={!available||!info||info.dimensions.Z<2} aria-pressed={workspace==='images'&&mode==='volume'} onClick={()=>{setWorkspace('images');setMode('volume');}}>3D workspace</button><button disabled={!available} aria-pressed={workspace==='validation'} onClick={()=>setWorkspace('validation')}>Validation</button><button aria-pressed={workspace==='evidence'} onClick={()=>setWorkspace('evidence')}>Molecular evidence</button><button aria-pressed={workspace==='batch'} onClick={()=>setWorkspace('batch')}>Batch analysis</button><button aria-pressed={workspace==='assistant'} onClick={()=>setWorkspace('assistant')}>Local assistant</button></nav>
       {error && <div role="alert" className="error">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}
       {info?.warnings.length ? <details className="review" open><summary>Import notes · {info.warnings.length}</summary>{info.warnings.map((w,i)=><p key={i}>{w}</p>)}</details> : null}
+      <ProjectStateProvider key={generation} data={projectData} setData={setProjectData}>
       <div hidden={workspace!=='images'}><section className="viewer panel"><div className="viewer-heading"><div><p className="eyebrow">IMAGE EXPLORER</p><h2>{info ? info.filename : "Start with an image"}</h2></div><div className="segmented"><button aria-pressed={mode==="slice"} onClick={()=>setMode("slice")}>XY slice</button><button disabled={!available || !info || info.dimensions.Z<2} aria-pressed={mode==="volume"} onClick={()=>setMode("volume")}>3D preview</button></div></div>
       {!info ? <div className="empty"><img className="empty-logo" src="./branding/brand-logo.jpg" alt="OrganelleScope — Cellular Exploration & Analysis"/><h2>A clearer view of cellular space.</h2><p>Open a TIFF to inspect its channels, depth and physical calibration.</p><span>TIFF · OME-TIFF · ImageJ TIFF · up to 4 channels</span></div> : !available ? <div className="empty"><h2>Review the image axes</h2><p>Confirm how dimensions map to channels and depth before viewing.</p></div> : mode==="volume" ? <VolumeView image={image!} channel={volumeChannel} onChannelChange={setVolumeChannel}/> : <>
         <div className="slice-toolbar"><label>Z plane <strong>{z+1} / {info.dimensions.Z}</strong><input aria-label="Z plane" type="range" min={0} max={info.dimensions.Z-1} value={z} onChange={e=>{setZ(Number(e.target.value));setRoi(null);}}/></label><span>{info.calibration.Z.value_um != null ? `${(z*info.calibration.Z.value_um).toFixed(3)} µm from first plane` : "Z spacing unknown"}</span></div>
 
         <div className="image-stage" style={{aspectRatio:`${info.dimensions.X}/${info.dimensions.Y}`}}>{preview ? <img src={preview} alt={`Composite Z plane ${z+1}`}/> : <p>Loading source plane…</p>}
-          <RoiOverlay controlsContainer={drawingActions} disabled={busy || loadingSaved} key={`${image!.id}-${z}-${tool}`} width={info.dimensions.X} height={info.dimensions.Y} z={z} tool={tool} rois={areas} line={roi} onLine={setRoi} onAdd={r=>{if(busy)return;setAreas(a=>[...a,r]);setAnalysis(null);}}/>
+          <RoiOverlay spacing={{x:info.calibration.X.value_um,y:info.calibration.Y.value_um}} controlsContainer={drawingActions} disabled={busy || loadingSaved} key={`${image!.id}-${z}-${tool}`} width={info.dimensions.X} height={info.dimensions.Y} z={z} tool={tool} rois={areas} line={roi} onLine={setRoi} onAdd={r=>{if(busy)return;setAreas(a=>[...a,r]);setAnalysis(null);}}/>
 
         </div>
         <div className="drawing-dock" role="toolbar" aria-label="Image drawing tools"><div className="roi-tools"><label>Drawing tool<select aria-label="Drawing tool" disabled={busy} value={tool} onChange={e=>setTool(e.target.value as DrawTool)}><option value="line">Line profiler</option><option value="circle">Circular ROI</option><option value="polygon">Polygonal ROI</option></select></label><span>{tool==='polygon'?'Click vertices, then finish the polygon.':tool==='circle'?'Drag from the center to the circle edge.':'Drag to sample a line.'}</span></div><div ref={setDrawingActions}/></div>
@@ -213,7 +216,7 @@ export default function App() {
       <div hidden={mode!=='slice'}>{image && available && <ProcessingPanel key={`processing-${image.id}`} imageId={image.id} z={z} labels={info!.channel_labels} bitDepth={info!.bit_depth} value={processing} disabled={busy||loadingSaved} onChange={config=>{setProcessing(config);setAnalysis(null);if(!isProcessed(config))setMeasurementSource("raw");}}/>}
       {image && available && <section className="panel statistics"><p className="eyebrow">AREA ANALYSIS</p><h2>ROI measurements</h2><p className="hint">Draw circular or polygonal ROIs above. Each region is measured separately on its own plane.</p>
         <label>Measurement source<select aria-label="Measurement source" disabled={busy||loadingSaved} value={measurementSource} onChange={e=>{const source=e.target.value as 'raw'|'processed';setMeasurementSource(source);setAnalysis(null);if(source==='processed'&&thresholdMode==='costes')setThresholdMode('manual');}}><option value="raw">Raw source intensities</option><option value="processed" disabled={!isProcessed(processing)}>Processed intensities (applied recipe)</option></select></label><p className="hint">This selection applies to line profiles and ROI statistics. Raw images remain visible in the image explorer and 3D preview.</p>
-        <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} <button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>
+        <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} {r.kind==='circle'&&<CircleSizeEditor roi={r} sx={info!.calibration.X.value_um} sy={info!.calibration.Y.value_um} width={info!.dimensions.X} height={info!.dimensions.Y} disabled={busy||loadingSaved} onChange={updated=>{setAreas(a=>a.map(x=>x.id===r.id?updated:x));setAnalysis(null);}}/>}<button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>
         <div className="roi-tools"><label>Threshold method<select disabled={busy} value={thresholdMode} onChange={e=>{setThresholdMode(e.target.value as typeof thresholdMode);setAnalysis(null);}}><option value="costes" disabled={measurementSource==='processed'}>Costes-style automatic (raw only)</option><option value="manual">Manual per channel</option><option value="zero">Zero threshold</option></select></label><label>Regression target<select disabled={busy} value={target} onChange={e=>{setTarget(Number(e.target.value));setAnalysis(null);}}>{info!.channel_labels.map((l,i)=><option key={i} value={i}>{l}</option>)}</select></label></div>
         {thresholdMode==='manual' && info!.channel_labels.map((l,i)=><label key={i}>{l} threshold<input disabled={busy} type="number" min="0" max={2**info!.bit_depth-1} value={thresholds[i]??0} onChange={e=>{setThresholds(t=>Array.from({length:info!.dimensions.C},(_,j)=>j===i?Number(e.target.value):t[j]??0));setAnalysis(null);}}/></label>)}
         <button disabled={busy || loadingSaved || !areas.length || info!.dimensions.C<2} onClick={calculate}>{busy?'Calculating…':'Calculate ROI statistics'}</button><p className="hint">At least two channels are needed. Results and ROI coordinates are saved locally after calculation and included in the export.</p>
@@ -224,6 +227,8 @@ export default function App() {
       <div hidden={workspace!=='validation'}>{image && available && <ValidationPanel key={`validation-${image.id}`} image={image} rois={areas} processing={processing} measurementProcessing={selectedProcessing} thresholds={thresholds} thresholdMode={thresholdMode} target={target}/>}</div>
       <div hidden={workspace!=='evidence'}><EvidencePanel/></div>
       <div hidden={workspace!=='assistant'}><AssistantPanel projectId={project?.id??null}/></div>
+      </ProjectStateProvider>
+      <div hidden={workspace!=='batch'}><BatchPanel/></div>
       <footer><span>Research development · Local projects and experimental assistant; biological validation pending.</span><span>Source → calibration → measurement</span></footer>
-    </main></div></div></ProjectStateProvider>;
+    </main></div></div>;
 }
