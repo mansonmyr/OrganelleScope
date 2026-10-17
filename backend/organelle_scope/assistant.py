@@ -34,7 +34,7 @@ def bounded(value,limit=5000):
  text=json.dumps(value,ensure_ascii=False,allow_nan=False)
  if len(text)<=limit:return value
  # Valid JSON wrapper: a size cap is explicit and never looks like a complete report.
- return {'truncated':True,'excerpt':text[:limit],'note':'Excerpt only. Use the application report for complete measurements.'}
+ return {**({k:value[k] for k in ('source_id','source_ids') if k in value} if isinstance(value,dict) else {}),'truncated':True,'excerpt':text[:limit],'note':'Excerpt only. Use the application report for complete measurements.'}
 
 
 def invalid_answer(answer,sources):
@@ -102,7 +102,7 @@ def run_agent(model,record,options,query_evidence):
      source_id=f'evidence-{record_index+1}-{source_index+1}'
      sources[source_id]={'id':source_id,'title':result.get('provider','Evidence')+' · '+str(source.get('retrieved_utc','date unknown')),'url':url,'response_sha256':source.get('response_sha256')}
      source['source_id']=source_id
-   return {'records':records,'note':'Retrieved association/pathway evidence is not an experimental causal finding.'}
+   return {'source_ids':[key for key in sources if key.startswith('evidence-')],'records':records,'note':'Retrieved association/pathway evidence is not an experimental causal finding.'}
   raise ValueError('Tool is not in the application allowlist.')
 
  initial=bounded(execute('inspect_project'))
@@ -160,7 +160,9 @@ def register_assistant(app,data_dir,authorized,load_project,query_evidence):
   if not lock.acquire(blocking=False):raise HTTPException(409,'The assistant is already answering. Wait for it to finish.')
   try:
    record=load_project(options.project_id)
-   return run_agent(model,record,options,query_evidence)
+   result=run_agent(model,record,options,query_evidence)
+   model.cleanup_after_success()
+   return result
   except (ValueError,KeyError,TypeError,OSError) as exc:raise HTTPException(422,str(exc)) from exc
   finally:lock.release()
  from contextlib import asynccontextmanager

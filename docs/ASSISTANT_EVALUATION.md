@@ -1,10 +1,34 @@
 # Preliminary local assistant evaluation
 
-Development observations, **17 October 2026**, source milestone 0.1.7. This is a small engineering smoke test, not a biological benchmark, model ranking or a claim of validated interpretation.
+Development observations, **17 October 2026**, source milestone 0.1.8. This is a small engineering smoke test, not a biological benchmark, model ranking or a claim of validated interpretation.
 
-## Configuration
+## Current model: Ministral 3 8B (0.1.8)
 
-Apple M3 / 24 GB unified memory; Qwen3.5-4B community Q4_K_M (exact size/hash/revision in LOCAL_ASSISTANT.md); official llama.cpp b11669, Metal, four CPU threads, one slot, 8,192-token context, thinking disabled, temperature 0.2. No vision projector or raw microscopy image was passed to the model. The assistant used saved source metadata and deterministic reports from the existing synthetic validation stack (64×64, eight Z planes, two channels; XY spacing 0.1 µm, Z spacing 0.4 µm).
+The active model is official Mistral Ministral 3 8B Instruct Q4_K_M, 5,198,911,904 bytes, pinned revision and SHA-256 in [LOCAL_ASSISTANT.md](LOCAL_ASSISTANT.md). The complete downloaded file passed SHA-256 verification before installation. On Apple M3 / 24 GB, llama.cpp b11669 uses Metal, four CPU threads, one slot, an 8,192-token context and temperature 0.05. This is text-only evidence interpretation; no microscopy image or vision projector is passed to the model.
+
+Three real local API requests used saved development projects with online access disabled:
+
+| Request | Elapsed | Application tools | Observation |
+| --- | --- | --- | --- |
+| Interpret saved synthetic ROI results | 51.33 s | `inspect_project`, `read_measurements` | Distinguished intensity correlation from molecular binding; cited supplied measurements. Nine recorded quantities were returned separately by the application. |
+| Run numerical references and assess publication readiness | 11.00 s | `inspect_project`, `run_reference_checks` | Explained that numerical agreement does not establish biological validity or publication readiness. |
+| Repeat saved human TP53 KEGG query from cache | 27.80 s | `inspect_project`, `refresh_selected_evidence` | Used cached evidence and actual source IDs; distinguished pathway membership from activation and a causal silencing effect. |
+
+The interface test completed in **42.03 seconds**. Its new Ministral answer and nine recorded quantities were saved with the earlier Qwen answer, then restored from project revision 4 after reloading; each answer retained its own model attribution. The model was unloaded after testing to release memory.
+
+These are individual smoke-test timings, not a controlled comparison with Qwen or a biomedical reasoning benchmark. In the KEGG response the model also attributed a general methodological caution to “original KEGG documentation”; the retrieved membership record does not establish that attribution. Source-ID validation alone cannot verify citation entailment. This remains a limitation requiring human review and a curated evaluation corpus before a mature public release.
+
+All 81 backend and 33 frontend tests passed, and the interface production build passed. Additional tests cover model-specific request settings, retained source IDs in bounded evidence payloads, conservative cleanup and runtime integrity receipts. Native Windows inference and installer bundling of the new model have not been qualified.
+
+After the first successful new-model response, cleanup removed the superseded Qwen weights, the downloaded runtime archive and explicitly identified evaluation scratch files (2,719,767,635 bytes). Earlier cleanup removed obsolete build artifacts and the 0.1.2 installer (398,903,213 bytes): **3,118,670,848 bytes reclaimed in total**. The latest usable installer, active runtime, scientific images, saved projects, measurements, conversations and evidence were preserved. Re-running setup verified the installed model/runtime without downloading the removed archive again. The active 5.20 GB model is larger than the retired model; reclaimed space is not a claim of a net reduction in total installation size.
+
+## Historical model: Qwen3.5-4B (0.1.7)
+
+The following observations refer to the retired Qwen configuration; its weights have been removed. They do not measure Ministral performance. Model provenance remains in earlier Git history and saved response metadata.
+
+### Historical configuration
+
+Apple M3 / 24 GB unified memory; Qwen3.5-4B community Q4_K_M (historical size/hash/revision in Git revision c9f28c0); official llama.cpp b11669, Metal, four CPU threads, one slot, 8,192-token context, thinking disabled, temperature 0.2. No vision projector or raw microscopy image was passed to the model. The assistant used saved source metadata and deterministic reports from the existing synthetic validation stack (64×64, eight Z planes, two channels; XY spacing 0.1 µm, Z spacing 0.4 µm).
 
 One exploratory process snapshot reported about **3.53 GiB RSS** for llama-server. This is not peak memory, a full accounting of Metal/unified allocations, or an installation requirement. Timings varied with prompt context, cache and rewrite checks; exploratory qualitative-answer tests took approximately **6–35 seconds** before the final structured rewrite check, and a cache-only KEGG test about **28 seconds**. The final cited ROI smoke test took **47.11 seconds**, including a format/grounding rewrite, and returned 9 recorded quantities separately from the model prose. The end-to-end interface check took **76.94 seconds** under concurrent desktop activity; its cited answer, measurement table and conversation survived saving and reopening. These are individual development observations, not a controlled latency benchmark. Native Windows execution, low-memory behavior and larger concurrent image workloads were not tested.
 

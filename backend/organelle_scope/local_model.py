@@ -13,18 +13,20 @@ from pathlib import Path
 from threading import Lock
 
 MODEL={
- 'name':'Qwen3.5-4B Q4_K_M','filename':'Qwen3.5-4B-Q4_K_M.gguf','bytes':2707513696,
- 'sha256':'25082a7dd3776cc3c741c6347d3bd04523f05796607b3fbc32fa3a25dfa1418c',
- 'upstream':'https://huggingface.co/Qwen/Qwen3.5-4B',
- 'quantization':'https://huggingface.co/lmstudio-community/Qwen3.5-4B-GGUF',
- 'revision':'f9f88ac3e234be915e23811a6d28ea287bdb927e','license':'Apache-2.0',
+ 'name':'Ministral 3 8B Instruct Q4_K_M','filename':'Ministral-3-8B-Instruct-2512-Q4_K_M.gguf','bytes':5198911904,
+ 'sha256':'33e7a72cf5e6e2cfc2f2847075acc013d68bba023e35310cef86b5cf8fdca761',
+ 'upstream':'https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512',
+ 'quantization':'https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512-GGUF',
+ 'revision':'0102285ad796bd99af90f58de616092e5630e970','license':'Apache-2.0',
  'runtime':'llama.cpp b11669','context_tokens':8192,
+ 'vision_enabled':False,'temperature':0.05,
 }
 
 
 class LocalModel:
  def __init__(self,log_dir):
   repository=Path(__file__).resolve().parents[2]
+  self.repository=repository;self.cleanup_report=None
   # Packaged deployments supply absolute bundled paths via the desktop launcher.
   self.binary=Path(os.environ.get('ORGANELLESCOPE_LLAMA_SERVER',str(repository/'.local-runtime/llama-b11669'/('llama-server.exe' if sys.platform=='win32' else 'llama-server'))))
   self.model=Path(os.environ.get('ORGANELLESCOPE_MODEL',str(repository/'.local-models'/MODEL['filename'])))
@@ -39,7 +41,7 @@ class LocalModel:
    try:self._request('/health',timeout=1);ready=True
    except (OSError,ValueError):pass
   return {'model':MODEL,'runtime_available':self.binary.is_file(),'model_available':self.model.is_file() and self.model.stat().st_size==MODEL['bytes'],
-          'running':running,'ready':ready,'verified':self.verified is not None,'inference':'local only','log_name':'local-assistant.log'}
+          'running':running,'ready':ready,'verified':self.verified is not None,'inference':'local only','log_name':'local-assistant.log','cleanup':self.cleanup_report}
 
  def _request(self,path,body=None,timeout=120):
   if self.port is None:raise ValueError('Start the local model first.')
@@ -90,8 +92,14 @@ class LocalModel:
 
  def completion(self,messages,tools=None,response_format=None):
   if not self.status()['ready']:raise ValueError('The local model is not ready. Start it and wait for Ready.')
-  body={'model':'organellescope-local','messages':messages,'temperature':0.2,'top_p':0.8,'max_tokens':600,
-        'chat_template_kwargs':{'enable_thinking':False},'reasoning_effort':'none','stream':False}
+  body={'model':'organellescope-local','messages':messages,'temperature':MODEL['temperature'],'top_p':0.9,'max_tokens':600,
+        'stream':False}
   if tools:body.update(tools=tools,parallel_tool_calls=False)
   if response_format:body.update(response_format=response_format,max_tokens=350)
   return self._request('/v1/chat/completions',body)
+
+ def cleanup_after_success(self):
+  if self.cleanup_report is None and self.verified is not None and self.process and self.process.poll() is None:
+   from organelle_scope.model_storage import cleanup_superseded
+   self.cleanup_report=cleanup_superseded(self.repository,self.model)
+  return self.cleanup_report

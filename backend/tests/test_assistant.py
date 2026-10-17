@@ -102,3 +102,19 @@ def test_schema_request_does_not_replace_application_validation():
  with pytest.raises(ValueError,match='valid cited draft'):run_agent(model,RECORD,options(),None)
  model=Fake(response('No citation.'),response(json.dumps({'answer':'Qualitative draft','citations':['invented']})))
  with pytest.raises(ValueError,match='valid cited draft'):run_agent(model,RECORD,options(),None)
+
+
+def test_ministral_request_uses_selected_model_settings_without_qwen_specific_flags(tmp_path,monkeypatch):
+ from organelle_scope.local_model import LocalModel,MODEL
+ model=LocalModel(tmp_path);monkeypatch.setattr(model,'status',lambda:{'ready':True})
+ calls=[];monkeypatch.setattr(model,'_request',lambda path,body:(calls.append((path,body)) or {}))
+ model.completion([{'role':'user','content':'Test'}])
+ assert MODEL['name'].startswith('Ministral') and MODEL['bytes']==5198911904
+ assert calls[0][1]['temperature']==.05
+ assert 'chat_template_kwargs' not in calls[0][1] and 'reasoning_effort' not in calls[0][1]
+
+
+def test_bounded_tool_results_keep_source_ids_visible():
+ from organelle_scope.assistant import bounded
+ result=bounded({'source_ids':['evidence-1-1'],'records':['x'*10000]})
+ assert result['truncated'] and result['source_ids']==['evidence-1-1']

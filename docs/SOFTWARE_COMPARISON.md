@@ -1,6 +1,6 @@
 # Capability comparison and release-readiness criteria
 
-Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.7 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
+Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.1.8 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
 
 ## How to interpret the comparison
 
@@ -55,7 +55,7 @@ Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed 
 | Preprocessing/restoration | Deterministic background subtraction and smoothing | Noise2Void/model validation, residuals, held-out acquisitions and downstream measurement bias |
 | Projects / automation | Manual versioned local projects retain source associations, settings and workspace reports; round-trip tests | Portable archives, multi-image experiments, batch runs, cancellation, autosave and recovery |
 | Evidence reliability | Explicit mapping, live checks, caching, diagrams and provenance | Provider failure/changed-schema handling, rights review, stable exports and evidence review |
-| Local agent | Experimental pinned Qwen3.5-4B Q4_K_M / llama.cpp; local tool loop, response checks, recorded quantities, visible audit; M3 smoke tests | Curated biological/citation-entailment and adversarial evaluation; native Windows qualification; offline installer and dependency review |
+| Local agent | Experimental pinned Ministral 3 8B Instruct Q4_K_M / llama.cpp; local tool loop, response checks, recorded quantities, visible audit; M3 smoke tests | Curated biological/citation-entailment and adversarial evaluation; native Windows qualification; offline installer and dependency review |
 | Distribution | Development packaging and Mac signing fixes | Native platform installations, memory/performance budgets, production signing and release procedures |
 
 ## Independent benchmark protocol to implement next

@@ -1,4 +1,4 @@
-# Local assistant and project persistence — source milestone 0.1.7
+# Local assistant and project persistence — source milestone 0.1.8
 
 This milestone adds a working **experimental** local assistant and manually saved projects. It does not publish a new installer, certify biological conclusions, or enable autonomous analysis changes.
 
@@ -14,12 +14,12 @@ Development locations: `.dev-images/`, `project-data/`, `evidence-cache/` and `a
 
 ## Exact local model
 
-- Upstream: [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B), Apache-2.0.
-- Quantization: **community**, [lmstudio-community/Qwen3.5-4B-GGUF](https://huggingface.co/lmstudio-community/Qwen3.5-4B-GGUF), revision `f9f88ac3e234be915e23811a6d28ea287bdb927e`.
-- File: `Qwen3.5-4B-Q4_K_M.gguf`, **2,707,513,696 bytes** (2.71 GB / 2.52 GiB).
-- SHA-256: `25082a7dd3776cc3c741c6347d3bd04523f05796607b3fbc32fa3a25dfa1418c`.
+- Upstream: [mistralai/Ministral-3-8B-Instruct-2512](https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512), Apache-2.0.
+- Quantization: **official Mistral GGUF**, [mistralai/Ministral-3-8B-Instruct-2512-GGUF](https://huggingface.co/mistralai/Ministral-3-8B-Instruct-2512-GGUF), revision `0102285ad796bd99af90f58de616092e5630e970`.
+- File: `Ministral-3-8B-Instruct-2512-Q4_K_M.gguf`, **5,198,911,904 bytes** (5.20 GB / 4.84 GiB).
+- SHA-256: `33e7a72cf5e6e2cfc2f2847075acc013d68bba023e35310cef86b5cf8fdca761`.
 - Runtime: official [llama.cpp b11669](https://github.com/ggml-org/llama.cpp/releases/tag/b11669); archive size/hash pinned in `scripts/setup-local-assistant.py`.
-- Text-only use; no vision projector or raw image input. Context: 8,192 tokens; one request at a time; at most four model-selected tool calls plus the supplied project context. Model-generated prose is capped and conversation context bounded.
+- Text-only use; no vision projector or raw image input. Context: 8,192 tokens; one request at a time; at most four model-selected tool calls plus the supplied project context. Temperature is 0.05, following Mistral's recommendation below 0.1. Quantitative values remain engine-derived, independent of the language model.
 
 These weights are **not** the full-precision model evaluated in upstream benchmarks. A successful local test does not transfer all upstream benchmark claims to this quantization or to microscopy interpretation.
 
@@ -54,3 +54,10 @@ Calculations remain in the deterministic engine. The assistant's interpretation 
 The allowlist has no shell, arbitrary filesystem, arbitrary URL, image modification or setting-write tool. Tool arguments/roles/budgets are validated. Retrieved data is treated as untrusted context. Provider association scores are not binding probabilities; pathway membership is not measured activation; hypothetical perturbations are hypotheses, not causal predictions. Missing measurements are not zero effects. No autonomous search for significance is allowed.
 
 Engineering tests cover revisions/source integrity, restoration isolation, persisted workspace reports, tool permissions, offline query boundaries, model context format and invalid-reference/quantitative-answer rejection. Real model tests and their limitations are recorded in `docs/ASSISTANT_EVALUATION.md`. Curated biological interpretation, citation-entailment assessment, prompt-injection robustness and native platform qualification remain release gates.
+
+
+## Disk-space policy
+
+One active model is retained. After the first valid assistant response, known superseded Qwen weights, their incomplete download and obsolete development scratch files are removed from the managed local folders. Downloaded runtime archives are removed too; setup retains an integrity receipt for the installed runtime so a repeat setup can verify it without downloading the archive again. Model hashes/revisions and small evaluation summaries remain in source control. The current runtime, model and licence records are retained.
+
+The cleanup allowlist does not remove images, saved projects, conversations, ROI/measurement reports, scientific evidence, user exports, custom models or unrelated files. Symlinked managed directories are skipped. Source updates also remove obsolete generated builds and superseded installers after identifying them, while keeping the most recent usable installer until it is replaced.

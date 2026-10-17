@@ -34,15 +34,24 @@ def download(url,path,size,digest):
  temp.replace(path)
 
 def main():
- parser=argparse.ArgumentParser(description='Install pinned llama.cpp and Qwen3.5-4B for local development (about 2.73 GB download).')
+ parser=argparse.ArgumentParser(description='Install pinned llama.cpp and Ministral 3 8B for local development (about 5.22 GB download).')
  parser.add_argument('--download',action='store_true',help='Explicitly download and verify the model/runtime.')
  args=parser.parse_args();key=platform.system()+'-'+platform.machine()
  if key not in RUNTIMES:parser.error('Supported setup: Apple Silicon macOS or native Windows x64. Windows ARM/emulation and other targets need separate qualification.')
  runtime=RUNTIMES[key];manifest={'model':MODEL,'runtime':runtime,'runtime_tag':'b11669'}
  print(json.dumps(manifest,indent=2))
  if not args.download:return
- download('https://huggingface.co/lmstudio-community/Qwen3.5-4B-GGUF/resolve/'+MODEL['revision']+'/'+MODEL['filename'],ROOT/'.local-models'/MODEL['filename'],MODEL['bytes'],MODEL['sha256'])
- archive=ROOT/'.local-runtime'/runtime['file']
+ download(MODEL['quantization']+'/resolve/'+MODEL['revision']+'/'+MODEL['filename'],ROOT/'.local-models'/MODEL['filename'],MODEL['bytes'],MODEL['sha256'])
+ runtime_root=ROOT/'.local-runtime';destination=runtime_root/'llama-b11669';receipt=runtime_root/'installed-runtime.json'
+ installed=False
+ if receipt.is_file():
+  try:
+   record=json.loads(receipt.read_text())
+   installed=record['archive_sha256']==runtime['sha256'] and bool(record['files']) and all((destination/name).is_file() and not (destination/name).is_symlink() and sha(destination/name)==digest for name,digest in record['files'].items())
+  except (ValueError,KeyError,OSError):installed=False
+ if installed:
+  print('Verified installed runtime; no archive download needed.');return
+ archive=runtime_root/runtime['file']
  download('https://github.com/ggml-org/llama.cpp/releases/download/b11669/'+runtime['file'],archive,runtime['bytes'],runtime['sha256'])
  if key.startswith('Darwin'):
   with tarfile.open(archive) as source:source.extractall(ROOT/'.local-runtime',filter='data')
@@ -53,6 +62,8 @@ def main():
     target=(destination/member.filename).resolve()
     if not target.is_relative_to(destination.resolve()):raise ValueError('Unsafe archive entry.')
    source.extractall(destination)
+ files={str(path.relative_to(destination)):sha(path) for path in destination.rglob('*') if path.is_file() and not path.is_symlink()}
+ receipt.write_text(json.dumps({'archive_sha256':runtime['sha256'],'files':files},indent=2))
  print('Verified local assistant files are ready. Start the app, save a project, then use Local assistant → Start local model.')
 
 if __name__=='__main__':main()

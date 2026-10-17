@@ -28,7 +28,7 @@ The comprehensive first-public-release scope is retained. A module passing unit 
 
 ## Agent/model decision
 
-Preferred evaluation candidate: Qwen3.5-4B, Q4_K_M via llama.cpp. One model in the full offline installer; do not bundle multiple competing models by default. Measure exact quantized-model tool use, numerical/citation fidelity, latency, memory and packaging size on target hardware. Model weights must have versioned manifests, hashes and notices before inclusion. The pinned community quantization and official llama.cpp runtime have now been downloaded and smoke-tested on M3/24 GB for source milestone 0.1.7. This is an experimental local agent, not a validated biological interpreter. Model/runtime assets are ignored development files, not committed weights or newly packaged installers. See LOCAL_ASSISTANT.md and ASSISTANT_EVALUATION.md.
+Initial evaluation candidate (0.1.7, now retired): Qwen3.5-4B, Q4_K_M via llama.cpp. See the active Ministral update below. One model in the full offline installer; do not bundle multiple competing models by default. Measure exact quantized-model tool use, numerical/citation fidelity, latency, memory and packaging size on target hardware. Model weights must have versioned manifests, hashes and notices before inclusion. The pinned community quantization and official llama.cpp runtime have now been downloaded and smoke-tested on M3/24 GB for source milestone 0.1.7. This is an experimental local agent, not a validated biological interpreter. Model/runtime assets are ignored development files, not committed weights or newly packaged installers. See LOCAL_ASSISTANT.md and ASSISTANT_EVALUATION.md.
 
 Agent tools will inspect metadata, propose workflows, run deterministic analysis tools, inspect quality/sensitivity checks and retrieve evidence. Never alter settings to seek statistical significance, invent tool results, or interpret functional association as direct binding. Preserve raw data and make agent actions auditable/recoverable.
 
@@ -49,3 +49,7 @@ Deterministic XY background correction and Gaussian smoothing, matched-contrast 
 ## Implemented persistence and local assistant (0.1.7 source)
 
 Manual versioned local projects now restore source associations and workspace reports, with source-integrity checks, atomic writes and revision conflicts. The bounded local assistant inspects saved metadata/results/evidence, runs numeric references and can repeat only an explicitly saved provider query. Recorded numerical quantities are presented separately from generated interpretation. Portable archives, autosave, multi-image experiments, broader agent actions and full offline packaging remain planned.
+
+## Active model update (0.1.8 source)
+
+The selected evaluation candidate is now the official Ministral 3 8B Instruct Q4_K_M (5.20 GB), replacing Qwen. Known retired development model assets are cleaned only after valid inference. Historical Qwen evaluation observations remain as provenance; they are not measurements of Ministral performance. Current model evidence and limitations are recorded in ASSISTANT_EVALUATION.md.

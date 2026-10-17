@@ -11,6 +11,8 @@ The new application license is undecided. These notices do not relicense predece
 
 ## Local assistant development assets
 
-Qwen3.5-4B is provided by Qwen under Apache-2.0; the model licence is retained in `Qwen3.5-4B-LICENSE.txt`. The pinned Q4_K_M file is a **community quantization**, from `lmstudio-community/Qwen3.5-4B-GGUF`, revision `f9f88ac3e234be915e23811a6d28ea287bdb927e`, not an official Qwen quantization. File size and SHA-256 are in `backend/organelle_scope/local_model.py`.
+The active model is Ministral 3 8B Instruct 2512, official Q4_K_M GGUF from Mistral AI, revision `0102285ad796bd99af90f58de616092e5630e970`, under Apache-2.0 (`Ministral-3-LICENSE.txt`). Exact file size and SHA-256 are in `backend/organelle_scope/local_model.py`.
+
+The previous Qwen community quantization is retired. Its small historical licence record and evaluation remain as provenance; its local weights and temporary test files are removed after successful replacement inference.
 
 The official llama.cpp b11669 runtime is from ggml-org. Its source licence is retained in `llama.cpp-LICENSE.txt`. The development setup verifies the official platform archive before extraction and retains the archive's bundled notices. The runtime and model are downloaded into ignored local folders; **neither their binaries nor weights are committed or added to an installer by this milestone**. Review all bundled-runtime dependency notices before any future redistribution.
