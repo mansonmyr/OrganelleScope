@@ -39,3 +39,28 @@ it('exposes rolling-ball radius and native intensity height and validates the CP
  fireEvent.change(screen.getByLabelText('Background radius (XY pixels)'),{target:{value:'101'}});
  expect((screen.getByText('Apply recipe') as HTMLButtonElement).disabled).toBe(true);
 });
+it('keeps cleared radius, ball height and smoothing fields blank until valid numbers are entered',async()=>{
+ const onChange=vi.fn();render(<ProcessingPanel imageId="test" z={0} labels={['A']} bitDepth={16} value={rawProcessing} disabled={false} onChange={onChange}/>);
+ fireEvent.change(screen.getByLabelText('Background method'),{target:{value:'rolling_ball'}});
+ const fields=['Background radius (XY pixels)','Ball height (native intensity units)','Gaussian smoothing σ (XY pixels)'].map(name=>screen.getByLabelText(name) as HTMLInputElement);
+ for(const field of fields){fireEvent.change(field,{target:{value:''}});fireEvent.blur(field);expect(field.value).toBe('');}
+ fireEvent.click(screen.getByText('Apply recipe'));expect(onChange).not.toHaveBeenCalled();
+ expect((screen.getByText('Apply recipe') as HTMLButtonElement).disabled).toBe(true);
+ await waitFor(()=>expect(request).toHaveBeenCalled());
+ expect(JSON.parse(vi.mocked(request).mock.calls[0][1]!.body as string)).toEqual(rawProcessing);
+ fireEvent.change(fields[0],{target:{value:'30'}});fireEvent.change(fields[1],{target:{value:'1500.5'}});fireEvent.change(fields[2],{target:{value:'0'}});
+ expect((screen.getByText('Apply recipe') as HTMLButtonElement).disabled).toBe(false);
+ fireEvent.click(screen.getByText('Apply recipe'));
+ expect(onChange).toHaveBeenLastCalledWith({...rawProcessing,background:'rolling_ball',offsets:[0],radius_px:30,rolling_height:1500.5,sigma_px:0});
+});
+it('keeps cleared offsets blank and ignores an unused blank radius after changing methods',()=>{
+ const onChange=vi.fn();render(<ProcessingPanel imageId="test" z={0} labels={['A']} bitDepth={16} value={rawProcessing} disabled={false} onChange={onChange}/>);
+ fireEvent.change(screen.getByLabelText('Background method'),{target:{value:'opening'}});
+ fireEvent.change(screen.getByLabelText('Background radius (XY pixels)'),{target:{value:''}});
+ fireEvent.change(screen.getByLabelText('Background method'),{target:{value:'constant'}});
+ const offset=screen.getByLabelText('A offset') as HTMLInputElement;
+ fireEvent.change(offset,{target:{value:''}});expect(offset.value).toBe('');
+ expect((screen.getByText('Apply recipe') as HTMLButtonElement).disabled).toBe(true);
+ fireEvent.change(offset,{target:{value:'0'}});fireEvent.click(screen.getByText('Apply recipe'));
+ expect(onChange).toHaveBeenLastCalledWith({...rawProcessing,background:'constant',offsets:[0]});
+});

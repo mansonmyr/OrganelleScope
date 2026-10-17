@@ -80,3 +80,7 @@ Raw XYZ containment tests replace every outside-cuboid voxel with a bright value
 ## Shared preview layout — 0.1.13
 
 The preview is mounted above the workspace navigation and outside workspace visibility conditions. Separate preview mode and workspace selection preserve the current XY/3D view when moving between Image & ROI, 3D workspace, Validation, Molecular evidence, Batch analysis and Local assistant. Regression checks verify DOM order, preview identity, selected Z plane and drawing tool across all tabs, and a stateful volume-view stand-in across tab changes. The full frontend run passed **51 tests**. Live checks also confirm the sample remains displayed in Validation and that the 3D workspace tab does not force a preview-mode change. The production UI build passes; quantitative backend algorithms are unchanged.
+
+### Numeric entry follow-up
+
+Preprocessing fields now retain text while being edited, so deleting radius, ball height, Gaussian sigma or a channel offset leaves an empty input after blur. Empty active inputs disable Apply instead of becoming zero; the current applied recipe/preview stays unchanged. Valid entries are converted to numbers only for the applied recipe. Explicit sigma = 0 remains supported. Unused blank background fields do not prevent switching to another method. The complete frontend suite passes **53 tests**, and the production UI build passes. A live browser check confirmed all three reported fields were empty and Apply was disabled.
