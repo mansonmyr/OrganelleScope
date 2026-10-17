@@ -1,7 +1,6 @@
 import React,{useState} from 'react';
 import {afterEach,it,expect,vi} from 'vitest';
 import {render,screen,fireEvent,waitFor,cleanup} from '@testing-library/react';
-import {RestorationPanel} from '../RestorationPanel';
 import {SegmentationPanel} from '../SegmentationPanel';
 import {ProcessingDiagnostics} from '../ProcessingDiagnostics';
 import {ProjectStateProvider} from '../ProjectContext';
@@ -10,15 +9,6 @@ import {json,request} from '../api';
 vi.mock('../api',()=>({json:vi.fn(),request:vi.fn()}));
 const image:any={id:'image',info:{filename:'stack.tif',bit_depth:16,dimensions:{X:20,Y:20,Z:5,C:2},channel_labels:['A','B'],calibration:{X:{value_um:.1},Y:{value_um:.1},Z:{value_um:.5}}}};
 afterEach(()=>{cleanup();vi.resetAllMocks();});
-it('requires explicit PSF review and sends calibrated widths for deconvolution',async()=>{
- vi.mocked(json).mockImplementation(async path=>{if(path.endsWith('/status'))return {available:false};if(path==='/api/images')return [image];if(path.endsWith('/models')||path.endsWith('/jobs'))return [];return {id:'job'};});
- render(<RestorationPanel image={image} onActivate={vi.fn()}/>);
- await screen.findByText(/runtime is unavailable/);
- const button=screen.getByRole('button',{name:'Deconvolve this image / Z-stack'});expect((button as HTMLButtonElement).disabled).toBe(true);
- fireEvent.change(screen.getByRole('spinbutton',{name:'Gaussian XY sigma (µm)'}),{target:{value:'.15'}});fireEvent.change(screen.getByRole('spinbutton',{name:'Gaussian Z sigma (µm)'}),{target:{value:'.5'}});
- fireEvent.click(screen.getByRole('checkbox',{name:/reviewed the PSF/}));fireEvent.click(button);
- await waitFor(()=>expect(json).toHaveBeenCalledWith('/api/restoration/deconvolve',expect.objectContaining({body:JSON.stringify({image_id:'image',psf_image_id:null,sigma_xy_um:.15,sigma_z_um:.5,iterations:10,acknowledge_psf_model:true})})));
-});
 it('uses exactly the shared XYZ cuboid for segmentation and clears stale measurements when it moves',async()=>{
  vi.mocked(json).mockResolvedValue({object_count:1,foreground_voxels:8,threshold:10,objects:[],scope:'test',mesh:null});vi.mocked(request).mockResolvedValue({blob:async()=>new Blob()} as Response);URL.createObjectURL=vi.fn(()=>'blob:mask');URL.revokeObjectURL=vi.fn();
  function Host(){const [data,setData]=useState<Record<string,unknown>>({'OrthogonalWorkspace.bounds':{x0:3,x1:8,y0:4,y1:9,z0:1,z1:3}});return <ProjectStateProvider data={data} setData={setData}><button onClick={()=>setData(d=>({...d,'OrthogonalWorkspace.bounds':{x0:4,x1:9,y0:4,y1:9,z0:1,z1:3}}))}>Move test cuboid</button><SegmentationPanel image={image} processing={rawProcessing} rois={[]}/></ProjectStateProvider>;}

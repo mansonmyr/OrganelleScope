@@ -50,10 +50,8 @@ def analyze_experiment(run,options):
         if not experiment or not cell:raise ImageError('Every selected image needs an independent experiment ID and a cell ID in the batch.')
         result=item['result'];request=result['request']
         signature={'threshold_mode':request['threshold_mode'],'thresholds':request.get('thresholds',[]),'processing':request.get('processing',{})}
-        # Restoration result IDs differ per image, but model/recipe must match.
-        signature['processing']=dict(signature['processing']);signature['processing'].pop('restoration_result_id',None)
-        if result['processing'].get('denoising'):signature['n2v_weights']=result['processing']['denoising']['model_weights_sha256']
-        if result['processing'].get('deconvolution'):signature['psf']=result['processing']['deconvolution']['psf']
+        if signature['processing'].get('restoration_result_id') or result['processing'].get('denoising') or result['processing'].get('deconvolution'):
+            raise ImageError('This batch used retired denoising/deconvolution. Recalculate the images with supported processing before new inference; the historical batch is preserved.')
         recipes.add(json.dumps(signature,sort_keys=True))
         for row in result['results']:
             if options.metric=='mean':
@@ -65,7 +63,7 @@ def analyze_experiment(run,options):
                 if abs(value)>=1:raise ImageError('Fisher z is undefined at ±1. Use native descriptive inference or review the perfect correlation; no clipping is substituted.')
                 value=float(np.arctanh(value))
             by_cell[(condition,experiment,cell)].append(value);source_rows.append({'image_id':item['image_id'],'source_sha256':result['source_sha256'],'roi_id':row['roi']['id'],'condition':condition,'experiment':experiment,'cell':cell,'value':value})
-    if len(recipes)!=1:raise ImageError('Selected images use different processing/threshold conventions or restoration models. Create a matched batch before comparison.')
+    if len(recipes)!=1:raise ImageError('Selected images use different processing/threshold conventions. Create a matched batch before comparison.')
     groups={condition:defaultdict(list) for condition in options.conditions}
     for (condition,experiment,cell),values in by_cell.items():groups[condition][experiment].append(float(np.mean(values)))
     if any(len(experiments)<3 for experiments in groups.values()):raise ImageError('This workflow requires at least three independent experiments per condition. More cells do not replace independent experiments.')

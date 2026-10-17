@@ -1,6 +1,6 @@
 # Capability comparison and release-readiness criteria
 
-Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.2.0 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
+Reviewed 16 October 2026. OrganelleScope column refers to source milestone 0.2.1 (OrganelleScope status updated 17 October 2026), not an installed release. Other applications are described using primary documentation; they were not all installed or benchmarked for this review. This document separates feature presence from scientific validation, workflow completeness and production readiness.
 
 ## How to interpret the comparison
 
@@ -52,7 +52,7 @@ Equivalent end-to-end STRING/KEGG integrations were not systematically surveyed 
 | Spatial inference | One seeded translation model with applicability warnings | False-positive calibration, compartment-aware alternatives, sensitivity and multiplicity control |
 | Biological experiments | Descriptive image/ROI results | Independent experiment/cell identifiers, effect sizes and uncertainty without pseudoreplication |
 | 3D quantification | Source cuboids and linked sections | Inspectable organelle masks, surfaces and distances; registration/resolution uncertainty |
-| Preprocessing/restoration | Deterministic background subtraction and smoothing | Noise2Void/model validation, residuals, held-out acquisitions and downstream measurement bias |
+| Preprocessing/restoration | Deterministic background subtraction and smoothing | Residuals, held-out acquisitions and downstream measurement bias; learned denoising/deconvolution excluded by user |
 | Projects / automation | Manual versioned projects; independent per-image ROI batch queues; reviewed frozen runs, cancellation, failure reports and Excel/JSON export; synthetic workflow checks | Portable archives, experiment-level inference, autosave, crash-resume and large real-data batch validation |
 | Evidence reliability | Explicit mapping, live checks, caching, diagrams and provenance | Provider failure/changed-schema handling, rights review, stable exports and evidence review |
 | Local agent | Experimental pinned Gemma 4 12B Instruct QAT Q4_0 / llama.cpp; local tool loop, response checks, recorded quantities, visible audit; M3 smoke tests | Curated biological/citation-entailment and adversarial evaluation; native Windows qualification; offline installer and dependency review |
@@ -66,4 +66,4 @@ Source 0.1.12 adds a full-resolution rolling-ball lower-envelope background filt
 
 ## 0.2.0 evidence update
 
-OrganelleScope now also provides optional CAREamics N2V, PSF-based RL, matched-contrast residual/QC views, snapshot capture, mask editing/export, calibrated conditional proximity and radial enrichment, and explicit experiment-level comparisons. These additions do not establish superiority over napari plugins, QuPath, CellProfiler, Fiji or Imaris. Threshold masks are less general than trained organelle classification and can merge adjacent objects. See [measured validation and assumptions](RESTORATION_AND_INFERENCE.md). A native Windows installation, actual image-quality and biological benchmarks remain required.
+Historical 0.2.0 included N2V/RL, removed in 0.2.1. Current OrganelleScope provides matched-contrast residual/QC views, snapshot capture, mask editing/export, calibrated conditional proximity and radial enrichment, and explicit experiment-level comparisons. These additions do not establish superiority over napari plugins, QuPath, CellProfiler, Fiji or Imaris. Threshold masks are less general than trained organelle classification and can merge adjacent objects. See [measured validation and assumptions](PROCESSING_AND_INFERENCE.md). A native Windows installation, actual image-quality and biological benchmarks remain required.

@@ -37,3 +37,7 @@ References: [SciPy nonflat erosion and its definition](https://docs.scipy.org/do
 ## 0.2.0 restoration and diagnostics
 
 Noise2Void training/inference, PSF-based Richardson–Lucy, full-plane processing diagnostics and background/residual views are now implemented. See [restoration methods and validation](RESTORATION_AND_INFERENCE.md) for acquisition assumptions, model/runtime requirements, native-unit normalization, source preservation, numerical benchmarks and image-quality limitations. Historical statements above about pending N2V refer to earlier milestones.
+
+## Current scope — 0.2.1
+
+Noise2Void and deconvolution were removed by user request. Gaussian smoothing, background estimators and residual/QC views remain. See [current methods](PROCESSING_AND_INFERENCE.md). The 0.2.0 entry above is historical.

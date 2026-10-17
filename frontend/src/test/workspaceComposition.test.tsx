@@ -12,9 +12,12 @@ it('keeps one preparation and validation workspace through saved-analysis restor
  vi.mocked(request).mockResolvedValue({blob:async()=>new Blob()} as Response);URL.createObjectURL=vi.fn(()=>'blob:preview');URL.revokeObjectURL=vi.fn();
  render(<App/>);
  await screen.findByLabelText('Recent imports');fireEvent.change(screen.getByLabelText('Recent imports'),{target:{value:'test'}});
+ fireEvent.click(screen.getByRole('button',{name:'Background correction'}));
  await waitFor(()=>expect((screen.getByLabelText('Background method') as HTMLSelectElement).disabled).toBe(false));
  fireEvent.change(screen.getByLabelText('Background method'),{target:{value:'opening'}});fireEvent.click(screen.getByText('Apply recipe'));
+ fireEvent.click(screen.getByRole('button',{name:'ROI measurements'}));
  fireEvent.change(screen.getByLabelText('Measurement source'),{target:{value:'processed'}});
+ fireEvent.click(screen.getByRole('button',{name:'Background correction'}));
  await waitFor(()=>expect(screen.getAllByRole('heading',{name:'Background correction & smoothing'})).toHaveLength(1));
  fireEvent.click(screen.getByRole('button',{name:'Validation'}));
  expect(screen.getAllByRole('heading',{name:'Processing sensitivity & spatial controls'})).toHaveLength(1);

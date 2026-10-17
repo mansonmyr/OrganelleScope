@@ -19,8 +19,6 @@ The official llama.cpp b11669 runtime is from ggml-org. Its source licence is re
 
 The assessed Liquid LFM2.5-8B-A1B Q4_K_M candidate (official LiquidAI revision `49c14831707011e64d70b2ebd8462ba08d608434`) uses LFM Open License v1.0, retained in `Liquid-LFM-LICENSE.txt`. It is not the selected application model and its evaluated weights are removed after comparison. Its pinned assessment manifest is in `backend/organelle_scope/model_candidates.py`; the full licence must be reviewed before any future redistribution.
 
-## Optional restoration dependencies (0.2.0)
+## Image processing — 0.2.1
 
-CAREamics 0.3.4 provides actual Noise2Void training/inference. PyTorch 2.11.0, torchvision 0.26.0 and Lightning supply the optional CPU runtime. scikit-image 0.26 supplies threshold and surface primitives; SciPy supplies numerical filters, distances and inference. Installed dependency license texts are retained in PYTHON_DEPENDENCY_NOTICES.txt (a build-environment superset, regenerated for each native build). No external pretrained N2V weights are redistributed; the tiny synthetic benchmark model is not offered as a general microscopy model.
-
-Compact installers exclude the restoration runtime and LLM assets. The full restoration build and opt-in local-assistant packaging configuration are separate; an actual full-offline installer requires native qualification and review of all bundled runtime notices. Model weights are integrity-checked before packaging and at inference startup. Historical statements above refer to earlier source milestones.
+CAREamics, PyTorch, torchvision and Lightning are no longer part of the application runtime. Small historical benchmark records remain as evaluation provenance. Current processing uses SciPy background estimators/Gaussian smoothing and scikit-image threshold/surface primitives. PYTHON_DEPENDENCY_NOTICES.txt is regenerated from the current build environment. User research artifacts from retired methods are preserved and can be archived; their presence does not enable new restoration processing.

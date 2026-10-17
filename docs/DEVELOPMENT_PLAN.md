@@ -17,7 +17,7 @@ Working name: OrganelleScope. Academic research use. Repository visibility chang
 
 1. **Import and viewing foundation:** provenance, metadata conflicts, axes, native intensities, XY profiles, calibrated volume preview, source reconciliation, automated checks.
 2. **Measurement engine:** explicit Pearson/Spearman/Manders definitions and threshold outcomes; 2D/3D ROIs; spatially appropriate nulls; source/processed comparison. No mock phenotype classifier or uncalibrated probability of binding.
-3. **Preprocessing:** validated background estimators, faithful N2V/CAREamics loading and normalization, residuals, PSF-based deconvolution, full processing records. Do not port the profiler's mean-filter subtraction under a rolling-ball label.
+3. **Preprocessing:** background estimators, optional Gaussian smoothing, residuals and full processing records. Noise2Void and deconvolution are excluded at the user’s request. Do not port the profiler's mean-filter subtraction under a rolling-ball label.
 4. **Organelle workflows:** inspectable/editable segmentation with compartment-specific measurements, calibrated surfaces/distances, radial enrichment and multi-ROI projects. Multi-channel rendering, orthogonal linked slices and quality overlays.
 5. **Inference:** appropriate image/noise likelihoods for MLE; Bayesian parameter uncertainty and visible priors; hierarchical experiment comparisons; bootstrap/Monte Carlo uncertainty propagation; model diagnostics and multiple-comparison control.
 6. **Reconstruction validation:** representative conventional/SR references, held-out acquisitions, synthetic controls, failure-domain checks, artifact maps and downstream measurement bias. No arbitrary nanoscale distances from interpolation. Separate samples cannot establish pixel-level reconstruction ground truth.
@@ -71,3 +71,7 @@ A browser access-policy rejection prevented live UI inspection in this run. Auto
 ## Biological validation deferred by user — 17 October 2026
 
 The user could not locate the original control images and explicitly authorized continuing without biological validation. Continue numerical, synthetic and packaging checks; keep biological validation marked deferred and do not imply publication certification. No further control-image request is required to continue development.
+
+## Scope change — source 0.2.1
+
+The user withdrew Noise2Void denoising and deconvolution. Both are removed from execution, UI, dependencies and installer workflows; Gaussian smoothing/background subtraction explicitly remain. Small historical evaluation records and research artifacts are preserved, with old restored measurements excluded from new inference. Added requested XY/camera zoom and separate correction/ROI/association tabs, retaining a shared persistent preview. Earlier restoration status entries are historical, not the active roadmap.

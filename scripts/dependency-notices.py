@@ -11,6 +11,6 @@ for dist in sorted(md.distributions(),key=lambda d:d.metadata['Name'].lower()):
         if not file.is_file() or file.stat().st_size>4*1024**2:continue
         try:text=file.read_text()
         except (UnicodeError,OSError):continue
-        out.append(f'\n===== {name} {dist.version}: {path.name} =====\n'+text)
-(root/'third_party/PYTHON_DEPENDENCY_NOTICES.txt').write_text('License texts found in the build environment, including optional restoration and test/build dependencies. This is a superset, not a claim all packages are shipped. Regenerate for each native build.\n'+''.join(out))
+        out.append(f'\n===== {name} {dist.version}: {path.name} =====\n'+'\n'.join(line.rstrip() for line in text.splitlines())+'\n')
+(root/'third_party/PYTHON_DEPENDENCY_NOTICES.txt').write_text('License texts found in the build environment, including test/build dependencies. This is a superset, not a claim all packages are shipped. Regenerate for each native build.\n'+''.join(out))
 (root/'docs/BUILD_ENVIRONMENT.json').write_text(json.dumps({'scope':'Local build/test environment; superset of installer dependencies','packages':inventory},indent=2)+'\n')

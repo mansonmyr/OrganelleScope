@@ -5,7 +5,6 @@ import App from '../App';
 import {json,request} from '../api';
 vi.mock('../api',()=>({json:vi.fn(),request:vi.fn()}));
 vi.mock('../VolumeView',()=>({VolumeView:()=>{const [rotation,setRotation]=useState(0);return <button onClick={()=>setRotation(r=>r+1)}>Test volume rotation {rotation}</button>;}}));
-vi.mock('../RestorationPanel',()=>({RestorationPanel:()=> <p>Test denoising workspace</p>}));
 vi.mock('../OrthogonalWorkspace',()=>({OrthogonalWorkspace:()=> <p>Test cuboid workspace</p>}));
 vi.mock('../ValidationPanel',()=>({ValidationPanel:()=> <p>Test validation workspace</p>}));
 vi.mock('../EvidencePanel',()=>({EvidencePanel:()=> <p>Test molecular workspace</p>}));
@@ -27,7 +26,7 @@ it('places workspace navigation below a shared preview and retains its slice and
  fireEvent.change(screen.getByRole('slider',{name:'Z plane'}),{target:{value:'2'}});
  fireEvent.change(screen.getByRole('combobox',{name:'Drawing tool'}),{target:{value:'circle'}});
  const source=await screen.findByRole('img',{name:'Composite Z plane 3'});
- for(const tab of ['Validation','3D workspace','Molecular evidence','Batch analysis','Local assistant','Image & ROI']){
+ for(const tab of ['Background correction','ROI measurements','Channel associations','Validation','3D workspace','Molecular evidence','Batch analysis','Local assistant','Image & ROI']){
   fireEvent.click(screen.getByRole('button',{name:tab}));
   expect(screen.getByRole('region',{name:'Image preview'})).toBe(viewer);
   expect(screen.getByRole('img',{name:'Composite Z plane 3'})).toBe(source);
@@ -59,4 +58,13 @@ it.each([{core:{workspace:'images',mode:'volume'},tab:'3D workspace'},{core:{lay
  fireEvent.change(screen.getByRole('combobox',{name:'Open saved project'}),{target:{value:'saved'}});
  await screen.findByRole('button',{name:'Test volume rotation 0'});
  expect(screen.getByRole('button',{name:tab}).getAttribute('aria-pressed')).toBe('true');
+});
+
+it('retains inspection zoom across workspace changes without rescaling source coordinates',async()=>{
+ await openImage();const stage=screen.getByLabelText('Zoomable XY image'),surface=screen.getByLabelText('ROI drawing surface');const viewBox=surface.getAttribute('viewBox');
+ fireEvent.click(screen.getByRole('button',{name:'Zoom in XY preview'}));expect((screen.getByRole('slider',{name:'XY preview zoom'}) as HTMLInputElement).value).toBe('125');
+ for(const tab of ['Background correction','ROI measurements','Channel associations']){fireEvent.click(screen.getByRole('button',{name:tab}));expect(screen.getByLabelText('Zoomable XY image')).toBe(stage);expect(screen.getByLabelText('ROI drawing surface').getAttribute('viewBox')).toBe(viewBox);expect((screen.getByRole('slider',{name:'XY preview zoom'}) as HTMLInputElement).value).toBe('125');}
+ fireEvent.click(screen.getByRole('button',{name:'Fit image'}));expect((screen.getByRole('slider',{name:'XY preview zoom'}) as HTMLInputElement).value).toBe('100');
+ expect(screen.getByRole('heading',{name:'Channel associations'})).toBeTruthy();
+ expect(screen.queryByRole('heading',{name:'Background correction & smoothing'})).toBeNull();
 });

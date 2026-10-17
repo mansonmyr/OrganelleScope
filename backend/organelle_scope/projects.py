@@ -116,6 +116,12 @@ def register_projects(app,data_dir,stored,authorized):
             image=stored(options.image_id)[1] if options.image_id else None
             if image and image['info']!=options.expected_image_info:raise HTTPException(409,'Import metadata changed; refresh before recovery autosave.')
             record={'schema_version':1,'id':'recovery','name':options.name,'revision':1,'created_utc':datetime.now(timezone.utc).isoformat(),'updated_utc':datetime.now(timezone.utc).isoformat(),'application_version':__version__,'image':image,'state':options.state}
+            from organelle_scope.legacy_artifacts import has_retired_processing
+            previous=root/'recovery-latest.json'
+            if previous.is_file():
+                old=json.loads(previous.read_text())
+                if has_retired_processing(old.get('state',{})):
+                    ident=str(uuid4());old.update(id=ident,name=old['name']+' (historical recovery)');write(path_for(ident),old)
             write(root/'recovery-latest.json',record)
             return {'updated_utc':record['updated_utc']}
 
@@ -133,7 +139,7 @@ def register_projects(app,data_dir,stored,authorized):
     def export_archive(project_id:str):
         import tempfile,zipfile
         from fastapi.responses import StreamingResponse
-        from organelle_scope.restoration import result_manifest
+        from organelle_scope.legacy_artifacts import result_manifest
         record=open_project(project_id);stream=tempfile.SpooledTemporaryFile(max_size=8*1024**2)
         try:
             with zipfile.ZipFile(stream,'w',zipfile.ZIP_DEFLATED) as archive:
@@ -202,8 +208,10 @@ def register_projects(app,data_dir,stored,authorized):
                     if isinstance(v,list):return [remap(x) for x in v]
                     return mapping.get(v,v) if isinstance(v,str) else v
                 options.state=remap(options.state);options.image_id=image_id if image else None;options.expected_image_info=image['info'] if image else None
-                config=ProcessingConfig.model_validate(options.state.get('core',{}).get('processing',{}))
-                if config.restoration_result_id and config.restoration_result_id not in mapping.values():raise ValueError('Archive is missing its active restoration result.')
+                legacy_config=options.state.get('core',{}).get('processing',{})
+                ProcessingConfig.model_validate({**legacy_config,'restoration_result_id':None})
+                legacy_result=legacy_config.get('restoration_result_id')
+                if legacy_result and legacy_result not in mapping.values():raise ValueError('Archive is missing its active restoration result.')
                 with lock:return save(project_id,options)
         except Exception as exc:
             for p in created:shutil.rmtree(p,ignore_errors=True)

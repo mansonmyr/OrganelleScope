@@ -61,3 +61,6 @@ button.metric-explanation:hover {color:#ffb46d;}
 .snapshot-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:8px 24px;border-bottom:1px solid #254650}.snapshot-controls .hint{flex:1;min-width:180px}.snapshot-controls .check-label{margin:0}
 
 .statistics fieldset {border:0;padding:0;margin:0;min-width:0}.statistics figure {margin:16px 0}.statistics figcaption {color:#a9c8cc;font-size:.9rem}
+
+.preview-zoom-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:10px 24px}.preview-zoom-controls label{min-width:180px;flex:0 1 230px}.preview-zoom-controls .hint{flex:1;min-width:200px}.preview-scroll{position:relative;width:100%;height:min(65vh,650px);overflow:auto;overscroll-behavior:contain;background:#05090b;scrollbar-gutter:stable}.preview-scroll .image-stage{max-height:none;max-width:none;width:var(--preview-width);height:var(--preview-height);margin:0 auto;flex:none}
+.preview-scroll.pan-enabled,.preview-scroll.pan-enabled .image-stage svg{cursor:grab}.preview-scroll.is-panning,.preview-scroll.is-panning .image-stage svg{cursor:grabbing}.preview-scroll{touch-action:none}.preview-scroll .image-stage img{user-select:none;-webkit-user-drag:none}

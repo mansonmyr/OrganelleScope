@@ -21,6 +21,8 @@ class ProcessingConfig(BaseModel):
 
     @model_validator(mode="after")
     def rolling_work_limit(self):
+        if self.restoration_result_id is not None:
+            raise ValueError('Denoising and deconvolution were removed. Open a copy using raw/background-corrected data and recalculate; historical reports remain unchanged.')
         if self.background == "rolling_ball" and self.radius_px > 100:
             raise ValueError("Rolling-ball radius is limited to 100 XY pixels for full-resolution CPU processing.")
         return self
@@ -57,10 +59,7 @@ def estimate_background(source: np.ndarray, config: ProcessingConfig, channel: i
 
 
 def prepared_plane(source,config,channel,artifacts=None,z=None):
-    if not config.restoration_result_id:return source
-    if artifacts is None:raise ImageError('The denoising artifact store is unavailable.')
-    from organelle_scope.restoration import restored_plane
-    return restored_plane(artifacts,config.restoration_result_id,source,channel,z)
+    return source
 
 
 def process_plane(source: np.ndarray, config: ProcessingConfig, channel: int, artifacts: Path | None = None, z: int | None = None) -> np.ndarray:
@@ -88,16 +87,6 @@ def provenance(config: ProcessingConfig, artifacts: Path | None = None) -> dict:
             "boundary": "exclude out-of-image samples (positive infinity padding)",
             "sampling": "full-resolution; no intensity normalization or downsampling"}
         recipe["boundary"] = "rolling-ball: exclude outside samples; Gaussian: reflect"
-    if config.restoration_result_id:
-        if artifacts is None:raise ImageError('The denoising artifact store is unavailable.')
-        from organelle_scope.restoration import result_manifest
-        result=result_manifest(artifacts,config.restoration_result_id)
-        if 'model' in result:
-            recipe['denoising']={'result_id':config.restoration_result_id,'source_sha256':result['source_sha256'],'model_weights_sha256':result['model']['weights_sha256'],'careamics_version':result['model']['careamics_version'],'normalization':result['model']['normalization'],'inference':result['inference']}
-            recipe['order'].insert(0,'Noise2Void from verified float32 result and inverse training normalization')
-        else:
-            recipe['deconvolution']={'result_id':config.restoration_result_id,'source_sha256':result['source_sha256'],'psf':result['psf'],'inference':result['inference']}
-            recipe['order'].insert(0,'Richardson-Lucy from verified float32 result')
     recipe["recipe_sha256"] = hashlib.sha256(json.dumps(recipe, sort_keys=True, allow_nan=False).encode()).hexdigest()
     return recipe
 

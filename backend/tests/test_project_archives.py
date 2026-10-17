@@ -33,19 +33,21 @@ def test_portable_project_preserves_verified_restoration_outputs(tmp_path):
     tifffile.imwrite(b,a,ome=True,photometric='minisblack',metadata={'axes':'ZYX','PhysicalSizeX':.1,'PhysicalSizeY':.1,'PhysicalSizeZ':.5})
     with TestClient(create_app(tmp_path/'a'/'images','test')) as c:
         im=c.post('/api/images',headers=h,files={'file':('a.tif',b.getvalue())}).json()
-        job=c.post('/api/restoration/deconvolve',headers=h,json={'image_id':im['id'],'sigma_xy_um':.1,'sigma_z_um':.5,'iterations':2,'acknowledge_psf_model':True}).json()
-        for _ in range(100):
-            j=c.get('/api/restoration/jobs/'+job['id'],headers=h).json()
-            if j['status']=='complete':break
-            time.sleep(.05)
-        assert j['status']=='complete'
-        config={'restoration_result_id':j['result_id']}
-        expected=c.post('/api/images/'+im['id']+'/processing/plane?z=1',headers=h,json=config).content
+        from uuid import uuid4
+        from hashlib import sha256
+        ident=str(uuid4());folder=tmp_path/'a'/'images'/'restoration-data'/'results'/ident;folder.mkdir(parents=True)
+        key='0-z0-'+sha256(a[0].tobytes()).hexdigest();path=folder/(key+'.npy');np.save(path,a[0].astype(np.float32)*.5)
+        (folder/'manifest.json').write_text(json.dumps({'source_sha256':im['sha256'],'image_id':im['id'],'planes':{key:{'sha256':sha256(path.read_bytes()).hexdigest()}}}))
+        config={'restoration_result_id':ident}
         saved=c.post('/api/projects',headers=h,json={'name':'Restored','image_id':im['id'],'expected_image_info':im['info'],'state':{'core':{'processing':config}}}).json()
         archive=c.get('/api/projects/'+saved['id']+'/archive',headers=h);assert archive.status_code==200
     with TestClient(create_app(tmp_path/'b'/'images','test')) as c:
         response=c.post('/api/project-archives/import',headers=h,files={'file':('restored.zip',archive.content)});assert response.status_code==200,response.text
         result=response.json();new=result['state']['core']['processing'];assert new['restoration_result_id']!=config['restoration_result_id']
-        actual=c.post('/api/images/'+result['image']['id']+'/processing/plane?z=1',headers=h,json=new)
-        assert actual.status_code==200,actual.text
-        assert actual.content==expected
+        # Historical artifacts survive the archive, but cannot drive new analysis.
+        actual=c.post('/api/images/'+result['image']['id']+'/processing/plane?z=0',headers=h,json=new)
+        assert actual.status_code==422
+        archive=c.get('/api/projects/'+result['id']+'/archive',headers=h)
+        assert archive.status_code==200
+        with zipfile.ZipFile(io.BytesIO(archive.content)) as z:
+            assert any(name.endswith('.npy') for name in z.namelist())

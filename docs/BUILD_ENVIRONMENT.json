@@ -42,10 +42,6 @@
       "version": "0.5.12.0"
     },
     {
-      "name": "careamics",
-      "version": "0.3.4"
-    },
-    {
       "name": "certifi",
       "version": "2026.7.22"
     },
@@ -148,14 +144,6 @@
     {
       "name": "lazy-loader",
       "version": "0.6"
-    },
-    {
-      "name": "lightning",
-      "version": "2.6.6"
-    },
-    {
-      "name": "lightning-utilities",
-      "version": "0.15.3"
     },
     {
       "name": "loguru",
@@ -298,10 +286,6 @@
       "version": "0.0.32"
     },
     {
-      "name": "pytorch-lightning",
-      "version": "2.6.6"
-    },
-    {
       "name": "PyYAML",
       "version": "6.0.3"
     },
@@ -340,18 +324,6 @@
     {
       "name": "tifffile",
       "version": "2026.3.3"
-    },
-    {
-      "name": "torch",
-      "version": "2.11.0"
-    },
-    {
-      "name": "torchmetrics",
-      "version": "1.8.2"
-    },
-    {
-      "name": "torchvision",
-      "version": "0.26.0"
     },
     {
       "name": "tqdm",

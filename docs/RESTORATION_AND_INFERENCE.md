@@ -1,3 +1,7 @@
+# Historical 0.2.0 restoration assessment — retired
+
+Noise2Void and deconvolution were removed in 0.2.1 at the user’s request. This document and the small benchmark records preserve historical assessment only; the instructions below are not current product capabilities. See [current methods](PROCESSING_AND_INFERENCE.md).
+
 # Restoration, masks, snapshots and experiment inference
 
 Source milestone 0.2.0, 17 October 2026. These are implemented research workflows, not certification for publication or a claim to recover molecular resolution. Keep raw measurements as a baseline and review processing effects before interpreting a biological difference.

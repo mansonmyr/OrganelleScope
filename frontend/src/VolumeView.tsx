@@ -15,6 +15,7 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
   const apply = useRef<((settings: Controls) => void) | null>(null);
   const meshActor=useRef<any>(null);
   const meshUpdate=useRef<(()=>void)|null>(null);
+  const zoomCamera=useRef<((factor:number)=>void)|null>(null);
   const resetCamera = useRef<(() => void) | null>(null);
   const [message, setMessage] = useState("Loading 3D volume…");
   const [geometry, setGeometry] = useState("");
@@ -29,7 +30,7 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
   useEffect(()=>{apply.current?.({cutoff,opacity,stretch});},[cutoff,opacity,stretch]);
   useEffect(() => {
     const abort = new AbortController(); let dispose: (()=>void) | undefined;
-    apply.current=null;resetCamera.current=null;
+    apply.current=null;resetCamera.current=null;zoomCamera.current=null;
     setMessage("Loading 3D volume…"); setGeometry("");
     async function load() {
       try {
@@ -102,12 +103,13 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
           renderer.resetCamera();renderer.resetCameraClippingRange();window.getRenderWindow().render();
         }
         resetCamera.current=frame;
+        zoomCamera.current=factor=>{renderer.getActiveCamera().zoom(factor);renderer.resetCameraClippingRange();window.getRenderWindow().render();};
         if(captureRef)captureRef.current=async()=>{
           const capture=window.getApiSpecificRenderWindow().captureNextImage('image/png');
           if(!capture)throw new Error('3D image capture is unavailable.');
           window.getRenderWindow().render();
           const camera=renderer.getActiveCamera();
-          return {dataUrl:await capture,details:{camera:{position:camera.getPosition(),focal_point:camera.getFocalPoint(),view_up:camera.getViewUp(),parallel_projection:camera.getParallelProjection()},mask_surface:meshData.current?{image_id:meshData.current.image_id,source_bounds:meshData.current.source_bounds,units:meshData.current.units}:null,display_settings:{...settings.current},channels:indices,display_shape:shape,display_spacing:spacing,units:physical?'um':'voxel',downsampled:true}};
+          return {dataUrl:await capture,details:{camera:{position:camera.getPosition(),focal_point:camera.getFocalPoint(),view_up:camera.getViewUp(),parallel_projection:camera.getParallelProjection(),view_angle:camera.getViewAngle(),parallel_scale:camera.getParallelScale()},mask_surface:meshData.current?{image_id:meshData.current.image_id,source_bounds:meshData.current.source_bounds,units:meshData.current.units}:null,display_settings:{...settings.current},channels:indices,display_shape:shape,display_spacing:spacing,units:physical?'um':'voxel',downsampled:true}};
         };
         apply.current=({cutoff,opacity,stretch})=>{
           for(const {op,high} of components){
@@ -122,12 +124,12 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
         observer.observe(container.current);window.resize();frame();
         setGeometry(`${shape[2]} × ${shape[1]} × ${shape[0]} display voxels · spacing ${spacing.map(v=>v.toFixed(3)).join(' × ')} ${physical?'µm':'source voxel steps'} · ${indices.length} channel${indices.length>1?'s':''}`);
         setMessage(payloads.every(p=>p.values.every(v=>v===0))?'The selected channels contain only zero intensity.':'');
-      } catch(e) { if (!abort.signal.aborted) {dispose?.();dispose=undefined;apply.current=null;resetCamera.current=null;setMessage(`3D preview unavailable: ${String(e)}`);} }
+      } catch(e) { if (!abort.signal.aborted) {dispose?.();dispose=undefined;apply.current=null;resetCamera.current=null;zoomCamera.current=null;setMessage(`3D preview unavailable: ${String(e)}`);} }
     }
     void load();
-    return () => { abort.abort();apply.current=null;resetCamera.current=null;if(captureRef)captureRef.current=null;dispose?.(); };
+    return () => { abort.abort();apply.current=null;resetCamera.current=null;zoomCamera.current=null;if(captureRef)captureRef.current=null;dispose?.(); };
   }, [image, channel, physical]);
-  return <div><div className="volume-controls"><label>3D channels<select aria-label="3D channels" value={channel} onChange={e=>onChannelChange(Number(e.target.value))}><option value={-1}>All channels</option>{image.info.channel_labels.map((name,i)=><option key={i} value={i}>{name}</option>)}</select></label><p className="hint">Drag to rotate · Scroll to zoom<br/>{physical?'Calibrated physical proportions':'Voxel-space preview · physical scale unknown'}</p><button onClick={()=>resetCamera.current?.()}>Reset 3D view</button></div>
+  return <div><div className="volume-controls"><label>3D channels<select aria-label="3D channels" value={channel} onChange={e=>onChannelChange(Number(e.target.value))}><option value={-1}>All channels</option>{image.info.channel_labels.map((name,i)=><option key={i} value={i}>{name}</option>)}</select></label><p className="hint">Drag to rotate · Scroll to zoom<br/>{physical?'Calibrated physical proportions':'Voxel-space preview · physical scale unknown'}</p><button aria-label="Zoom out 3D preview" onClick={()=>zoomCamera.current?.(.8)}>− Zoom out</button><button aria-label="Zoom in 3D preview" onClick={()=>zoomCamera.current?.(1.25)}>+ Zoom in</button><button onClick={()=>resetCamera.current?.()}>Reset 3D view</button></div>
     {!physical && <p className="volume-warning">X, Y or Z spacing is unknown. This preview uses pixel and slice counts, not physical dimensions. Confirm calibration for reliable physical proportions and distances.</p>}
     <div className="volume-settings"><label>Background cutoff: {cutoff}%<input aria-label="3D background cutoff" type="range" min="0" max="95" value={cutoff} onChange={e=>setCutoff(Number(e.target.value))}/></label><label>Opacity: {opacity}%<input aria-label="3D opacity" type="range" min="1" max="100" value={opacity} onChange={e=>setOpacity(Number(e.target.value))}/></label><label>Display Z stretch: {stretch}×<select aria-label="Display Z stretch" value={stretch} onChange={e=>setStretch(Number(e.target.value))}>{[1,2,5,10].map(v=><option key={v} value={v}>{v}×{v===1?(physical?' (true proportions)':' (voxel proportions)'):' (exaggerated display)'}</option>)}</select></label></div>
     {stretch!==1 && <p className="volume-warning">Z is stretched {stretch}× for visibility only. This view exaggerates depth; source data, calibration and measurements are unchanged.</p>}

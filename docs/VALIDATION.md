@@ -92,3 +92,9 @@ See [full definitions and measured limitations](RESTORATION_AND_INFERENCE.md), [
 New tests cover tensor-only model export/import, genuine training/tiled prediction, matched-source float artifacts, residual/QC values, Richardson–Lucy agreement with an independent library, known calibrated 3D masks, inclusive containment, proximity, radial shell counts, experiment/cell aggregation, paired-design rejection, analytic posterior parameters, multiple-comparison adjustment, project-archive integrity/path rejection and separate recovery persistence. Component tests cover restoration assumptions, shared-cuboid requests, stale-response protection and snapshot dimension/source preservation. Live visual checks remain blocked by browser access policy in this run.
 
 Final local checks for this source milestone: **132 backend tests, 59 interface tests, production UI build passed**. The signed application bundle’s service is checked separately from source execution. See PACKAGED_RUNTIME_BENCHMARK.json for the exact scope; visual and biological validation are not implied.
+
+## 0.2.1 scope change and layout
+
+Noise2Void/RL execution tests and dependencies were removed with those features. Current checks cover absence of their routes, rejection of retired processing in new calculations, lossless historical archive/recovery retention, recalculation-copy migration, supported Gaussian/background recipes, separate workspace visibility, XY zoom bounds/aspect ratio and persistence of source ROI coordinates. Previous runtime benchmark files describe historical 0.2.0 builds.
+
+XY gesture checks (0.2.1): component tests verify pinch/wheel event consumption, pointer anchoring, bounded zoom, drag/draw separation, and unchanged source SVG coordinates. Browser wheel zoom changed the fitted scale from 100% to 149%; dragging moved the scroll position from 66.5 to 116.5 pixels without adding an ROI. These are display interaction checks, not biological validation.

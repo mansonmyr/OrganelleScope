@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 from organelle_scope.main import create_app
 from organelle_scope.segmentation import SegmentationRequest,segment_volume
 from organelle_scope.experiments import ExperimentRequest,analyze_experiment,bh_adjust,normal_posterior
-from organelle_scope.deconvolution import gaussian_psf,richardson_lucy_reflect
 from organelle_scope.image_io import ImageError
 
 def test_segmentation_known_objects_xyz_and_edits():
@@ -17,14 +16,6 @@ def test_segmentation_known_objects_xyz_and_edits():
     assert r['mesh']['units']=='um';assert max(v[0] for v in r['mesh']['vertices_xyz'])<=1.55
     options.exclude_labels=[o['label']];assert segment_volume(a,options,[.5,.2,.1])[1]['object_count']==0
     assert segment_volume(np.ones((2,3,4)),SegmentationRequest(x0=0,x1=3,y0=0,y1=2,z0=0,z1=1),[None]*3)[1]['foreground_voxels']==0
-
-def test_rl_matches_library_and_uses_z_signal():
-    from skimage.restoration import richardson_lucy
-    a=np.zeros((5,9,9),np.float32);a[2,4,4]=100;k=gaussian_psf([.5,.7,.7]);pad=tuple((n//2,n//2) for n in k.shape)
-    expected=richardson_lucy(np.pad(a,pad,mode='reflect'),k,num_iter=3,clip=False)
-    expected=expected[tuple(slice(p[0],p[0]+n) for p,n in zip(pad,a.shape))]
-    actual=richardson_lucy_reflect(a,k,3);np.testing.assert_allclose(actual,expected,rtol=1e-4,atol=1e-4)
-    assert actual[2].sum()>actual[0].sum();np.testing.assert_allclose(richardson_lucy_reflect(a,np.ones((1,1,1)),2),a,atol=1e-5)
 
 def batch():
     items=[]
@@ -49,7 +40,7 @@ def test_experiment_units_pairing_posterior_and_bh():
     run['items'][0]['experiment']=''
     with pytest.raises(ImageError,match='experiment ID'):analyze_experiment(run,o)
 
-def test_segmentation_api_containment_proximity_export_and_deconv(tmp_path):
+def test_segmentation_api_containment_proximity_export(tmp_path):
     a=np.zeros((2,3,10,10),np.uint16);a[0,1,3:5,3:5]=100;a[1,1,3:5,5:7]=200
     buf=io.BytesIO();tifffile.imwrite(buf,a,ome=True,photometric='minisblack',metadata={'axes':'CZYX','PhysicalSizeX':.1,'PhysicalSizeY':.1,'PhysicalSizeZ':.5})
     with TestClient(create_app(tmp_path,'test')) as c:
@@ -59,18 +50,6 @@ def test_segmentation_api_containment_proximity_export_and_deconv(tmp_path):
         assert result['proximity']['fraction_marker_voxels_within_distance']==.5
         assert c.post(base+'/segmentation/export',headers=h,json=body).status_code==200
         assert c.post(base+'/segmentation',headers=h,json={**body,'x1':99}).status_code==422
-        assert c.post('/api/restoration/deconvolve',headers=h,json={'image_id':im['id']}).status_code==422
-        job=c.post('/api/restoration/deconvolve',headers=h,json={'image_id':im['id'],'sigma_xy_um':.1,'sigma_z_um':.5,'iterations':2,'acknowledge_psf_model':True});assert job.status_code==200,job.text
-        for _ in range(100):
-            j=c.get('/api/restoration/jobs/'+job.json()['id'],headers=h).json()
-            if j['status'] not in ['pending','running']:break
-            time.sleep(.05)
-        assert j['status']=='complete',j
-        from organelle_scope.processing import process_plane,ProcessingConfig
-        # Identical all-zero planes at different Z can have different restored context.
-        config=ProcessingConfig(restoration_result_id=j['result_id'])
-        assert process_plane(a[0,0],config,0,tmp_path,0).shape==(10,10)
-        assert process_plane(a[0,2],config,0,tmp_path,2).shape==(10,10)
 
 def test_radial_shells_are_clipped_to_cuboid_and_empty_bins_undefined(tmp_path):
     a=np.ones((3,5,5),np.uint16)*10;a[1,2,2]=100

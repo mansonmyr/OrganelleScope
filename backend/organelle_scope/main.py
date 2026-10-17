@@ -291,8 +291,6 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     register_assistant(app, data_dir, authorized, load_project, query_evidence, stored)
     from organelle_scope.batch import register_batch
     register_batch(app, data_dir, stored, image_dir, authorized)
-    from organelle_scope.restoration import register_restoration
-    register_restoration(app,data_dir,stored,authorized)
     from organelle_scope.segmentation import register_segmentation
     register_segmentation(app,stored,authorized)
     from organelle_scope.experiments import register_experiments
