@@ -34,14 +34,14 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-sample-check-') as scrat
             record={'id':ident,'sha256':before,'info':info.model_dump(),'options':{},'import_schema':2};(folder/'metadata.json').write_text(json.dumps(record))
             base='/api/images/'+ident;z=d['Z']//2;native=[]
             with tifffile.TiffFile(path) as tf:
-                # These samples use YX pages in C-fast ZCYX ImageJ ordering.
-                assert info.source_axes in ('YX','ZCYX'),f'Review independent page mapping for {info.source_axes}'
+                # These samples use YX pages in C-fast CYX or ZCYX ImageJ ordering.
+                assert info.source_axes in ('YX','CYX','ZCYX'),f'Review independent page mapping for {info.source_axes}'
                 for zz in sorted({0,z,d['Z']-1}):
                     for c in range(d['C']):
                         expected=tf.pages[zz*d['C']+c].asarray();actual=read_plane(path,info,c,zz)
                         np.testing.assert_array_equal(actual,expected)
                         r=client.get(base+f'/plane?z={zz}&channel={c}',headers=headers);assert r.status_code==200
-                        np.testing.assert_array_equal(np.frombuffer(r.content,'<u2').reshape(expected.shape),expected)
+                        np.testing.assert_array_equal(np.frombuffer(r.content,'<u2' if info.bit_depth==16 else 'u1').reshape(expected.shape),expected)
                         if zz==z:native.append(actual)
             item['checks'].append('first/middle/last Z and every channel: native plane API equals independently indexed TIFF pages')
             for palette in (None,','.join(['cyan']*d['C'])):

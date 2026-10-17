@@ -14,7 +14,10 @@
     "files": 4,
     "checks_per_file": 5,
     "original_sources_unchanged": true,
-    "scope": "Stored-image technical checks; marker assignment/export history unconfirmed. Private reports and TIFFs remain local; not biological validation."
+    "scope": "Stored-image technical checks; marker assignment/export history unconfirmed. Private reports and TIFFs remain local; not biological validation.",
+    "replacement_files_rechecked": true,
+    "replacement_shapes": "One 4-channel/18-plane stack, two 3-channel/4-plane stacks, one 3-channel/single-plane image",
+    "replacement_limit": "Single-plane sample lacks trusted XY specimen calibration; exact channel-to-marker mapping remains unconfirmed."
   },
   "layout": "project/archive/recovery controls in Workspace sidebar",
   "roadmap": "separate viewer-inspired document removed from current source and all current links removed",
