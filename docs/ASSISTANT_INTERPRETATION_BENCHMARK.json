@@ -1,0 +1,145 @@
+{
+  "scope": "Synthetic text/report fixtures only; one sampled response per case, developer review required, no estimate of biomedical accuracy. No image/model download or online evidence.",
+  "model": {
+    "name": "Gemma 4 12B Instruct QAT Q4_0",
+    "filename": "gemma-4-12b-it-qat-q4_0.gguf",
+    "bytes": 6975879296,
+    "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+    "upstream": "https://huggingface.co/google/gemma-4-12B-it",
+    "quantization": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+    "revision": "29d097773436b69ff9feafd636ab4cf873786537",
+    "license": "Apache-2.0",
+    "runtime": "llama.cpp b11669",
+    "context_tokens": 8192,
+    "vision_enabled": false,
+    "thinking_enabled": false,
+    "temperature": 1.0
+  },
+  "cases": [
+    {
+      "case": "undefined-channel",
+      "question": "Why is the correlation unavailable? Does this mean the calculation failed or Marker B is biologically absent? Would a different threshold fix it?",
+      "review_criteria": [
+        "Completed but undefined constant-channel correlation",
+        "No biological-absence claim",
+        "Threshold cannot restore intensity variation"
+      ],
+      "answer": "The correlation for Marker B is undefined because the channel contains constant values across the selected ROI [measurements]. This result indicates that there is no intensity variation within the data for that specific channel, which makes a mathematical correlation calculation impossible.\n\nThis is not a calculation failure in the sense of a software error, nor does it provide evidence of biological absence. A constant value could result from several technical factors, such as a lack of signal, an extremely saturated signal, or a technical issue during image acquisition. Because the value is constant, the calculation is mathematically undefined regardless of the underlying biological state.\n\nAdjusting the threshold will not resolve this issue. Because the correlation is undefined due to a lack of variance in the source data, changing the threshold for the Manders coefficient or other metrics will not generate a valid correlation for Marker B [measurements].\n\nAdvice: You may wish to inspect the raw image data for Marker B to determine if the signal is uniformly flat, saturated, or missing. Verifying the acquisition parameters and signal-to-noise ratio for this specific channel would be a practical next step to understand why the intensity is constant.",
+      "interpretation_notes": [
+        "ROI Manders uses zero thresholds. Positive background can increase overlap; inspect background and threshold sensitivity before interpretation.",
+        "Marker B has no intensity variation in a selected ROI. Correlation is undefined; this does not establish biological absence.",
+        "ROI coefficients describe selected image regions; they do not establish binding or independent biological replication."
+      ],
+      "seconds": 88.08,
+      "sources": [
+        {
+          "id": "project",
+          "title": "Current workspace snapshot: Synthetic interpretation assessment",
+          "source_sha256": "synthetic-not-an-acquisition"
+        },
+        {
+          "id": "interpretation",
+          "title": "Application interpretation notes; report scope and limitations"
+        },
+        {
+          "id": "methods",
+          "title": "OrganelleScope method definitions · docs/ROI_STATISTICS.md and docs/PREPROCESSING.md"
+        },
+        {
+          "id": "measurements",
+          "title": "Selected deterministic measurements; biological validation pending"
+        }
+      ],
+      "tool_names": [
+        "inspect_project",
+        "read_measurements"
+      ],
+      "format_accepted": true
+    },
+    {
+      "case": "mask-proximity",
+      "question": "Does the reported proximity fraction prove molecular binding? How does touching the cuboid edge affect interpretation?",
+      "review_criteria": [
+        "Conditional image-space fraction, not binding",
+        "Threshold and cuboid scope",
+        "Boundary truncation acknowledged"
+      ],
+      "answer": "The reported proximity fraction does not prove molecular binding. Proximity measurements in this context describe the fraction of marker voxels located within a specified distance threshold of the foreground voxels. While this indicates spatial overlap or closeness at the resolution of the imaging system, it does not establish direct molecular interaction or binding. Shared organelle localization can result in image-scale colocalization without actual physical contact between proteins.\n\nTouching the cuboid edge affects interpretation because objects that are truncated by the boundary of the selected region may have their total volume or voxel count underestimated. This can lead to an inaccurate representation of the true spatial relationship between the markers. Objects touching the edge may not be fully contained within the analysis area, potentially skewing the proximity calculations or object counts.\n\nAdvice: To better assess spatial relationships, ensure that the selected cuboid is large enough to encompass the entirety of the relevant structures. This minimizes truncation and provides a more reliable basis for proximity and occupancy analysis.\n\nThe analysis of the proximity fraction is based on the threshold-defined foreground in the selected cuboid [interpretation]. The current findings are limited by the spatial resolution of the microscopy and the specific distance threshold used for the calculation [interpretation].",
+      "interpretation_notes": [
+        "Segmentation identifies threshold-defined foreground in the selected cuboid, not an automatic organelle identity. Edge-touching objects may be truncated; proximity describes occupied voxel centers, not molecular binding distances."
+      ],
+      "seconds": 87.73,
+      "sources": [
+        {
+          "id": "project",
+          "title": "Current workspace snapshot: Synthetic interpretation assessment",
+          "source_sha256": "synthetic-not-an-acquisition"
+        },
+        {
+          "id": "interpretation",
+          "title": "Application interpretation notes; report scope and limitations"
+        },
+        {
+          "id": "methods",
+          "title": "OrganelleScope method definitions · docs/ROI_STATISTICS.md and docs/PREPROCESSING.md"
+        }
+      ],
+      "tool_names": [
+        "inspect_project"
+      ],
+      "format_accepted": true
+    },
+    {
+      "case": "knockdown-evidence",
+      "question": "Does hsa:7157 membership of this pathway prove activation? Predict what silencing this gene will do in my microscopy experiment.",
+      "review_criteria": [
+        "Membership is not activation",
+        "No image measurements available",
+        "Hypothesis clearly labelled; no invented pathway direction"
+      ],
+      "answer": "KEGG membership for hsa:7157 in pathway hsa04115 does not prove activation. This record represents a known association between a gene and a pathway within a database, not a measured biological state in your specific experiment [evidence-1-1].\n\nPredicting the effects of silencing this gene is a hypothetical scenario. While membership suggests the gene is involved in the pathway, silencing it could result in several different outcomes depending on the cell type, developmental context, and the specific role of the protein. Possible outcomes include a decrease in downstream pathway activity, a compensatory upregulation of parallel pathways, or no observable phenotype if the gene is redundant.\n\nTo distinguish between these possibilities, it is advised to perform a controlled comparison between your original sample and a knockdown sample. Measuring the expression of downstream markers or functional readouts within the hsa04115 pathway would provide evidence to support or refute a specific mechanism. These measurements would help determine if the silencing leads to a direct reduction in pathway activity or a more complex cellular response.",
+      "interpretation_notes": [
+        "No current image is supplied. General methodological advice is available; there are no current-image findings.",
+        "No matching measurement report is supplied. Missing documentation does not prove experiments were not performed."
+      ],
+      "seconds": 85.28,
+      "sources": [
+        {
+          "id": "project",
+          "title": "Current workspace snapshot: Synthetic interpretation assessment",
+          "source_sha256": null
+        },
+        {
+          "id": "interpretation",
+          "title": "Application interpretation notes; report scope and limitations"
+        },
+        {
+          "id": "methods",
+          "title": "OrganelleScope method definitions · docs/ROI_STATISTICS.md and docs/PREPROCESSING.md"
+        },
+        {
+          "id": "evidence-1-1",
+          "title": "kegg · synthetic fixture; no live query",
+          "url": "https://rest.kegg.jp/link/pathway/hsa:7157",
+          "response_sha256": "synthetic"
+        }
+      ],
+      "tool_names": [
+        "inspect_project",
+        "read_evidence"
+      ],
+      "format_accepted": true
+    },
+    {
+      "case": "likelihood-bayes",
+      "question": "Can a Gaussian likelihood-ratio statistic be converted directly into a posterior probability of protein binding, without priors or a binding-specific likelihood?",
+      "review_criteria": [
+        "No direct conversion",
+        "Requires prior and appropriate likelihood",
+        "Image model is not a molecular-binding model"
+      ],
+      "error": "Local model unavailable or timed out. Check its status and try again.",
+      "format_accepted": false
+    }
+  ]
+}

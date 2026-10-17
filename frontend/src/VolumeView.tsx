@@ -9,8 +9,8 @@ import { interleaveChannels, volumeSampleDistance } from "./volumeData";
 type Controls = { cutoff: number; opacity: number; stretch: number };
 
 
-export function VolumeView({ image, channel, onChannelChange, captureRef, maskMesh, luts }: {
-  luts?:string; image: ImageRecord; channel: number; onChannelChange: (channel: number) => void; captureRef?:VolumeCaptureRef;maskMesh?:Record<string,any>
+export function VolumeView({ image, channel, onChannelChange, captureRef, maskMesh, luts, contrast='native' }: {
+  contrast?:'native'|'auto'; luts?:string; image: ImageRecord; channel: number; onChannelChange: (channel: number) => void; captureRef?:VolumeCaptureRef;maskMesh?:Record<string,any>
 }) {
   const container = useRef<HTMLDivElement>(null);
   const recolor=useRef<(()=>void)|null>(null),currentLuts=useRef(luts);currentLuts.current=luts;
@@ -22,7 +22,7 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
   const resetCamera = useRef<(() => void) | null>(null);
   const [message, setMessage] = useState("Loading 3D volume…");
   const [geometry, setGeometry] = useState("");
-  const [cutoff, setCutoff] = useProjectState('VolumeView.cutoff',10);
+  const [cutoff, setCutoff] = useProjectState('VolumeView.cutoff',0);
   const [opacity, setOpacity] = useProjectState('VolumeView.opacity',35);
   const [stretch, setStretch] = useProjectState('VolumeView.stretch',1);
   const settings = useRef<Controls>({cutoff,opacity,stretch});
@@ -87,7 +87,7 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
         const components=payloads.map(({values,channel:c},component)=>{
           const ct=colorTransfer.default.newInstance();const op=piecewise.default.newInstance();
           const sorted=Array.from(values.filter((v,i)=>v>0 && i%8===0)).sort((a,b)=>a-b);
-          const high=sorted[Math.floor((sorted.length-1)*.995)] || values.reduce((a,b)=>Math.max(a,b),1);
+          const high=contrast==='native'?2**image.info.bit_depth-1:(sorted[Math.floor((sorted.length-1)*.995)] || values.reduce((a,b)=>Math.max(a,b),1));
           const color=lutColor(channelLuts(currentLuts.current?.split(','),image.info.dimensions.C)[c]);
           ct.addRGBPoint(0,0,0,0);ct.addRGBPoint(high,...color as [number,number,number]);
           actor.getProperty().setRGBTransferFunction(component,ct);actor.getProperty().setScalarOpacity(component,op);
@@ -114,7 +114,7 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
           if(!capture)throw new Error('3D image capture is unavailable.');
           window.getRenderWindow().render();
           const camera=renderer.getActiveCamera();
-          return {dataUrl:await capture,details:{camera:{position:camera.getPosition(),focal_point:camera.getFocalPoint(),view_up:camera.getViewUp(),parallel_projection:camera.getParallelProjection(),view_angle:camera.getViewAngle(),parallel_scale:camera.getParallelScale()},mask_surface:meshData.current?{image_id:meshData.current.image_id,source_bounds:meshData.current.source_bounds,units:meshData.current.units}:null,display_settings:{...settings.current,channel_luts:channelLuts(currentLuts.current?.split(','),image.info.dimensions.C)},channels:indices,display_shape:shape,display_spacing:spacing,units:physical?'um':'voxel',downsampled:true}};
+          return {dataUrl:await capture,details:{camera:{position:camera.getPosition(),focal_point:camera.getFocalPoint(),view_up:camera.getViewUp(),parallel_projection:camera.getParallelProjection(),view_angle:camera.getViewAngle(),parallel_scale:camera.getParallelScale()},mask_surface:meshData.current?{image_id:meshData.current.image_id,source_bounds:meshData.current.source_bounds,units:meshData.current.units}:null,display_settings:{contrast,storage_range:[0,2**image.info.bit_depth-1],...settings.current,channel_luts:channelLuts(currentLuts.current?.split(','),image.info.dimensions.C)},channels:indices,display_shape:shape,display_spacing:spacing,units:physical?'um':'voxel',downsampled:true}};
         };
         apply.current=({cutoff,opacity,stretch})=>{
           for(const {op,high} of components){
@@ -133,7 +133,7 @@ export function VolumeView({ image, channel, onChannelChange, captureRef, maskMe
     }
     void load();
     return () => { abort.abort();apply.current=null;resetCamera.current=null;zoomCamera.current=null;if(captureRef)captureRef.current=null;dispose?.(); };
-  }, [image, channel, physical]);
+  }, [image, channel, physical, contrast]);
   return <div><div className="volume-controls"><label>3D channels<select aria-label="3D channels" value={channel} onChange={e=>onChannelChange(Number(e.target.value))}><option value={-1}>All channels</option>{image.info.channel_labels.map((name,i)=><option key={i} value={i}>{name}</option>)}</select></label><p className="hint">Drag to rotate · Scroll to zoom<br/>{physical?'Calibrated physical proportions':'Voxel-space preview · physical scale unknown'}</p><button aria-label="Zoom out 3D preview" onClick={()=>zoomCamera.current?.(.8)}>− Zoom out</button><button aria-label="Zoom in 3D preview" onClick={()=>zoomCamera.current?.(1.25)}>+ Zoom in</button><button onClick={()=>resetCamera.current?.()}>Reset 3D view</button></div>
     {!physical && <p className="volume-warning">X, Y or Z spacing is unknown. This preview uses pixel and slice counts, not physical dimensions. Confirm calibration for reliable physical proportions and distances.</p>}
     <div className="volume-settings"><label>Background cutoff: {cutoff}%<input aria-label="3D background cutoff" type="range" min="0" max="95" value={cutoff} onChange={e=>setCutoff(Number(e.target.value))}/></label><label>Opacity: {opacity}%<input aria-label="3D opacity" type="range" min="1" max="100" value={opacity} onChange={e=>setOpacity(Number(e.target.value))}/></label><label>Display Z stretch: {stretch}×<select aria-label="Display Z stretch" value={stretch} onChange={e=>setStretch(Number(e.target.value))}>{[1,2,5,10].map(v=><option key={v} value={v}>{v}×{v===1?(physical?' (true proportions)':' (voxel proportions)'):' (exaggerated display)'}</option>)}</select></label></div>

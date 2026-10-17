@@ -87,3 +87,30 @@ it('places all project and archive controls inside the Workspace sidebar rather 
  expect(document.querySelectorAll('aside .project-bar').length).toBe(2);
  expect(document.querySelector('.shell > .workspace')).toBeTruthy();
 });
+it('defaults to native preview contrast and persists optional automatic contrast separately from measurements',async()=>{
+ await openImage();expect((screen.getByLabelText('Preview contrast') as HTMLSelectElement).value).toBe('native');
+ fireEvent.change(screen.getByLabelText('Preview contrast'),{target:{value:'auto'}});
+ await waitFor(()=>expect(vi.mocked(request).mock.calls.some(([url])=>url==='/api/images/test/preview?z=0&luts=rose,mint&contrast=auto')).toBe(true));
+ fireEvent.click(screen.getByRole('button',{name:'Validation'}));expect((screen.getByLabelText('Preview contrast') as HTMLSelectElement).value).toBe('auto');
+ fireEvent.click(screen.getByRole('button',{name:'Save project'}));
+ await waitFor(()=>expect(vi.mocked(json).mock.calls.some(([url,options])=>url==='/api/projects'&&options?.body&&JSON.parse(options.body as string).state.workspaces['Display.contrast']==='auto')).toBe(true));
+ fireEvent.change(screen.getByLabelText('Preview contrast'),{target:{value:'native'}});
+ expect((screen.getByLabelText('Preview contrast') as HTMLSelectElement).value).toBe('native');
+});
+it('applies channel identities without dropping drawn ROIs and clears the old ROI report',async()=>{
+ const roi={id:'existing',kind:'circle',z:0,points:[{x:3,y:3},{x:5,y:3}]};let renamed=false;
+ vi.mocked(json).mockImplementation(async(path,options)=>{
+  if(path==='/api/images')return [image];if(path==='/api/projects')return [];
+  if(path==='/api/images/test/channels'){renamed=true;return {...image,info:{...image.info,channel_labels:['Marker A','B']}};}
+  if(path==='/api/images/test/analysis'&&!renamed)return {request:{rois:[roi],target_channel:0,threshold_mode:'zero',thresholds:[]},results:[]};
+  throw new Error('No saved analysis');
+ });
+ await openImage();await waitFor(()=>expect(screen.getByText('ROI 1')).toBeTruthy());
+ fireEvent.change(screen.getByLabelText('Channel 1 name'),{target:{value:'Marker A'}});fireEvent.click(screen.getByText('Apply channel names'));
+ await screen.findByLabelText('Marker A display LUT');expect(screen.getByText('ROI 1')).toBeTruthy();
+ fireEvent.click(screen.getByRole('button',{name:'Save project'}));
+ await waitFor(()=>{
+  const call=vi.mocked(json).mock.calls.find(([p,o])=>p==='/api/projects'&&o?.method==='POST');expect(call).toBeTruthy();
+  const saved=JSON.parse(call![1]!.body as string);expect(saved.state.core.areas).toEqual([roi]);expect(saved.state.core.analysis).toBeNull();
+ });
+});

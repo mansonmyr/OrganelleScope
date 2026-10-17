@@ -1,0 +1,40 @@
+{
+  "artifact": "OrganelleScope-0.2.4-arm64.dmg",
+  "bytes": 210104463,
+  "sha256": "f496d90fba339de615a495df6c202b8caa9a94c943229a562f1b5e4dc515a4db",
+  "dmg_integrity": "passed",
+  "app_and_backend_signature_verification": "passed",
+  "signing": "ad-hoc development; not Apple Developer ID/notarized",
+  "frontend": {
+    "version": "0.2.4",
+    "frontend_index_sha256": "27dc2ab05a03734f98a4da0a28a2182b4dc7672ed57898d257117dbdda949c62"
+  },
+  "mounted_packaged_backend": {
+    "frozen_service": "passed",
+    "health": {
+      "status": "ok",
+      "version": "0.2.4.dev0"
+    },
+    "checks": [
+      "TIFF import",
+      "channel labels and source identity",
+      "selected-plane signal checks",
+      "native and optional automatic contrast",
+      "cuboid",
+      "segmentation",
+      "removed restoration API returns 404"
+    ]
+  },
+  "assistant_weights_bundled": false,
+  "scope": "Read-only DMG mounting, signature/frontend checks and synthetic backend API checks. No installed-app overwrite, native Windows test, full Electron interaction qualification or biological validation.",
+  "removed_obsolete_generated_artifacts": [
+    {
+      "artifact": "OrganelleScope-0.2.1-arm64.dmg",
+      "bytes": 210087055
+    },
+    {
+      "artifact": "verified temporary macOS packaging staging directory",
+      "bytes": 688223914
+    }
+  ]
+}

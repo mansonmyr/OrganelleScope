@@ -24,7 +24,7 @@ def test_all_display_endpoints_change_colour_without_mutating_native_data(tmp_pa
         assert 'results' in before
         native=c.get(base+'/plane?channel=0&z=1',headers=headers).content
         recipe={'background':'constant','offsets':[10,5],'radius_px':20,'sigma_px':0}
-        for path,post in [('/preview?z=1',False),('/orthogonal?axis=XZ&y=4&z=1',False),('/processing/preview?z=1',True),('/processing/preview?z=1&view=background',True)]:
+        for path,post in [('/preview?z=1&contrast=auto',False),('/orthogonal?axis=XZ&y=4&z=1',False),('/processing/preview?z=1',True),('/processing/preview?z=1&view=background',True)]:
             def get(luts):
                 return c.post(base+path+'&luts='+luts,headers=headers,json=recipe) if post else c.get(base+path+'&luts='+luts,headers=headers)
             red=get('red,red');blue=get('blue,blue');assert red.status_code==blue.status_code==200

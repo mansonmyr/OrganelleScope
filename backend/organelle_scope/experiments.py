@@ -42,7 +42,7 @@ def analyze_experiment(run,options):
     if len(set(options.conditions))!=len(options.conditions):raise ImageError('Select distinct conditions.')
     if options.metric!='mean' and options.channel_a>=options.channel_b:raise ImageError('Choose channel A before channel B; Manders directions follow this order.')
     if options.scale=='fisher_z' and options.metric not in ('pcc','spearman'):raise ImageError('Fisher transformation applies only to correlation metrics.')
-    by_cell=defaultdict(list);source_rows=[];excluded=[];recipes=set()
+    by_cell=defaultdict(list);source_rows=[];excluded=[];recipes=set();channel_identities=set()
     for item in run['items']:
         if item.get('condition') not in options.conditions:continue
         if item['status']!='completed':raise ImageError('Every selected image must have completed measurements; failed/cancelled images are not silently excluded.')
@@ -53,6 +53,10 @@ def analyze_experiment(run,options):
         if signature['processing'].get('restoration_result_id') or result['processing'].get('denoising') or result['processing'].get('deconvolution'):
             raise ImageError('This batch used retired denoising/deconvolution. Recalculate the images with supported processing before new inference; the historical batch is preserved.')
         recipes.add(json.dumps(signature,sort_keys=True))
+        labels=result.get('image_info',{}).get('channel_labels',[])
+        selected=[options.channel_a] if options.metric=='mean' else [options.channel_a,options.channel_b]
+        if any(c>=len(labels) or not isinstance(labels[c],str) or not labels[c].strip() for c in selected):raise ImageError('Selected channel identities are missing. Assign marker names and recalculate the batch before comparing conditions.')
+        channel_identities.add(tuple(labels[c] for c in selected))
         for row in result['results']:
             if options.metric=='mean':
                 target=next((c for c in row['channel_summary'] if c['channel']==options.channel_a),None);value=target.get('mean') if target else None
@@ -63,6 +67,7 @@ def analyze_experiment(run,options):
                 if abs(value)>=1:raise ImageError('Fisher z is undefined at ±1. Use native descriptive inference or review the perfect correlation; no clipping is substituted.')
                 value=float(np.arctanh(value))
             by_cell[(condition,experiment,cell)].append(value);source_rows.append({'image_id':item['image_id'],'source_sha256':result['source_sha256'],'roi_id':row['roi']['id'],'condition':condition,'experiment':experiment,'cell':cell,'value':value})
+    if len(channel_identities)>1:raise ImageError('Selected channel names differ across images. Match biological markers in the same stored channel order before comparing conditions.')
     if len(recipes)!=1:raise ImageError('Selected images use different processing/threshold conventions. Create a matched batch before comparison.')
     groups={condition:defaultdict(list) for condition in options.conditions}
     for (condition,experiment,cell),values in by_cell.items():groups[condition][experiment].append(float(np.mean(values)))
@@ -96,7 +101,7 @@ def analyze_experiment(run,options):
         assignments=2**len(va) if paired else math.comb(len(va)+len(vb),len(va))
         contrasts.append({'permutation_assignments_possible':assignments,'permutation_exact':assignments<=options.iterations,'minimum_attainable_two_sided_p':min(1.,2/(assignments if assignments<=options.iterations else options.iterations+1)),'condition_a':a,'condition_b':b,'difference_b_minus_a':difference,'hierarchical_bootstrap_ci95':list(map(float,np.quantile(draws,[.025,.975]))),'permutation_p_two_sided':float(permutation.pvalue),'bootstrap_replicates':options.iterations,'experimental_units':len(va) if paired else len(va)+len(vb)})
     for contrast,q in zip(contrasts,bh_adjust([c['permutation_p_two_sided'] for c in contrasts])):contrast['bh_adjusted_p_within_report']=q
-    return {'algorithm':'experiment-inference-1','request':options.model_dump(),'groups':summary,'contrasts':contrasts,'source_rows':source_rows,'batch_run_id':run['id'],'batch_run_sha256':sha256(json.dumps(run,sort_keys=True).encode()).hexdigest(),'aggregation':'Average ROIs within each (condition, experiment, cell); average cells within experiment; weight independent experiments equally. Bootstrap resamples experiments then cells; paired resampling preserves experiment pairing. No pixels are independent replicates.','multiple_comparisons':'Benjamini-Hochberg adjustment over all contrasts in this report for this one metric. Other metrics/reports are not part of this family.','scope':'Measured condition association under the selected design and resampling assumptions. No causal knockdown claim, molecular binding probability or biological validation certificate.'}
+    return {'selected_channel_labels':list(next(iter(channel_identities))),'algorithm':'experiment-inference-2','request':options.model_dump(),'groups':summary,'contrasts':contrasts,'source_rows':source_rows,'batch_run_id':run['id'],'batch_run_sha256':sha256(json.dumps(run,sort_keys=True).encode()).hexdigest(),'aggregation':'Average ROIs within each (condition, experiment, cell); average cells within experiment; weight independent experiments equally. Bootstrap resamples experiments then cells; paired resampling preserves experiment pairing. No pixels are independent replicates.','multiple_comparisons':'Benjamini-Hochberg adjustment over all contrasts in this report for this one metric. Other metrics/reports are not part of this family.','scope':'Measured condition association under the selected design and resampling assumptions. No causal knockdown claim, molecular binding probability or biological validation certificate.'}
 
 def register_experiments(app,data_dir,authorized):
     @app.post('/api/experiments/analyze',dependencies=[Depends(authorized)])

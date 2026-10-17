@@ -26,11 +26,20 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-frozen-') as folder:
         def post(path,body,content='application/json'):
             with urllib.request.urlopen(urllib.request.Request(f'http://127.0.0.1:{port}'+path,data=body,headers={'X-Session-Token':'frozen-smoke','Content-Type':content}),timeout=120) as response:return json.load(response)
         image=post('/api/images',payload,'multipart/form-data; boundary='+boundary)
+        base='/api/images/'+image['id']
+        renamed=post(base+'/channels',json.dumps({'labels':['Synthetic A','Synthetic B'],'expected_image_info':image['info']}).encode())
+        assert renamed['sha256']==image['sha256'] and renamed['info']['channel_labels']==['Synthetic A','Synthetic B']
+        quality=get(base+'/quality?z=1');assert quality['channels'][0]['max']==100 and quality['channels'][0]['storage_ceiling_pixels']==0
+        from PIL import Image
+        def png(path):
+            with urllib.request.urlopen(urllib.request.Request(f'http://127.0.0.1:{port}'+path,headers={'X-Session-Token':'frozen-smoke'}),timeout=10) as response:return np.asarray(Image.open(io.BytesIO(response.read())))
+        assert png(base+'/preview?z=1').max()==0  # native 16-bit values below one display step
+        assert png(base+'/preview?z=1&contrast=auto').max()>0
         bounds={'x0':0,'x1':7,'y0':0,'y1':7,'z0':0,'z1':2}
         report=post('/api/images/'+image['id']+'/cuboid',json.dumps(bounds).encode());assert report['voxel_count']==192
         mask=post('/api/images/'+image['id']+'/segmentation',json.dumps({**bounds,'method':'manual','threshold':10,'min_voxels':1}).encode());assert mask['foreground_voxels']==9
 
-        print(json.dumps({'frozen_service':'passed','health':get('/health'),'checks':['TIFF import','cuboid','segmentation','removed restoration API returns 404']}))
+        print(json.dumps({'frozen_service':'passed','health':get('/health'),'checks':['TIFF import','channel labels and source identity','selected-plane signal checks','native and optional automatic contrast','cuboid','segmentation','removed restoration API returns 404']}))
     finally:
         p.terminate()
         try:p.wait(10)

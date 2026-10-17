@@ -131,3 +131,8 @@ The superseded Ministral weights (5,198,911,904 bytes) were removed after succes
 ## Remaining release gates
 
 Real biological controls and independent experiment/cell labels, citation-entailment scoring, systematic repeat runs, adversarial/conflicting evidence, larger stacks sharing memory with the model, cancellation/recovery, and native Windows/offline installer qualification remain outstanding. The interpretation remains an experimental draft. Preserve source measurements as the authority; do not treat model confidence or longer answers as validation.
+
+
+## Source 0.2.4 interpretation context assessment
+
+The selected model is unchanged. [The current review](ASSISTANT_INTERPRETATION_REVIEW.md) records synthetic constant-channel, mask-proximity, KEGG/knockdown and likelihood/Bayes scenarios, including a timeout and a separate follow-up. Report-aware context and deterministic application notes improve the information available to the assistant; no improvement is attributed solely to model weights, and these few developer-reviewed drafts do not establish biomedical accuracy.

@@ -24,7 +24,7 @@ def batch():
             for cell in range(2):
                 values=[10+exp+cell+20*(condition=='treated')]*2
                 rows=[{'roi':{'id':str(i)},'channel_summary':[{'channel':0,'mean':v}],'pairs':[]} for i,v in enumerate(values)]
-                items.append({'condition':condition,'experiment':str(exp),'cell':str(cell),'status':'completed','image_id':str(len(items)),'result':{'request':{'threshold_mode':'zero'},'processing':{},'source_sha256':'hash','results':rows}})
+                items.append({'condition':condition,'experiment':str(exp),'cell':str(cell),'status':'completed','image_id':str(len(items)),'result':{'request':{'threshold_mode':'zero'},'processing':{},'source_sha256':'hash','image_info':{'channel_labels':['Marker A']},'results':rows}})
     return {'id':'batch','items':items}
 
 def test_experiment_units_pairing_posterior_and_bh():
@@ -88,3 +88,11 @@ def test_completed_real_batch_flows_into_experiment_api(tmp_path):
         assert report.json()['contrasts'][0]['difference_b_minus_a']==100
         assert report.json()['contrasts'][0]['minimum_attainable_two_sided_p']==.1
         assert c.post('/api/experiments/analyze',json={}).status_code==401
+
+
+def test_experiment_rejects_changed_marker_identity_at_same_channel_position():
+    run=batch();options=ExperimentRequest(run_id='x',conditions=['control','treated'],design='paired_experiments',metric='mean',iterations=199)
+    run['items'][-1]['result']['image_info']['channel_labels']=['Different marker']
+    with pytest.raises(ImageError,match='channel names differ'):analyze_experiment(run,options)
+    run['items'][-1]['result']['image_info']['channel_labels']=[]
+    with pytest.raises(ImageError,match='channel identities are missing'):analyze_experiment(run,options)

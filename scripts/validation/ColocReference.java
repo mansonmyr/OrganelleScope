@@ -22,6 +22,12 @@ public class ColocReference {
   double s=new SpearmanRankCorrelation<DoubleType>().calculateSpearmanRank(cursor);
   cursor.reset();
   MandersColocalization.MandersResults m=new MandersColocalization<DoubleType>().calculateMandersCorrelation(cursor,new DoubleType());
-  System.out.println("{\"pcc\":"+p+",\"spearman\":"+s+",\"m1\":"+m.m1+",\"m2\":"+m.m2+"}");
+  double ta=args.length>1?Double.parseDouble(args[1]):0, tb=args.length>2?Double.parseDouble(args[2]):0;
+  cursor.reset();
+  MandersColocalization.MandersResults inclusive=new MandersColocalization<DoubleType>().calculateMandersCorrelation(cursor,new DoubleType(ta),new DoubleType(tb),ThresholdMode.Above);
+  cursor.reset();
+  // Coloc 2 Above includes equality at positive thresholds. nextUp aligns DoubleType with strict >.
+  MandersColocalization.MandersResults strict=new MandersColocalization<DoubleType>().calculateMandersCorrelation(cursor,new DoubleType(Math.nextUp(ta)),new DoubleType(Math.nextUp(tb)),ThresholdMode.Above);
+  System.out.println("{\"pcc\":"+p+",\"spearman\":"+s+",\"m1\":"+m.m1+",\"m2\":"+m.m2+",\"inclusive_tm1\":"+inclusive.m1+",\"inclusive_tm2\":"+inclusive.m2+",\"strict_tm1\":"+strict.m1+",\"strict_tm2\":"+strict.m2+"}");
  }
 }

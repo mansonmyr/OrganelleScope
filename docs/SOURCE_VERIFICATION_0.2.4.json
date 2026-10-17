@@ -1,0 +1,40 @@
+{
+  "source_version": "0.2.4",
+  "date": "2026-10-18",
+  "backend_tests": 141,
+  "frontend_tests": 70,
+  "production_ui_build": "passed",
+  "manual_numbered_references": 32,
+  "added_primary_scientific_references": 13,
+  "coloc2_cases": 36,
+  "coloc2_strict_aligned_max_abs_difference": 4.440892098500626e-16,
+  "coloc2_unaligned_boundary_difference_cases": 12,
+  "coloc2_scope": "Manual thresholds with explicit predicate alignment; no automatic Costes search/randomization or biological equivalence claim.",
+  "assistant_assessment": {
+    "model_unchanged": true,
+    "synthetic_only": true,
+    "initial_accepted_drafts": 3,
+    "initial_timeouts": 1,
+    "followup_accepted_drafts": 2,
+    "scope": "Developer-reviewed individual drafts, not a biomedical accuracy estimate. See ASSISTANT_INTERPRETATION_REVIEW.md."
+  },
+  "source_changes": [
+    "editable native-order channel names",
+    "exact selected-plane signal checks",
+    "marker-consistent experiment inference",
+    "native-range main XY/3D previews and contrast provenance",
+    "matching-report interpretation guide and cached evidence context",
+    "separate deterministic interpretation notes"
+  ],
+  "browser_qa": "Synthetic image: native/automatic contrast selected and restored; selected-plane quality results observed. Snapshot of the updated control is retained locally.",
+  "packaged_backend": "Passed synthetic API checks from the mounted 0.2.4 macOS installer; see BUILD_VERIFICATION_0.2.4.json.",
+  "private_data": "No microscopy pixels, biological channel-assignment manifests or detailed local sample results included.",
+  "limitations": [
+    "Independent biological validation pending",
+    "Native Windows installation qualification pending",
+    "No Apple notarization credentials",
+    "Compact installer does not bundle multi-gigabyte Gemma weights"
+  ],
+  "local_document_links": "passed",
+  "installer_distribution": "Local ARM64 development DMG; not published as a GitHub Release"
+}

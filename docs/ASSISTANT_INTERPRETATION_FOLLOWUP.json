@@ -1,0 +1,93 @@
+{
+  "scope": "Synthetic text/report fixtures only; one sampled response per case, developer review required, no estimate of biomedical accuracy. No image/model download or online evidence.",
+  "model": {
+    "name": "Gemma 4 12B Instruct QAT Q4_0",
+    "filename": "gemma-4-12b-it-qat-q4_0.gguf",
+    "bytes": 6975879296,
+    "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+    "upstream": "https://huggingface.co/google/gemma-4-12B-it",
+    "quantization": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+    "revision": "29d097773436b69ff9feafd636ab4cf873786537",
+    "license": "Apache-2.0",
+    "runtime": "llama.cpp b11669",
+    "context_tokens": 8192,
+    "vision_enabled": false,
+    "thinking_enabled": false,
+    "temperature": 1.0
+  },
+  "cases": [
+    {
+      "case": "undefined-channel",
+      "question": "Why is the correlation unavailable? Does this mean the calculation failed or Marker B is biologically absent? Would a different threshold fix it?",
+      "review_criteria": [
+        "Completed but undefined constant-channel correlation",
+        "No biological-absence claim",
+        "Threshold cannot restore intensity variation"
+      ],
+      "answer": "The Pearson and Spearman correlations are unavailable because Marker B is recorded as a constant channel with zero variation within the selected region [measurements]. In this specific instance, a constant channel makes the correlation mathematically undefined rather than a calculation failure.\n\nThe absence of a correlation value does not establish that Marker B is biologically absent. The recorded data shows no intensity variation for Marker B in the current ROI, but this does not provide evidence regarding its actual biological presence or distribution in the sample.\n\nChanging a threshold will not fix this issue. Because the correlation is undefined due to a lack of intensity variation in the channel itself, adjusting the threshold for Marker B or Marker A cannot restore the necessary variance required for the calculation [measurements].\n\nThe reading guide notes that for Manders coefficients using zero thresholds, positive background can increase overlap. However, for Pearson and Spearman correlations, the primary issue here is the constant nature of the channel [interpretation].\n\nTo further investigate, you might consider checking if the image was correctly captured or if the ROI was placed in a region devoid of the target signal. You could also verify if the marker was properly labeled or if there was a technical issue during acquisition that resulted in a flat signal for that channel.",
+      "interpretation_notes": [
+        "ROI Manders uses zero thresholds. Positive background can increase overlap; inspect background and threshold sensitivity before interpretation.",
+        "Marker B is all zero in a selected ROI. High-intensity saturation is not an explanation for this recorded zero range. Correlation is undefined; this does not establish biological absence. Changing a threshold cannot restore intensity variation.",
+        "ROI coefficients describe selected image regions; they do not establish binding or independent biological replication."
+      ],
+      "seconds": 110.02,
+      "sources": [
+        {
+          "id": "project",
+          "title": "Current workspace snapshot: Synthetic interpretation assessment",
+          "source_sha256": "synthetic-not-an-acquisition"
+        },
+        {
+          "id": "interpretation",
+          "title": "Application interpretation notes; report scope and limitations"
+        },
+        {
+          "id": "methods",
+          "title": "OrganelleScope method definitions · docs/ROI_STATISTICS.md and docs/PREPROCESSING.md"
+        },
+        {
+          "id": "measurements",
+          "title": "Selected deterministic measurements; biological validation pending"
+        }
+      ],
+      "tool_names": [
+        "inspect_project",
+        "read_measurements"
+      ],
+      "format_accepted": true
+    },
+    {
+      "case": "likelihood-bayes",
+      "question": "Can a Gaussian likelihood-ratio statistic be converted directly into a posterior probability of protein binding, without priors or a binding-specific likelihood?",
+      "review_criteria": [
+        "No direct conversion",
+        "Requires prior and appropriate likelihood",
+        "Image model is not a molecular-binding model"
+      ],
+      "answer": "A Gaussian likelihood-ratio statistic cannot be converted directly into a posterior probability of protein binding without the inclusion of priors and a binding-specific likelihood. In Bayesian statistics, the posterior probability is derived from the product of the likelihood and the prior, which is then normalized. A likelihood ratio only indicates how much more likely the data is under one hypothesis versus another; it does not provide an absolute probability without knowing the preceding probability of the binding event. Furthermore, a general Gaussian model may not accurately capture the specific biological and optical characteristics of a molecular binding event. Advice: To move toward a posterior probability, you must define a prior based on independent experimental evidence and develop a likelihood model that specifically accounts for the expected signal of interaction. It is important to remember that colocalization in microscopy reflects proximity and does not establish direct molecular binding. [methods]",
+      "interpretation_notes": [
+        "No matching measurement report is supplied. Missing documentation does not prove experiments were not performed."
+      ],
+      "seconds": 134.41,
+      "sources": [
+        {
+          "id": "project",
+          "title": "Current workspace snapshot: Synthetic interpretation assessment",
+          "source_sha256": "synthetic-not-an-acquisition"
+        },
+        {
+          "id": "interpretation",
+          "title": "Application interpretation notes; report scope and limitations"
+        },
+        {
+          "id": "methods",
+          "title": "OrganelleScope method definitions · docs/ROI_STATISTICS.md and docs/PREPROCESSING.md"
+        }
+      ],
+      "tool_names": [
+        "inspect_project"
+      ],
+      "format_accepted": true
+    }
+  ]
+}

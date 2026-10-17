@@ -107,10 +107,10 @@ def test_schema_request_does_not_replace_application_validation():
 def test_gemma_request_uses_selected_model_settings(tmp_path,monkeypatch):
  from organelle_scope.local_model import LocalModel,MODEL
  model=LocalModel(tmp_path);monkeypatch.setattr(model,'status',lambda:{'ready':True})
- calls=[];monkeypatch.setattr(model,'_request',lambda path,body:(calls.append((path,body)) or {}))
+ calls=[];monkeypatch.setattr(model,'_request',lambda path,body,**kwargs:(calls.append((path,body,kwargs)) or {}))
  model.completion([{'role':'user','content':'Test'}])
  assert MODEL['name'].startswith('Gemma') and MODEL['bytes']==6975879296
- assert calls[0][1]['temperature']==1.0
+ assert calls[0][1]['temperature']==1.0 and calls[0][2]['timeout']==300
  assert calls[0][1]['chat_template_kwargs']=={'enable_thinking':False} and calls[0][1]['max_tokens']==1600
 
 
@@ -167,7 +167,7 @@ def test_candidate_model_does_not_change_selected_model_or_response_provenance(t
  from organelle_scope.model_candidates import LIQUID_MODEL
  model=LocalModel(tmp_path,manifest=LIQUID_MODEL);calls=[]
  monkeypatch.setattr(model,'status',lambda:{'ready':True})
- monkeypatch.setattr(model,'_request',lambda path,body:calls.append(body))
+ monkeypatch.setattr(model,'_request',lambda path,body,**kwargs:calls.append(body))
  model.completion([{'role':'user','content':'Test'}])
  assert MODEL['name'].startswith('Gemma') and model.model.name==LIQUID_MODEL['filename']
  assert calls[0]['temperature']==.2 and calls[0]['top_k']==80 and calls[0]['repeat_penalty']==1.05
@@ -269,3 +269,59 @@ def test_null_metrics_in_completed_report_are_not_described_as_unperformed():
  assert 'cannot repair' in context['constant_channels'][0]['explanation']
  wrapped=bounded({'interpretation_context':context,'roi':'x'*20000})
  assert wrapped['interpretation_context']['constant_channels'][0]['all_zero'] is True
+
+
+def test_assistant_reads_matching_segmentation_and_batch_context_without_tool_request():
+ from organelle_scope.interpretation import interpretation_snapshot
+ record=json.loads(json.dumps(RECORD))
+ info={'calibration':{a:{'value_um':.1} for a in 'XYZ'},'channel_labels':['Marker A','Marker B']}
+ record['image']={'sha256':'source','info':info}
+ report={'source_sha256':'source','image_info':info,'object_count':2,'foreground_voxels':10,'objects':[{'touches_cuboid_edge':True},{'touches_cuboid_edge':False}],'proximity':{'fraction_marker_voxels_within_distance':.6},'request':{'channel':0}}
+ record['state']['workspaces']={'Segmentation.report':report,'ExperimentPanel.runId':'batch','ExperimentPanel.report':{'request':{'run_id':'batch'},'groups':[{'condition':'control','independent_experiments':3}],'contrasts':[]}}
+ snapshot=interpretation_snapshot(record)
+ assert snapshot['reports']['segmentation']['objects_touching_cuboid_edge']==1
+ assert snapshot['reports']['experiment']['groups'][0]['independent_experiments']==3
+ model=Fake(response('The mask defines image foreground rather than binding. [interpretation]'))
+ result=run_agent(model,record,options(),None)
+ assert 'foreground_voxels' in model.messages[0][0]['content']
+ assert any('batch' in n for n in result['interpretation_notes'])
+ report['source_sha256']='wrong'
+ assert 'segmentation' not in interpretation_snapshot(record)['reports']
+ record['state']['workspaces']['ExperimentPanel.runId']='other'
+ assert 'experiment' not in interpretation_snapshot(record)['reports']
+
+
+def test_selected_cached_evidence_is_supplied_without_online_access_or_model_tool():
+ record=json.loads(json.dumps(RECORD));record['state']['workspaces']={'EvidencePanel.result':{'provider':'kegg','rows':[{'gene':'hsa:7157','pathway':'hsa04115'}],'sources':[{'source_url':'https://rest.kegg.jp/link/pathway/hsa:7157'}]}}
+ def forbidden(_):pytest.fail('Cached context must not trigger network access')
+ model=Fake(response('hsa:7157 pathway membership does not establish activation. [evidence-1-1]'))
+ result=run_agent(model,record,options(),forbidden)
+ assert 'hsa04115' in model.messages[0][0]['content']
+ assert any(a.get('trigger')=='application selected evidence' for a in result['audit'])
+
+
+def test_workspace_excludes_stale_segmentation_and_quality():
+ from organelle_scope.assistant import WorkspaceContext,workspace_record
+ image={'sha256':'s','info':{'filename':'synthetic.tif'}}
+ context=WorkspaceContext(image_id='11111111-1111-1111-1111-111111111111',expected_image_info=image['info'],state={'workspaces':{'Segmentation.report':{'source_sha256':'wrong','image_info':image['info']},'ChannelPanel.quality':{'source_sha256':'s','image_info':{}}}})
+ record=workspace_record(context,lambda _:(None,image,None))
+ assert not record['state']['workspaces']
+
+
+def test_interpretation_notes_distinguish_zero_signal_and_rgb_display_components():
+ from organelle_scope.interpretation import interpretation_snapshot
+ record={'image':{'info':{'acquisition':{'stored_color_model':'RGB components'}}},'state':{'core':{'analysis':{'results':[{'channel_summary':[{'label':'A','std':0,'sum':0}]}]}}}}
+ notes=interpretation_snapshot(record)['notes']
+ assert any('RGB components' in n for n in notes)
+ assert any('all zero' in n and 'High-intensity saturation is not an explanation' in n for n in notes)
+
+
+def test_acquisition_notes_do_not_reuse_a_different_z_plane_as_current():
+ from organelle_scope.interpretation import interpretation_snapshot
+ info={'calibration':{}}
+ record={'image':{'sha256':'s','info':info},'state':{'core':{'z':2},'workspaces':{'ChannelPanel.quality':{'source_sha256':'s','image_info':info,'z':1,'channels':[]}}}}
+ snapshot=interpretation_snapshot(record)
+ assert 'acquisition' not in snapshot['reports']
+ assert any('different Z plane' in n for n in snapshot['notes'])
+ record['state']['core']['z']=1
+ assert 'acquisition' in interpretation_snapshot(record)['reports']

@@ -5,12 +5,12 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Research development source 0.2.3.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
+**Research development source 0.2.4.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
 
 ## Main features
 
 - TIFF / OME-TIFF / ImageJ TIFF, native 8/16-bit data, static images/Z stacks and up to four channels, with metadata review and physical calibration.
-- Persistent XY/3D preview, per-channel LUTs, trackpad zoom/panning, linked sections and PNG snapshots with display provenance.
+- Persistent native-range XY/3D preview, optional automatic contrast, editable channel names, signal checks, per-channel LUTs, trackpad zoom/panning, linked sections and PNG snapshots with display provenance.
 - Circular/polygonal ROIs, physical circle diameters, line profiles, FWHM and defined Pearson/Spearman/Manders measurements.
 - Background subtraction and optional Gaussian smoothing, matched-contrast previews and processing diagnostics. Noise2Void and deconvolution have been removed.
 - Full-resolution cuboids, inspectable threshold masks/objects, image-based proximity and radial enrichment.

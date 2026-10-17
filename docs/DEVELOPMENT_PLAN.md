@@ -83,3 +83,8 @@ Independent per-channel LUTs are implemented for the single-image XY/volume/link
 ## 0.2.3 Workspace layout and sample QA
 
 Project save/open/archive/recovery controls move into the Workspace sidebar. UI chrome uses #6DB1BF, #FFEAEC, #FDF0D5 and #83BCFF with dark readable text; scientific channel LUTs stay independent. The separate viewer-inspired roadmap and its current-document links are removed at the user's request. General software comparisons/citations remain factual references; no third-party implementation or dependency was introduced. User-provided local TIFFs support technical tests; biological marker mappings and independent replicate identities must be confirmed before control interpretation.
+
+
+## 0.2.4 channel identity, interpretation and unenhanced previews
+
+Editable channel identities, exact selected-plane signal checks, marker-consistent batch inference, native-range main previews and report-aware assistant context are implemented. The manual expands method-specific primary literature citations. Independent Coloc 2 checks now include explicit manual-threshold boundary conventions. See INTERPRETATION_AND_QC_0.2.4.md for observed results and limitations. Biological validation, realistic design-specific coverage, native Windows installation and signed release qualification remain separate gates; existing segmentation, batch Excel and experiment workflows are refined rather than presented as newly implemented features.

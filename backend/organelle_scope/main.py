@@ -32,6 +32,11 @@ class InspectOptions(BaseModel):
     spacing_um: dict[str, float] = Field(default_factory=dict)
 
 
+class ChannelNames(BaseModel):
+    labels: list[str] = Field(min_length=1, max_length=4)
+    expected_image_info: dict
+
+
 def create_app(data_dir: Path, token: str) -> FastAPI:
     app = FastAPI(title="OrganelleScope", version=__version__)
     app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "null"],
@@ -119,6 +124,36 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     def metadata(image_id: str) -> dict:
         return stored(image_id)[1]
 
+    @app.post('/api/images/{image_id}/channels', dependencies=[Depends(authorized)])
+    def channel_names(image_id: str, options: ChannelNames) -> dict:
+        with lock:
+            folder, record, info = stored(image_id)
+            if options.expected_image_info != record['info']:
+                raise HTTPException(409, 'Image settings changed. Reopen the image before naming channels.')
+            labels = [label.strip() for label in options.labels]
+            if len(labels) != info.dimensions['C'] or any(not label or len(label)>120 or any(ord(c)<32 for c in label) for label in labels):
+                raise HTTPException(422, 'Give every stored channel a nonempty name of at most 120 characters.')
+            if len(set(labels)) != len(labels):
+                raise HTTPException(422, 'Use distinct channel names; include the dye when markers repeat.')
+            if labels != info.channel_labels:
+                record.setdefault('original_channel_labels', list(info.channel_labels))
+                record['info']['channel_labels'] = labels
+                record['channel_annotation'] = {'source': 'User assigned; not inferred from dye or colour', 'labels': labels, 'series_index': info.series_index}
+                save_record(folder, record)
+            return record
+
+    @app.get('/api/images/{image_id}/quality', dependencies=[Depends(authorized)])
+    def acquisition_quality(image_id: str, z: int = 0) -> dict:
+        folder, record, info = stored(image_id)
+        from organelle_scope.acquisition_quality import plane_quality
+        try:
+            rows = [plane_quality(read_plane(folder/'source.tiff', info, c, z), c, label) for c, label in enumerate(info.channel_labels)]
+        except (ImageError, ValueError) as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return {'source_sha256': record['sha256'], 'image_info': record['info'], 'z': z, 'channels': rows,
+                'scope': 'Exact raw pixels of the selected XY plane only, not the whole stack or an ROI. Storage-ceiling counts do not establish detector saturation; acquisition bit depth/gain and controls require review.',
+                'calibration_notes': [f'{a} sampling is unknown or conflicting.' for a in 'XYZ' if (a!='Z' or info.dimensions['Z']>1) and (info.calibration[a].value_um is None or info.calibration[a].conflict)]}
+
     @app.post("/api/images/{image_id}/inspect", dependencies=[Depends(authorized)])
     def reinspect(image_id: str, options: InspectOptions) -> dict:
         with lock:
@@ -128,6 +163,11 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             except (ImageError, ValueError) as exc:
                 raise HTTPException(422, str(exc)) from exc
             info.filename = record["info"]["filename"]
+            if info.series_index == record['info']['series_index'] and info.axes == record['info']['axes'] and info.dimensions['C'] == record['info']['dimensions']['C'] and record.get('channel_annotation'):
+                info.channel_labels = record['channel_annotation']['labels']
+            else:
+                record.pop('channel_annotation', None)
+                record.pop('original_channel_labels', None)
             record.update(info=info.model_dump(), options=options.model_dump())
             save_record(folder, record)
             return record
@@ -179,14 +219,14 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
         return Response(np.ascontiguousarray(data, dtype=dtype).tobytes(), media_type="application/octet-stream")
 
     @app.get("/api/images/{image_id}/preview", dependencies=[Depends(authorized)])
-    def preview(image_id: str, z: int = 0, luts: str | None = None) -> Response:
+    def preview(image_id: str, z: int = 0, luts: str | None = None, contrast: Literal['native','auto'] = 'native') -> Response:
         folder, _, info = stored(image_id)
         output = np.zeros((info.dimensions["Y"], info.dimensions["X"], 3), np.float32)
         try:
             colors = display_colors(luts, info.dimensions["C"])
             for c in range(info.dimensions["C"]):
                 plane_data = read_plane(folder / "source.tiff", info, c, z)
-                high = float(np.percentile(plane_data[::4, ::4], 99.5)) or float(plane_data.max()) or 1.
+                high = float(2**info.bit_depth-1) if contrast == 'native' else (float(np.percentile(plane_data[::4, ::4], 99.5)) or float(plane_data.max()) or 1.)
                 output += np.clip(plane_data / high, 0, 1)[..., None] * colors[c]
         except (ImageError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from exc

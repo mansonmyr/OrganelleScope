@@ -13,7 +13,7 @@ for n in (3,8):
                 effect=rng.normal(0,1)
                 for cell in range(4):
                     mean=effect+rng.normal(0,.5)
-                    result={'request':{'threshold_mode':'zero'},'processing':{},'source_sha256':'simulation','results':[{'roi':{'id':'r'},'channel_summary':[{'channel':0,'mean':mean}]}]}
+                    result={'request':{'threshold_mode':'zero'},'processing':{},'source_sha256':'simulation','image_info':{'channel_labels':['Simulated marker']},'results':[{'roi':{'id':'r'},'channel_summary':[{'channel':0,'mean':mean}]}]}
                     items.append({'status':'completed','condition':condition,'experiment':condition+str(exp),'cell':str(cell),'image_id':str(len(items)),'result':result})
         request=ExperimentRequest(run_id='simulation',conditions=['a','b'],design='independent_experiments',metric='mean',iterations=199,seed=simulation)
         c=analyze_experiment({'id':'simulation','items':items},request)['contrasts'][0];lo,hi=c['hierarchical_bootstrap_ci95'];covered+=lo<=0<=hi;reject+=c['permutation_p_two_sided']<=.05

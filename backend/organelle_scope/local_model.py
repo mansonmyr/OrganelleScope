@@ -98,7 +98,8 @@ class LocalModel:
   if 'repeat_penalty' in self.manifest:body['repeat_penalty']=self.manifest['repeat_penalty']
   if tools:body.update(tools=tools,parallel_tool_calls=False)
   if response_format:body.update(response_format=response_format,max_tokens=1200)
-  return self._request('/v1/chat/completions',body)
+  # Model prefill plus generation can exceed two minutes on a CPU or a busy Mac.
+  return self._request('/v1/chat/completions',body,timeout=300)
 
  def cleanup_after_success(self):
   if self.cleanup_report is None and self.verified is not None and self.process and self.process.poll() is None:
