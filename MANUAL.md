@@ -2,7 +2,7 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 1.0.5 · 18 October 2026 · local research workbench**
+**Edition 1.0.6 · 18 October 2026 · local research workbench**
 
 This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 

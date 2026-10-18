@@ -5,7 +5,7 @@ root=Path(__file__).resolve().parents[1]
 exe=Path(os.environ.get('ORGANELLESCOPE_FROZEN_BACKEND',str(root/'backend/dist/organellescope-backend'/('organellescope-backend.exe' if sys.platform=='win32' else 'organellescope-backend'))))
 with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
 with tempfile.TemporaryDirectory(prefix='OrganelleScope-frozen-') as folder:
-    p=subprocess.Popen([str(exe),'--port',str(port),'--data-dir',folder],env={**os.environ,'ORGANELLESCOPE_SESSION_TOKEN':'frozen-smoke'},stdout=subprocess.DEVNULL)
+    p=subprocess.Popen([str(exe),'--port',str(port),'--data-dir',str(Path(folder)/'images')],env={**os.environ,'ORGANELLESCOPE_SESSION_TOKEN':'frozen-smoke'},stdout=subprocess.DEVNULL)
     try:
         def get(path):
             with urllib.request.urlopen(urllib.request.Request(f'http://127.0.0.1:{port}'+path,headers={'X-Session-Token':'frozen-smoke'}),timeout=10) as response:return json.load(response)
