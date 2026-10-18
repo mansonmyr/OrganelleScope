@@ -338,3 +338,32 @@ def test_directional_context_and_recorded_quantities_follow_engine_marker_order(
  facts=recorded_quantities(record)
  assert any(f['value']==1 and 'M1 · Marker A intensity where Marker B' in f['label'] for f in facts)
  assert any(f['value']==.1 and 'M2 · Marker B intensity where Marker A' in f['label'] for f in facts)
+
+
+def test_recorded_summary_needs_no_model_and_generation_failure_keeps_engine_notes(tmp_path,monkeypatch):
+ import organelle_scope.assistant as module
+ def unavailable(*args,**kwargs):
+  kwargs['audit_sink'].append({'tool':'inspect_project','result':{'source_id':'project'}})
+  raise ValueError('Generated claims could not be substantiated; draft withheld.')
+ monkeypatch.setattr(module,'ensure_ready',lambda _:None)
+ monkeypatch.setattr(module,'run_agent',unavailable)
+ with TestClient(create_app(tmp_path/'images','token')) as client:
+  payload={'message':'Interpret the current measurements','context':{'state':{'core':{},'workspaces':{}}}}
+  assert client.post('/api/assistant/notes',json=payload).status_code==401
+  response=client.post('/api/assistant/notes',headers={'X-Session-Token':'token'},json=payload)
+  assert response.status_code==200
+  notes=response.json();assert notes['response_mode']=='application_summary' and notes['model'] is None
+  assert notes['generation_error'] is None and notes['interpretation_notes']
+  response=client.post('/api/assistant/chat',headers={'X-Session-Token':'token'},json=payload)
+  assert response.status_code==200
+  fallback=response.json();assert fallback['response_mode']=='application_summary'
+  assert 'withheld' in fallback['generation_error']
+  assert [a['tool'] for a in fallback['audit']]==['inspect_project','application_summary']
+
+
+def test_session_readiness_requires_application_token(tmp_path):
+ with TestClient(create_app(tmp_path,'test')) as client:
+  assert client.get('/api/ready').status_code==401
+  assert client.get('/api/ready',headers={'X-Session-Token':'wrong'}).status_code==401
+  response=client.get('/api/ready',headers={'X-Session-Token':'test'})
+  assert response.status_code==200 and response.json()['status']=='ok'

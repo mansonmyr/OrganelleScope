@@ -209,7 +209,7 @@ export default function App() {
   }
   return <div className="shell"><AssistantSetupBanner/>
     <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
-      <span className="badge">Development build · ROI statistics</span><span className="local"><i /> Local processing</span></header>
+      <span className="badge">Research workbench · 1.0</span><span className="local"><i /> Local processing</span></header>
     <div className="workspace"><aside aria-label="Workspace">
       <p className="eyebrow">WORKSPACE / 01</p><h2>Your image, in context.</h2><p className="muted">Inspect the source. Confirm the scale. Explore the volume.</p>
       <label className={`import-button ${busy ? "disabled" : ""}`}><input type="file" accept=".tif,.tiff" disabled={busy||projectBusy} onChange={importImage} />{busy ? "Working…" : "+ Open TIFF / OME-TIFF"}</label>
@@ -271,6 +271,6 @@ export default function App() {
       <div hidden={workspace!=='assistant'}><AssistantPanel projectId={project?.id??null} context={{image_id:image?.id??null,expected_image_info:image?.info??null,state:{core:snapshot().core,workspaces:Object.fromEntries(Object.entries(projectData).filter(([key])=>!key.startsWith('AssistantPanel.')))}}}/></div>
       </ProjectStateProvider>
       <div hidden={workspace!=='batch'}><BatchPanel/><ProjectStateProvider data={projectData} setData={setProjectData}><ExperimentPanel/></ProjectStateProvider></div>
-      <footer><span>Research development · Local projects and experimental assistant; biological validation pending.</span><span>Source → calibration → measurement</span></footer>
+      <footer><span>Local research analysis · Reproducible reports · AI interpretations require review.</span><span>Source → calibration → measurement</span></footer>
     </main></div></div>;
 }

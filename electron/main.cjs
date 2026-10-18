@@ -5,6 +5,7 @@ const path = require('node:path');
 const net = require('node:net');
 const http = require('node:http');
 const fs = require('node:fs');
+const {startupLog, waitForBackend, stopBackend} = require('./lifecycle.cjs');
 
 const smokeTest=process.argv.includes('--organelle-smoke-test');
 if(smokeTest&&process.env.ORGANELLESCOPE_SMOKE_DATA)app.setPath('userData',process.env.ORGANELLESCOPE_SMOKE_DATA);
@@ -14,24 +15,15 @@ let backend;
 let apiUrl;
 let mainWindow;
 let quitting = false;
+let shutdownComplete = false;
+let serviceReady = false;
+const diagnostics = startupLog(path.join(app.getPath('userData'), 'logs'), {version:app.getVersion(),platform:process.platform,architecture:process.arch}, [token]);
+diagnostics.write('launch');
 
 function freePort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer(); server.on('error', reject);
     server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(() => resolve(port)); });
-  });
-}
-function ready(timeout = 120000) {
-  const start = Date.now();
-  return new Promise((resolve, reject) => {
-    function poll() {
-      if (Date.now() - start > timeout) return reject(new Error('Local image service did not start.'));
-      if (backend?.exitCode != null) return reject(new Error('Local image service exited during startup.'));
-      const req = http.get(`${apiUrl}/health`, res => { res.resume(); if (res.statusCode === 200) resolve(); else setTimeout(poll, 200); });
-      req.setTimeout(1000, () => req.destroy());
-      req.on('error', () => setTimeout(poll, 200));
-    }
-    poll();
   });
 }
 async function start() {
@@ -52,16 +44,19 @@ async function start() {
     env.PYTHONPATH = path.join(root, 'backend');
     backend = spawn(python, ['-m', 'organelle_scope.main', ...args], { env, cwd: root, stdio: ['ignore','pipe','pipe'] });
   }
-  backend.on('error', error => { dialog.showErrorBox('Image service unavailable', error.message); app.quit(); });
+  backend.on('error', error => diagnostics.write('backend-spawn-error',{message:error.message}));
   backend.stdout.resume();
-  backend.stderr.on('data', chunk => console.error(String(chunk)));
-  backend.on('exit', code => { if (!quitting && mainWindow) dialog.showErrorBox('Image service stopped', `Restart OrganelleScope. Exit code: ${code}`); });
-  await ready();
+  backend.stderr.on('data', chunk => {if(!serviceReady)diagnostics.write('backend-startup-output',{message:String(chunk).slice(-3000)});console.error(String(chunk));});
+  backend.on('exit', (code,signal) => { diagnostics.write('backend-exit',{code,signal,expected:quitting}); if (!quitting && mainWindow) dialog.showErrorBox('Image service stopped', `Restart OrganelleScope. Exit code: ${code}`); });
+  diagnostics.write('backend-spawned');
+  await waitForBackend({url:apiUrl,token,child:backend,expectedVersion:app.getVersion()});
+  serviceReady=true;diagnostics.write('backend-ready');
   ipcMain.handle('organelle:runtime', event => {
     if (!mainWindow || event.sender !== mainWindow.webContents || event.senderFrame !== mainWindow.webContents.mainFrame) throw new Error('Untrusted application frame.');
     return { apiUrl, token };
   });
   await createWindow();
+  diagnostics.write('window-loaded');
   if(smokeTest){
     const target=process.env.ORGANELLESCOPE_SMOKE_REPORT;
     if(!target)throw new Error('Smoke report path required.');
@@ -75,7 +70,7 @@ async function start() {
     const picture=await mainWindow.webContents.capturePage();
     if(picture.isEmpty())throw new Error('Packaged renderer returned an empty capture.');
     fs.mkdirSync(path.dirname(target),{recursive:true});
-    fs.writeFileSync(target,JSON.stringify({version:app.getVersion(),platform:process.platform,architecture:process.arch,packaged:app.isPackaged,renderer_mounted:true,renderer_capture_size:picture.getSize(),local_backend_ready:true,automatic_download_disabled_for_test:process.env.ORGANELLESCOPE_DISABLE_AUTO_SETUP==='1',scope:'Native application startup and initial renderer paint; not a human interaction, GPU workload, fresh full-weight download or biological validation.'},null,2));
+    fs.writeFileSync(target,JSON.stringify({version:app.getVersion(),platform:process.platform,architecture:process.arch,packaged:app.isPackaged,renderer_mounted:true,renderer_capture_size:picture.getSize(),diagnostics_available:fs.existsSync(diagnostics.file),local_backend_ready:true,automatic_download_disabled_for_test:process.env.ORGANELLESCOPE_DISABLE_AUTO_SETUP==='1',scope:'Native application startup and initial renderer paint; not a human interaction, GPU workload, fresh full-weight download or biological validation.'},null,2));
     app.quit();
   }
 }
@@ -83,6 +78,8 @@ async function createWindow() {
   mainWindow = new BrowserWindow({ width: 1440, height: 960, minWidth: 950, minHeight: 680,
     title: 'OrganelleScope', backgroundColor: '#001524',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true } });
+  mainWindow.webContents.on('render-process-gone',(_event,details)=>{diagnostics.write('renderer-stopped',{reason:details.reason,exitCode:details.exitCode});if(!quitting&&!smokeTest)dialog.showErrorBox('Image workspace stopped','Restart OrganelleScope. Saved projects and source images remain on disk. Diagnostic log: '+diagnostics.file);});
+  mainWindow.webContents.on('preload-error',(_event,_file,error)=>diagnostics.write('preload-error',{message:error.message}));
   mainWindow.webContents.setWindowOpenHandler(({url}) => {
     try {
       const target=new URL(url);
@@ -96,17 +93,24 @@ async function createWindow() {
   if (process.env.ORGANELLESCOPE_UI_URL && !app.isPackaged) await mainWindow.loadURL(process.env.ORGANELLESCOPE_UI_URL);
   else await mainWindow.loadFile(path.join(root, 'frontend', 'dist', 'index.html'));
 }
-if(!app.requestSingleInstanceLock())app.quit();
-else app.whenReady().then(start).catch(error => {
-  if(smokeTest){console.error(error);quitting=true;backend?.kill();app.exit(1);}
-  else{dialog.showErrorBox('Startup failed', error.message);app.quit();}
-});
-app.on('activate', () => { if (!mainWindow && apiUrl) void createWindow(); });
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-app.on('before-quit', () => {
+async function shutdown() {
   quitting=true;
-  if(process.platform==='win32'&&backend?.pid&&backend.exitCode===null){
-    // Terminate only this app's owned backend/model tree; do not leave a CPU model orphaned.
-    spawnSync(path.join(process.env.SystemRoot||'C:/Windows','System32','taskkill.exe'),['/PID',String(backend.pid),'/T','/F'],{windowsHide:true,stdio:'ignore',timeout:10000});
-  }else backend?.kill();
+  await stopBackend(backend, {terminateTree:process.platform==='win32' ? pid=>spawnSync(path.join(process.env.SystemRoot||'C:/Windows','System32','taskkill.exe'),['/PID',String(pid),'/T','/F'],{windowsHide:true,stdio:'ignore',timeout:10000}) : undefined});
+  shutdownComplete=true;diagnostics.write('shutdown-complete');
+}
+async function startupFailure(error) {
+  diagnostics.write('startup-failed',{message:error.message,stack:error.stack?.slice(-3000)});
+  if(!smokeTest)dialog.showErrorBox('Startup failed',error.message+'\nDiagnostic log: '+diagnostics.file);
+  else console.error(error);
+  await shutdown();app.exit(1);
+}
+if(!app.requestSingleInstanceLock())app.quit();
+else app.whenReady().then(start).catch(startupFailure);
+app.on('second-instance',()=>{if(mainWindow){if(mainWindow.isMinimized())mainWindow.restore();mainWindow.focus();}});
+app.on('activate', () => { if (!quitting && !mainWindow && apiUrl) void createWindow().catch(startupFailure); });
+app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('before-quit', event => {
+  if(shutdownComplete || !backend){quitting=true;return;}
+  event.preventDefault();
+  if(!quitting)void shutdown().then(()=>app.quit());
 });

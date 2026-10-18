@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a reproducible problem with installation, analysis or interpretation.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: OrganelleScope version
+      description: Include the release tag and installer filename.
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Computer and operating system
+      placeholder: macOS / Apple Silicon or Windows 11 x64; RAM if known
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps and observed result
+      description: Include expected behaviour and the relevant workspace/settings. Synthetic examples are preferred; do not attach unpublished research images or credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Error or relevant diagnostic excerpt
+      description: Startup failures are recorded locally in logs/startup.jsonl under the application data folder. Review excerpts before sharing; there is no automatic upload.

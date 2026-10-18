@@ -79,6 +79,10 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
     def health() -> dict:
         return {"status": "ok", "version": __version__}
 
+    @app.get("/api/ready", dependencies=[Depends(authorized)])
+    def session_ready() -> dict:
+        return {"status": "ok", "service": "OrganelleScope", "version": __version__}
+
     @app.post("/api/images", dependencies=[Depends(authorized)])
     def import_image(file: UploadFile = File(...)) -> dict:
         name = Path(file.filename or "image.tiff").name

@@ -1,13 +1,11 @@
-# OrganelleScope 0.2.7 research preview
+# OrganelleScope 1.0.0
 
-Batch images now include channel-identity editing and selected-plane signal checks beside their ROIs. Corrected names preserve geometry and require review again. Backend metadata checks prevent a stale batch review being used after channel/metadata changes; historical frozen runs retain their original annotations.
+Local research release for calibrated TIFF inspection, circular/polygonal ROI analysis, line profiles, defined colocalization measurements, 3D cuboids/threshold objects, reviewed batches, experiment-level comparisons and traceable exports. The manual records formulas, interpretation, limits and original references.
 
-Experimental design review shows labelled experiments/cells, missing labels and repeated source hashes. The frozen run and Excel export retain the design review. Identical raw sources assigned to different conditions or experiments are rejected by experiment inference. Counts do not prove experimental independence.
+Startup authenticates its own analysis service and records bounded local diagnostics. Normal quit waits for the owned service. Renderer/preload failures and startup errors are inspectable; session credentials are redacted and logs are not uploaded. Qualification includes cold/warm native launches on both platforms, exact stack/batch sums and artifact checksums. Stable publication is blocked if required platform reports are missing or inconsistent.
 
-The assistant receives explicit method guidance on marker identity, corrected annotations, copied TIFFs and nonlinear clipping. Unqualified biological-ground-truth claims about corrected channel labels are withheld, and duplicate advice prefixes are normalized. Synthetic evaluation records preserve the initial inconsistent fixture, corrected follow-up and remaining same-model audit limitations. This is not a biomedical accuracy certification.
+The optional local Gemma assistant produces reviewed drafts. Recorded analysis summaries work without the model; a withheld/failed draft after model startup returns application notes and preserves the question for retry. AI prose remains separate from recorded measurements and does not certify biological truth. Existing local projects, raw TIFFs and the verified Gemma file are retained on upgrade.
 
-Local sample-control reports record owner acceptance/rejection per candidate and preserve rejected technical results. No private image, annotation or measurement is uploaded. Existing background subtraction and Gaussian smoothing remain; denoising and deconvolution remain removed.
+Download the macOS Apple Silicon or Windows x64 installer below. Gemma setup is one automatic, resumable 6.98 GB download; no cloud inference service is used. Publisher credentials remain outside scope, so macOS uses development ad-hoc signing and Windows has no publisher certificate. The old unexplained 0.2.7 launch observation is preserved; no retrospective root-cause claim is made.
 
-The installed application bundles its pinned inference runtime and automatically downloads Gemma once (6.98 GB), with pause/resume and checksum verification. Native build checks, platform reports and checksums accompany each release candidate. Trusted publisher signing remains outside scope.
-
-See the [manual](../MANUAL.md), [verification status](VALIDATION.md) and [model assessments](../README_MODEL_DECISIONS.md).
+See [MANUAL.md](../MANUAL.md), [verification status](VALIDATION.md) and [software citation](../CITATION.cff).

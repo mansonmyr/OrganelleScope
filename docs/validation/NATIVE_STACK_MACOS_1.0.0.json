@@ -1,0 +1,32 @@
+{
+  "batch_images_checked": 3,
+  "batch_all_channel_sums_exact": true,
+  "technical_repeated_source_flagged": true,
+  "shape_czyx": [
+    4,
+    32,
+    2048,
+    2048
+  ],
+  "decoded_bytes": 1073741824,
+  "z_depth_um": 8,
+  "native_service_health": {
+    "status": "ok",
+    "version": "1.0.0"
+  },
+  "platform": "darwin",
+  "timings": {
+    "upload_and_inspection_seconds": 0.019176707952283323,
+    "volume_seconds": 0.1438240420538932,
+    "cuboid_seconds": 0.6630109580000862,
+    "segmentation_seconds": 1.5710732910083607,
+    "full_plane_qc_seconds": 0.24144441704265773,
+    "three_image_sequential_batch_seconds": 0.11788866599090397
+  },
+  "memory": {
+    "peak_process_tree_rss_bytes": 1522221056,
+    "minimum_system_available_bytes": 10636148736
+  },
+  "all_four_cuboid_sums_exact": true,
+  "scope": "One deterministic compressed synthetic stack through a native frozen executable, including multipart upload. Process-tree RSS includes the driver and service, not unrelated applications. This is not a realistic acquisition distribution, sustained batch benchmark, human usability assessment or biological validation."
+}

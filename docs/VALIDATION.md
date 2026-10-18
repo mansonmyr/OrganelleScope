@@ -1,6 +1,6 @@
 # Verification status
 
-OrganelleScope is a research preview. Numerical agreement, installer integrity and biological validity are separate properties. No passing check certifies a biological conclusion or publication readiness.
+OrganelleScope 1.0 is released for the documented local research workflows. Numerical agreement, installer integrity and biological validity are separate properties. No passing check certifies a biological conclusion or publication readiness.
 
 | Check | Available evidence and limits |
 |---|---|
@@ -42,3 +42,14 @@ Local candidate reports now retain explicit owner-accepted/rejected statuses. On
 [Local 0.2.7 frozen-service workload](validation/NATIVE_STACK_MACOS_0.2.7.json) checks a decoded 1 GiB, 32-slice, four-channel stack and three sequential technical-repeat imports. Cuboid and batch channel sums match exact source expectations; copied sources are flagged. Process-tree RSS includes the driver and service. The synthetic timings and memory are not a real-acquisition distribution or general hardware guarantee.
 
 [Local installer observations](validation/NATIVE_INSTALL_OBSERVATIONS_0.2.7.json) retain an initial temporary-copy launch failure, a successful direct launch and a successful full installer recheck. The original failure cause is not isolated; verifier diagnostics now expose child errors. This candidate is not a claim of failure-free startup.
+
+
+## Stable release 1.0 qualification
+
+Stable publication requires platform reports for both installers: exact artifact hashes, native runtime execution, repeated native startup (two fresh profiles and one retained profile), authenticated service readiness, renderer paint, observed owned-backend shutdown, and exact stack/batch sums with copied-source detection. Tests also exercise deliberately failed readiness/spawn, bounded shutdown, log rotation/redaction, and model-free summaries after withheld AI drafts. Frozen-service checks include ROI correlation, source-preserving channel names, project save/reopen and a model-free summary. These are operational and numerical release criteria, not certification of a specimen or generated interpretation.
+
+The 0.2.7 one-off local launch failure remains a historical observation; its original hidden error cannot be reconstructed retrospectively. No definite root cause is claimed. Version 1.0 adds diagnostics and addresses concrete readiness/shutdown weaknesses; repeated fresh and retained-profile qualification is required for the new artifacts. Historical failure records are retained rather than deleted or retroactively marked fixed.
+
+Core measurement definitions, independent numerical comparisons and scientific assumptions remain documented. The AI component is optional assistive interpretation, with explicit review status and deterministic summaries available independently. A stable software release does not imply an error-free LLM, independent biological replication, negative-control discrimination or a publication certificate.
+
+[Exact local 1.0 installer qualification](validation/STARTUP_QUALIFICATION_1.0.0.json) records nine successful launches (six fresh, three retained profiles), observed backend exits and frozen analysis/project/summary checks. [The local 1 GiB stack and batch record](validation/NATIVE_STACK_MACOS_1.0.0.json) checks exact source sums. Release assets contain independent build-specific qualification records for the distributed Mac and Windows installers.

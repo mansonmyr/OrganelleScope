@@ -7,6 +7,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--dmg',type=Path)
+parser.add_argument('--launches',type=int,default=3)
 parser.add_argument('--output',type=Path,required=True)
 args=parser.parse_args()
 version=json.loads((root/'package.json').read_text(encoding='utf-8'))['version']
@@ -42,7 +43,7 @@ console.log(JSON.stringify({version:info.version,frontend_index_sha256:crypto.cr
         installed.parent.mkdir()
         run(['/usr/bin/ditto',str(app),str(installed)])
         desktop_report=Path(temporary)/'desktop.json'
-        run([sys.executable,str(root/'scripts/smoke-desktop.py'),'--app',str(installed),'--output',str(desktop_report)],cwd=root)
+        run([sys.executable,str(root/'scripts/smoke-desktop.py'),'--app',str(installed),'--launches',str(args.launches),'--output',str(desktop_report)],cwd=root)
         desktop=json.loads(desktop_report.read_text(encoding='utf-8'))
         environment={**os.environ,'ORGANELLESCOPE_FROZEN_BACKEND':str(binary)}
         result=run([sys.executable,str(root/'scripts/smoke-frozen.py')],env=environment,cwd=root)

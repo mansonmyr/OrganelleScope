@@ -1,0 +1,98 @@
+{
+  "version": "1.0.0",
+  "platform": "macos-arm64",
+  "artifact_sha256": "3f95fe00e8810c5755687beba1aa7758946457f8cf763c09388f14095746b87f",
+  "successful_launches": 9,
+  "fresh_profiles": 6,
+  "retained_profile_launches": 3,
+  "launches": [
+    {
+      "index": 1,
+      "profile": "fresh",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 2,
+      "profile": "retained",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 3,
+      "profile": "fresh",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 4,
+      "profile": "fresh",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 5,
+      "profile": "retained",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 6,
+      "profile": "fresh",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 7,
+      "profile": "fresh",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 8,
+      "profile": "retained",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    },
+    {
+      "index": 9,
+      "profile": "fresh",
+      "renderer_mounted": true,
+      "authenticated_backend_ready": true,
+      "owned_backend_exit_observed": true,
+      "shutdown_complete": true
+    }
+  ],
+  "integrity": "passed",
+  "runtime": "passed",
+  "frozen_checks": [
+    "authenticated readiness",
+    "ROI reference correlation",
+    "project save/reopen with source identity",
+    "model-free analysis summary",
+    "TIFF import",
+    "channel labels and source identity",
+    "selected-plane signal checks",
+    "native and optional automatic contrast",
+    "cuboid",
+    "segmentation",
+    "removed restoration API returns 404"
+  ],
+  "scope": "Exact local DMG, development M3 host. All observed launches passed; this is not a failure-rate estimate or a retrospective explanation of the old 0.2.7 observation. CI release installers have separate artifact-bound reports."
+}

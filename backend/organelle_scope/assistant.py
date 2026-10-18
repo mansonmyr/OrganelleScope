@@ -109,12 +109,12 @@ def measurement_context(analysis):
    'controls_note':'Biological controls and independent experimental replicates are not established by this report. Absence from this record is not proof they were not performed.'}
 
 
-def run_agent(model,record,options,query_evidence):
+def run_agent(model,record,options,query_evidence,audit_sink=None):
  state=record.get('state',{});core=state.get('core',{});workspaces=state.get('workspaces',{});image=record.get('image')
  live=record.get('context_kind')=='workspace'
  sources={'project':{'id':'project','title':('Current workspace snapshot: '+record['name']) if live else f"Saved project: {record['name']} · revision {record['revision']}", 'source_sha256':image.get('sha256') if image else None}}
  general=live and not image and not any(workspaces.get(k) for k in ('EvidencePanel.mapping','EvidencePanel.result','ExperimentPanel.report'))
- audit=[];identifiers=set(image.get('info',{}).get('channel_labels',[])) if image else set()
+ audit=audit_sink if audit_sink is not None else [];identifiers=set(image.get('info',{}).get('channel_labels',[])) if image else set()
  for index,_ in enumerate((core.get('analysis') or {}).get('results',[])[:100]):identifiers.add(f'ROI {index+1}')
  reading=interpretation_snapshot(record)
  source_payloads={'methods':METHOD_REFERENCE,'interpretation':bounded(reading,5000)}
@@ -203,7 +203,7 @@ def run_agent(model,record,options,query_evidence):
    if review:answer=review['checked_answer']
    return {'evidence_review':review,'answer':answer,'model':getattr(model,'manifest',MODEL),'project_id':record['id'],'project_revision':record['revision'],'context_kind':record.get('context_kind','saved_project'),
       'created_utc':datetime.now(timezone.utc).isoformat(),'interpretation_notes':reading['notes'],'recorded_quantities':recorded_quantities(record),'sources':list(sources.values()),'audit':audit,'usage':usage,
-      'elapsed_seconds':round(time.monotonic()-start,2),'status':'AI draft; verify against measurements and cited evidence.'}
+      'response_mode':'generated_draft','elapsed_seconds':round(time.monotonic()-start,2),'status':'AI draft; verify against measurements and cited evidence.'}
   if call_count+len(calls)>4:raise ValueError('The assistant exceeded its four-tool limit. Ask a narrower question.')
   messages.append({'role':'assistant','content':message.get('content') or '', 'tool_calls':calls})
   for call in calls:
@@ -252,6 +252,16 @@ def ensure_ready(model):
  raise ValueError('The local model is still loading. Your question is retained; retry when Ready.')
 
 
+def application_summary(record,reason=None,audit=None):
+ reading=interpretation_snapshot(record)
+ return {'response_mode':'application_summary','answer':'Recorded analysis summary. These application-generated notes are separate from an AI interpretation.',
+         'generation_error':reason,'model':None,'project_id':record.get('id'),'project_revision':record.get('revision'),'context_kind':record.get('context_kind','project'),
+         'created_utc':datetime.now(timezone.utc).isoformat(),'interpretation_notes':reading['notes'],'recorded_quantities':recorded_quantities(record),
+         'sources':[{'id':'interpretation','title':'Application report scope and recorded measurement definitions'}],
+         'audit':list(audit or [])+[{'tool':'application_summary','result':reading}], 'elapsed_seconds':0,
+         'status':'Application summary; no generated scientific conclusion.'}
+
+
 def register_assistant(app,data_dir,authorized,load_project,query_evidence,stored=None):
  model=LocalModel(data_dir.parent/'assistant');lock=Lock()
  setup=ModelSetup(model,automatic=os.environ.get('ORGANELLESCOPE_AUTO_SETUP')=='1')
@@ -269,13 +279,21 @@ def register_assistant(app,data_dir,authorized,load_project,query_evidence,store
   except (ValueError,OSError) as exc:raise HTTPException(422,str(exc)) from exc
  @app.post('/api/assistant/stop',dependencies=[Depends(authorized)])
  def stop():return model.stop()
+ @app.post('/api/assistant/notes',dependencies=[Depends(authorized)])
+ def notes(options:ChatRequest):
+  try:
+   record=workspace_record(options.context,stored) if options.context is not None or not options.project_id else load_project(options.project_id)
+   return application_summary(record)
+  except (ValueError,KeyError,TypeError,OSError) as exc:raise HTTPException(422,str(exc)) from exc
  @app.post('/api/assistant/chat',dependencies=[Depends(authorized)])
  def chat(options:ChatRequest):
   if not lock.acquire(blocking=False):raise HTTPException(409,'The assistant is already answering. Wait for it to finish.')
   try:
    record=workspace_record(options.context,stored) if options.context is not None or not options.project_id else load_project(options.project_id)
    ensure_ready(model)
-   result=run_agent(model,record,options,query_evidence)
+   audit=[]
+   try:result=run_agent(model,record,options,query_evidence,audit_sink=audit)
+   except (ValueError,KeyError,TypeError,IndexError,OSError) as exc:return application_summary(record,reason=str(exc)[:1000],audit=audit)
    model.cleanup_after_success()
    return result
   except (ValueError,KeyError,TypeError,OSError) as exc:raise HTTPException(422,str(exc)) from exc

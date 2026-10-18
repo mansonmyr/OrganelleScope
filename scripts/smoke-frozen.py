@@ -14,6 +14,7 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-frozen-') as folder:
             try:get('/health');break
             except OSError:time.sleep(.2)
         else:raise RuntimeError('Frozen backend startup timeout.')
+        assert get('/api/ready')['status']=='ok'
         assert get('/api/images')==[]
         try:get('/api/restoration/status')
         except urllib.error.HTTPError as error:assert error.code==404
@@ -39,7 +40,14 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-frozen-') as folder:
         report=post('/api/images/'+image['id']+'/cuboid',json.dumps(bounds).encode());assert report['voxel_count']==192
         mask=post('/api/images/'+image['id']+'/segmentation',json.dumps({**bounds,'method':'manual','threshold':10,'min_voxels':1}).encode());assert mask['foreground_voxels']==9
 
-        print(json.dumps({'frozen_service':'passed','health':get('/health'),'checks':['TIFF import','channel labels and source identity','selected-plane signal checks','native and optional automatic contrast','cuboid','segmentation','removed restoration API returns 404']}))
+        analysis=post(base+'/analysis',json.dumps({'rois':[{'id':'test-roi','kind':'circle','z':1,'points':[{'x':3,'y':3},{'x':5,'y':3}]}],'threshold_mode':'zero'}).encode())
+        pair=analysis['results'][0]['pairs'][0];assert abs(pair['pcc']-1)<1e-12
+        saved=post('/api/projects',json.dumps({'name':'Native round-trip','image_id':image['id'],'expected_image_info':renamed['info'],'state':{'core':{'analysis':analysis},'workspaces':{}}}).encode())
+        restored=get('/api/projects/'+saved['id']);assert restored['state']['core']['analysis']==analysis and restored['image']['sha256']==image['sha256']
+        notes=post('/api/assistant/notes',json.dumps({'message':'Show recorded analysis summary','context':{'image_id':image['id'],'expected_image_info':renamed['info'],'state':{'core':{'analysis':analysis},'workspaces':{}}}}).encode())
+        assert notes['response_mode']=='application_summary' and notes['model'] is None and notes['recorded_quantities']
+
+        print(json.dumps({'frozen_service' :'passed','health':get('/health'),'checks':['authenticated readiness','ROI reference correlation','project save/reopen with source identity','model-free analysis summary','TIFF import','channel labels and source identity','selected-plane signal checks','native and optional automatic contrast','cuboid','segmentation','removed restoration API returns 404']}))
     finally:
         p.terminate()
         try:p.wait(10)

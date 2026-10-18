@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use OrganelleScope in research, cite the exact release and the original methods referenced in MANUAL.md."
+title: OrganelleScope
+type: software
+authors:
+  - name: OrganelleScope contributors
+version: 1.0.0
+repository-code: https://github.com/mansonmyr/OrganelleScope
+url: https://github.com/mansonmyr/OrganelleScope/releases/tag/v1.0.0
+date-released: '2026-10-18'
