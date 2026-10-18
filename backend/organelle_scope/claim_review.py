@@ -1,7 +1,7 @@
 """Automatic claim/source audit. Matching quotations is not a proof of entailment;
 this uses the same local model and remains subject to correlated model errors.
 """
-import json,re
+import json,re,unicodedata
 
 class ClaimReviewError(ValueError):
  def __init__(self,message,details):super().__init__(message);self.details=details
@@ -41,6 +41,19 @@ def review_claims(model,answer,payloads,general=False):
  if response['choices'][0].get('finish_reason')=='length':raise ValueError('The claim review was truncated; draft withheld.')
  if not isinstance(claims,list) or len(claims)!=len(units):raise ValueError('The claim review omitted sentences; draft withheld.')
  def fail(message):raise ClaimReviewError(message,{'claims':claims,'draft':answer,'source_ids':list(context)})
+ # Marker-specific Manders interpretations are supplied by the calculation engine,
+ # not accepted from generated prose. Same-model review has reversed A/B in a real control.
+ marker_pairs=[]
+ def find_pairs(value):
+  if isinstance(value,dict):
+   if isinstance(value.get('label_a'),str) and isinstance(value.get('label_b'),str):marker_pairs.append((value['label_a'],value['label_b']))
+   for child in value.values():find_pairs(child)
+  elif isinstance(value,list):
+   for child in value:find_pairs(child)
+ for payload in payloads.values():find_pairs(payload)
+ def normalized_label(text):
+  value=unicodedata.normalize('NFKC',text).translate(str.maketrans({'α':'alpha','β':'beta','γ':'gamma'})).casefold()
+  return re.sub(r'[\W_]+',' ',value).strip()
  seen=set();checked=[];retained=[]
  for item in claims:
   index=item.get('index')
@@ -58,6 +71,8 @@ def review_claims(model,answer,payloads,general=False):
    if not re.search(r'\b(not|never|cannot|doesn.t|can.t|no)\b',text[max(0,match.start()-30):match.start()],re.I):reason='Statement exceeds image/database evidence by asserting binding, activation or causality.'
   if re.search(r'\bManders\b',text,re.I) and re.search(r'(fraction|proportion|quantif|measur|represent).{0,40}\b(volume|binding probability)\b',text,re.I) and not re.search(r'\b(not|cannot|never)\b',text,re.I):reason='Manders intensity fractions must not be described as volume fractions or binding probabilities.'
   if re.search(r'\b(publication[- ]ready|publication[- ]certified|biologically certified)\b',text,re.I) and not re.search(r'\b(not|never|cannot|no)\b',text,re.I):reason='The record does not certify publication readiness or biological validity.'
+  directional=re.search(r'\b(Manders|M1|M2|fraction|overlap)\b',text,re.I) and re.search(r'contain|within|intensity|signal|mostly|largely|majority|predominant',text,re.I)
+  if directional and any(len(a)>=3 and len(b)>=3 and re.search(r'\b'+re.escape(normalized_label(a))+r'\b',normalized_label(text)) and re.search(r'\b'+re.escape(normalized_label(b))+r'\b',normalized_label(text)) for a,b in marker_pairs):reason='Marker-specific Manders direction/magnitude is explained by engine-defined notes and recorded quantities; generated interpretation omitted.'
   accepted=reason is None
   if accepted:
    if kind=='record_supported':retained.append((index,text))
@@ -69,6 +84,6 @@ def review_claims(model,answer,payloads,general=False):
   checked.append({'index':index,'sentence':text,'kind':kind,'retained':accepted,'reason':reason,'source_id':key if accepted and kind=='record_supported' else None,'quote':quote if accepted and kind=='record_supported' else None})
  kept=len(retained);withheld=len(units)-kept
  fallback='I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.'
- return {'algorithm':'claim-source-audit-2','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
+ return {'algorithm':'claim-source-audit-3','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
          'retained_sentences':kept,'withheld_sentences':withheld,'checked_answer':' '.join(text for _,text in sorted(retained)) if retained else fallback,
          'claims':sorted(checked,key=lambda c:c['index']),'limitations':'Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.','usage':response.get('usage',{})}

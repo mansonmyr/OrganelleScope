@@ -51,3 +51,18 @@ def test_irrelevant_but_verbatim_boilerplate_cannot_support_binding_claim():
  reviewer=Reviewer([claim(source='interpretation',quote=payload['interpretation'])])
  r=review_claims(reviewer,'Database associations are not evidence of direct molecular interaction. [interpretation]',payload)
  assert r['withheld_sentences']==1 and 'direct molecular interaction' not in r['checked_answer']
+
+
+def test_marker_specific_manders_claim_is_deferred_to_engine_even_with_valid_quote():
+ payload={'measurements':{'pairs':[{'label_a':'Marker A','label_b':'Marker B','thresholded_m1':1.,'thresholded_m2':.1}]}}
+ quote='"label_a": "Marker A", "label_b": "Marker B", "thresholded_m1": 1.0, "thresholded_m2": 0.1'
+ r=review_claims(Reviewer([claim(source='measurements',quote=quote)]),'The Manders fraction indicates Marker B signal is largely contained within Marker A. [measurements]',payload)
+ assert r['withheld_sentences']==1 and 'Marker B signal is largely contained' not in r['checked_answer']
+ assert 'engine-defined' in r['claims'][0]['reason']
+
+
+def test_direction_guard_normalizes_typographic_marker_separators():
+ payload={'measurements':{'pairs':[{'label_a':'Marker-A','label_b':'Marker B','thresholded_m1':1.,'thresholded_m2':.1}]}}
+ quote='"label_a": "Marker-A", "label_b": "Marker B", "thresholded_m1": 1.0, "thresholded_m2": 0.1'
+ r=review_claims(Reviewer([claim(source='measurements',quote=quote)]),'The Manders fraction indicates Marker B signal is largely contained within Marker‑A. [measurements]',payload)
+ assert r['withheld_sentences']==1

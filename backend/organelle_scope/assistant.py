@@ -87,7 +87,9 @@ def recorded_quantities(record):
    for pair in result.get('pairs',[])[:6]:
     label=prefix+' · '+pair['label_a']+' / '+pair['label_b']
     for metric in ('pcc','spearman','thresholded_m1','thresholded_m2'):
-     if pair.get(metric) is not None:facts.append({'label':label+' · '+metric,'value':pair[metric],'unit':''})
+     if pair.get(metric) is not None:
+      direction=(f"M1 · {pair['label_a']} intensity where {pair['label_b']} exceeds its threshold" if metric=='thresholded_m1' else f"M2 · {pair['label_b']} intensity where {pair['label_a']} exceeds its threshold" if metric=='thresholded_m2' else metric)
+      facts.append({'label':label+' · '+direction,'value':pair[metric],'unit':''})
  return facts
 
 
@@ -102,7 +104,7 @@ def measurement_context(analysis):
      for r in results for c in r.get('channel_summary',[]) if c.get('std')==0],
    'channel_summaries':[{'roi_id':r.get('roi',{}).get('id'),'channels':r.get('channel_summary',[])} for r in results],
    'scope':analysis.get('scope'),'validation':analysis.get('validation'),
-   'pairs':[{'roi_id':result.get('roi',{}).get('id'),**{k:pair.get(k) for k in ('label_a','label_b','thresholds','pcc','spearman','thresholded_m1','thresholded_m2','gaussian_lrt_note','warnings','unavailable_reasons')}}
+   'pairs':[{'roi_id':result.get('roi',{}).get('id'),'direction_definitions':{'m1':f"{pair.get('label_a')} intensity where {pair.get('label_b')} exceeds its threshold, divided by total {pair.get('label_a')} intensity.",'m2':f"{pair.get('label_b')} intensity where {pair.get('label_a')} exceeds its threshold, divided by total {pair.get('label_b')} intensity."},**{k:pair.get(k) for k in ('label_a','label_b','thresholds','pcc','spearman','thresholded_m1','thresholded_m2','gaussian_lrt_note','warnings','unavailable_reasons')}}
     for result in results for pair in result.get('pairs',[])[:6]],
    'controls_note':'Biological controls and independent experimental replicates are not established by this report. Absence from this record is not proof they were not performed.'}
 

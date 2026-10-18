@@ -7,3 +7,5 @@ Assistant drafts receive an additional automatic claim/source review with inspec
 Native build checks include initial desktop renderer startup, a Windows installer extraction/launch check and synthetic large-stack workloads against frozen backends. Numerical oracle checks and owner-supplied sample-control analyses are separate from general biological validation. Private sample images and measurements remain local. Trusted publisher signing is outside this release's scope; existing development signature/integrity checks remain.
 
 Read the [manual](../MANUAL.md) and [verification status](VALIDATION.md) for assumptions, interpretation and limits.
+
+The latest candidate corrects a marker-order interpretation defect: engine-defined M1/M2 directions are supplied explicitly, recorded quantities name their marker direction, and generated marker-specific Manders interpretations are omitted. Matching source quotes alone had not prevented the model from reversing the direction.

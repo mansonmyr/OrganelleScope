@@ -14,6 +14,9 @@ def interpretation_snapshot(record):
     if isinstance(analysis,dict):
         if analysis.get('request',{}).get('threshold_mode')=='zero':notes.append('ROI Manders uses zero thresholds. Positive background can increase overlap; inspect background and threshold sensitivity before interpretation.')
         for row in analysis.get('results',[])[:10]:
+            for pair in row.get('pairs',[])[:6]:
+                a,b=pair.get('label_a'),pair.get('label_b')
+                if a and b:notes.append(f'Engine-defined marker order: M1 is the fraction of {a} intensity at pixels where {b} exceeds its threshold; M2 is the fraction of {b} intensity where {a} exceeds its threshold. Read the recorded values in that order. These are intensity fractions, not shared volume or binding probabilities.')
             for channel in row.get('channel_summary',[]):
                 if channel.get('std')==0:notes.append(str(channel.get('label','A channel'))+(' is all zero in a selected ROI. High-intensity saturation is not an explanation for this recorded zero range.' if channel.get('sum')==0 else ' has constant intensity in a selected ROI.')+' Correlation is undefined; this does not establish biological absence. Changing a threshold cannot restore intensity variation.')
         notes.append('ROI coefficients describe selected image regions; they do not establish binding or independent biological replication.')

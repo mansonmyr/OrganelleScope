@@ -325,3 +325,16 @@ def test_acquisition_notes_do_not_reuse_a_different_z_plane_as_current():
  assert any('different Z plane' in n for n in snapshot['notes'])
  record['state']['core']['z']=1
  assert 'acquisition' in interpretation_snapshot(record)['reports']
+
+
+def test_directional_context_and_recorded_quantities_follow_engine_marker_order():
+ from organelle_scope.assistant import measurement_context,recorded_quantities
+ analysis={'source_sha256':'source','image_info':{'calibration':{}},'results':[{'roi':{'id':'r'},'pairs':[{'label_a':'Marker A','label_b':'Marker B','thresholded_m1':1.,'thresholded_m2':.1}]}]}
+ definitions=measurement_context(analysis)['pairs'][0]['direction_definitions']
+ assert definitions['m1'].startswith('Marker A intensity where Marker B')
+ assert definitions['m2'].startswith('Marker B intensity where Marker A')
+ record={'image':{'sha256':'source','info':{'calibration':{a:{'value_um':None} for a in 'XYZ'}}},'state':{'core':{'analysis':analysis}}}
+ analysis['image_info']=record['image']['info']
+ facts=recorded_quantities(record)
+ assert any(f['value']==1 and 'M1 · Marker A intensity where Marker B' in f['label'] for f in facts)
+ assert any(f['value']==.1 and 'M2 · Marker B intensity where Marker A' in f['label'] for f in facts)
