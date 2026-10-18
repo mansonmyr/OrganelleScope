@@ -1,6 +1,6 @@
 # OrganelleScope: cumulative local-model decisions
 
-This README is the accumulating decision record for the local assistant. Keep previous evaluations and their limitations when adding new candidates; append dated decisions rather than rewriting history into a claim that the current model is universally best. Gemma is currently retained as an **experimental, supervised interpreter**, not a validated biological reasoning engine. Measurements and statistical calculations remain in the deterministic application engine.
+This README is the accumulating decision record for the local assistant. Keep previous evaluations and their limitations when adding new candidates; append dated decisions rather than rewriting history into a claim that the current model is universally best. Gemma is retained as a **supervised interpretation assistant**; general biological reasoning accuracy has not been established. Measurements and statistical calculations remain in the deterministic application engine.
 
 ## Current decision — 17 October 2026
 
@@ -169,7 +169,7 @@ Three real local API requests used saved development projects with online access
 
 The interface test completed in **42.03 seconds**. Its new Ministral answer and nine recorded quantities were saved with the earlier Qwen answer, then restored from project revision 4 after reloading; each answer retained its own model attribution. The model was unloaded after testing to release memory.
 
-These are individual smoke-test timings, not a controlled comparison with Qwen or a biomedical reasoning benchmark. In the KEGG response the model also attributed a general methodological caution to “original KEGG documentation”; the retrieved membership record does not establish that attribution. Source-ID validation alone cannot verify citation entailment. This remains a limitation requiring human review and a curated evaluation corpus before a mature public release.
+These are individual smoke-test timings, not a controlled comparison with Qwen or a biomedical reasoning benchmark. In the KEGG response the model also attributed a general methodological caution to “original KEGG documentation”; the retrieved membership record does not establish that attribution. Source-ID validation alone cannot verify citation entailment. This historical assessment motivates human review and claim-level evaluation; it does not describe a release-wide biological accuracy estimate.
 
 All 81 backend and 33 frontend tests passed, and the interface production build passed. Additional tests cover model-specific request settings, retained source IDs in bounded evidence payloads, conservative cleanup and runtime integrity receipts. Native Windows inference and installer bundling of the new model have not been qualified.
 
@@ -206,9 +206,9 @@ One exploratory process snapshot reported about **3.53 GiB RSS** for llama-serve
 
 The backend tests include project round trips/revisions, source integrity, calibration isolation, concurrent import-setting conflicts, recovery errors, session authentication, allowlisted tools and empty-argument schemas, history validation, tool budgets, offline query boundaries, fabricated reference/URL rejection, generated-number repair/rejection, single-system-message compatibility, model checksum rejection and recorded-quantity provenance. Frontend tests include restored validation/3D reports in React StrictMode, invalidation after changed settings, isolation from late callbacks on a closed project, and local assistant request permissions/response display.
 
-## Required before a mature public release
+## Historical evaluation criteria
 
-Use a curated, versioned corpus with expected tool actions and source-supported claims, including positive/negative biological controls, ambiguous symbols, missing/stale/conflicting evidence, unseen experiments and adversarial provider content. Score citation entailment and claim correctness rather than merely checking whether a source ID exists. Evaluate hypothetical knockdown answers separately from measured comparisons. Measure repeated latency/peak memory, cancellation/recovery and coexistence with representative large stacks. Qualify native Windows and packaged offline installations. Passing this smoke test or the unit suite does not complete those gates.
+The historical assessment specified a curated, versioned corpus with expected tool actions and source-supported claims, including positive/negative biological controls, ambiguous symbols, missing/stale/conflicting evidence, unseen experiments and adversarial provider content. Score citation entailment and claim correctness rather than merely checking whether a source ID exists. Evaluate hypothetical knockdown answers separately from measured comparisons. Measure repeated latency/peak memory, cancellation/recovery and coexistence with representative large stacks. Qualify native Windows and packaged offline installations. Passing this smoke test or the unit suite does not complete those gates.
 
 
 

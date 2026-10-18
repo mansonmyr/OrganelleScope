@@ -75,6 +75,7 @@ it('keeps per-channel display LUTs through workspace changes and sends them to p
  fireEvent.click(screen.getByRole('button',{name:'Background correction'}));
  expect((screen.getByRole('combobox',{name:'A display LUT'}) as HTMLSelectElement).value).toBe('cyan');
  await waitFor(()=>expect(vi.mocked(request).mock.calls.some(([url])=>url.includes('/processing/preview?z=0&luts=cyan,mint'))).toBe(true));
+ if(!screen.getByText('Projects & recovery').closest('details')!.open)fireEvent.click(screen.getByText('Projects & recovery'));
  fireEvent.click(screen.getByRole('button',{name:'Save project'}));
  await waitFor(()=>expect(vi.mocked(json).mock.calls.some(([url,options])=>url==='/api/projects'&&options?.body&&JSON.parse(options.body as string).state.workspaces['Display.luts']?.[0]==='cyan')).toBe(true));
  fireEvent.click(screen.getByRole('button',{name:'Reset channel LUTs'}));
@@ -82,6 +83,7 @@ it('keeps per-channel display LUTs through workspace changes and sends them to p
 });
 it('places all project and archive controls inside the Workspace sidebar rather than above the preview',async()=>{
  await openImage();const sidebar=screen.getByRole('complementary',{name:'Workspace'});
+ fireEvent.click(screen.getByText('Projects & recovery'));
  for(const element of [screen.getByRole('button',{name:'Save project'}),screen.getByRole('button',{name:'Save as new'}),screen.getByRole('combobox',{name:'Open saved project'}),screen.getByRole('button',{name:'Export saved project archive'}),screen.getByLabelText('Import portable project')])expect(sidebar.contains(element)).toBe(true);
  expect(document.querySelectorAll('.shell > .project-bar').length).toBe(0);
  expect(document.querySelectorAll('aside .project-bar').length).toBe(2);
@@ -92,6 +94,7 @@ it('defaults to native preview contrast and persists optional automatic contrast
  fireEvent.change(screen.getByLabelText('Preview contrast'),{target:{value:'auto'}});
  await waitFor(()=>expect(vi.mocked(request).mock.calls.some(([url])=>url==='/api/images/test/preview?z=0&luts=rose,mint&contrast=auto')).toBe(true));
  fireEvent.click(screen.getByRole('button',{name:'Validation'}));expect((screen.getByLabelText('Preview contrast') as HTMLSelectElement).value).toBe('auto');
+ if(!screen.getByText('Projects & recovery').closest('details')!.open)fireEvent.click(screen.getByText('Projects & recovery'));
  fireEvent.click(screen.getByRole('button',{name:'Save project'}));
  await waitFor(()=>expect(vi.mocked(json).mock.calls.some(([url,options])=>url==='/api/projects'&&options?.body&&JSON.parse(options.body as string).state.workspaces['Display.contrast']==='auto')).toBe(true));
  fireEvent.change(screen.getByLabelText('Preview contrast'),{target:{value:'native'}});
@@ -108,9 +111,20 @@ it('applies channel identities without dropping drawn ROIs and clears the old RO
  await openImage();await waitFor(()=>expect(screen.getByText('ROI 1')).toBeTruthy());
  fireEvent.change(screen.getByLabelText('Channel 1 name'),{target:{value:'Marker A'}});fireEvent.click(screen.getByText('Apply channel names'));
  await screen.findByLabelText('Marker A display LUT');expect(screen.getByText('ROI 1')).toBeTruthy();
+ if(!screen.getByText('Projects & recovery').closest('details')!.open)fireEvent.click(screen.getByText('Projects & recovery'));
  fireEvent.click(screen.getByRole('button',{name:'Save project'}));
  await waitFor(()=>{
   const call=vi.mocked(json).mock.calls.find(([p,o])=>p==='/api/projects'&&o?.method==='POST');expect(call).toBeTruthy();
   const saved=JSON.parse(call![1]!.body as string);expect(saved.state.core.areas).toEqual([roi]);expect(saved.state.core.analysis).toBeNull();
  });
+});
+
+it('switches workspaces using the compact selector without replacing the image preview',async()=>{
+ await openImage();
+ const viewer=screen.getByRole('region',{name:'Image preview'});
+ const source=screen.getByRole('img',{name:'Composite Z plane 1'});
+ fireEvent.change(screen.getByLabelText('Workspace',{selector:'select'}),{target:{value:'evidence'}});
+ expect(screen.getByRole('region',{name:'Image preview'})).toBe(viewer);
+ expect(screen.getByRole('img',{name:'Composite Z plane 1'})).toBe(source);
+ expect(screen.getByRole('button',{name:'Molecular evidence'}).getAttribute('aria-pressed')).toBe('true');
 });

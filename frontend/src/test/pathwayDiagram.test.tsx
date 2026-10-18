@@ -23,3 +23,21 @@ it('loads a KEGG diagram only when requested and supports zoom and close',async(
  fireEvent.change(screen.getByLabelText('Diagram zoom'),{target:{value:'150'}});expect(diagram.style.width).toBe('1500px');
  fireEvent.click(screen.getByText('Close diagram'));await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());
 });
+it('allows clearing the STRING score and submits the explicitly retyped value',async()=>{
+ const base={database_version:'12.5',sources:[],limits:'bounded',citation_url:'https://string-db.org',terms_url:'https://string-db.org'};
+ vi.mocked(json).mockResolvedValueOnce({...base,rows:[{stringId:'9606.test',queryItem:'TUBG1',preferredName:'TUBG1',annotation:'Tubulin'}]}).mockResolvedValueOnce({...base,rows:[]});
+ render(<EvidencePanel/>);
+ fireEvent.click(screen.getByLabelText('Use these integrations for academic research.'));
+ fireEvent.click(screen.getByText('Find identifier candidates'));
+ await screen.findByText('Identifier candidates');
+ fireEvent.click(screen.getByLabelText(/TUBG1 → TUBG1 · 9606.test/));
+ const input=screen.getByLabelText('Minimum STRING score (0–1000)');
+ const retrieve=screen.getByRole('button',{name:'Retrieve selected network'});
+ fireEvent.change(input,{target:{value:''}});
+ expect((input as HTMLInputElement).value).toBe('');expect((retrieve as HTMLButtonElement).disabled).toBe(true);
+ fireEvent.change(input,{target:{value:'850'}});
+ expect((input as HTMLInputElement).value).toBe('850');expect((retrieve as HTMLButtonElement).disabled).toBe(false);
+ fireEvent.click(retrieve);
+ await waitFor(()=>expect(json).toHaveBeenCalledTimes(2));
+ expect(JSON.parse(vi.mocked(json).mock.calls[1][1]!.body as string).required_score).toBe(850);
+});

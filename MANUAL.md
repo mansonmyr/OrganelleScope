@@ -2,11 +2,15 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 0.2.6 · 18 October 2026 · research development software**
+**Edition 1.0.1 · 18 October 2026 · local research workbench**
 
-This manual describes the current source, including editable channel identities, selected-plane signal checks, native-range previews, report-aware assistant interpretation and independently checked manual-threshold conventions. An installed binary can contain an earlier feature set: check its version and the corresponding release notes. The [build verification record](docs/validation/BUILD_VERIFICATION_0.2.4.json) identifies the separately verified installer version; it is not a certificate for later source changes.
+This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 
-OrganelleScope combines workflows from the Probabilistic Colocalization Estimator and Quick IF Line Profiler. It keeps microscopy images local, connects explicit measurement choices to saved results, and offers optional database context and a supervised local assistant. It does not convert conventional fluorescence images into validated super-resolution acquisitions, identify molecular binding from overlap, or certify publication readiness. Biological validation remains incomplete. Technical tests and developer-reviewed synthetic assistant assessments do not establish accuracy on independent biological experiments. Numerical verification and biological validation answer different questions.
+OrganelleScope combines workflows from the Probabilistic Colocalization Estimator and Quick IF Line Profiler. It keeps microscopy images local, connects explicit measurement choices to saved results, and offers optional database context and a supervised local assistant. It does not convert conventional fluorescence images into validated super-resolution acquisitions, identify molecular binding from overlap, or certify publication readiness. The supplied owner-reviewed microscopy regions support scoped workflow checks. Independent population-level biological accuracy and general assistant accuracy are outside the established evidence. Numerical verification and biological validation answer different questions.
+
+### First installation and retained data
+
+A first installation in a new operating-system account starts with an empty image list and no saved projects. Research images, projects, recovery records and conversations are stored separately in that account’s local application data, never seeded from the developer’s workspace. Installing an upgrade or reinstalling in the same account preserves that account’s existing work; the recent-import list can therefore remain populated. Automatic Gemma setup downloads model weights only, not microscopy images. Source-development sessions may have their own retained local data.
 
 ### Contents
 
@@ -62,7 +66,7 @@ On macOS, open the DMG, copy the application into Applications and open it. Curr
 
 ### 4. Interface map
 
-The **Workspace** sidebar contains image import, recent imports, **Projects & recovery** (save/open, portable archives and recovery), source information, calibration and **Channels**. Project controls no longer occupy horizontal bars above the preview. The shared top preview has independent **XY slice / 3D preview** modes and capture controls. The drawing dock is below the XY image. Workspace tabs below the preview open Image & ROI, Background correction, ROI measurements, Channel associations, 3D workspace, Validation, Molecular evidence, Batch analysis and Local assistant. Switching these tabs does not replace the shared preview. Preview mode is a separate choice.
+The **Workspace** sidebar contains image import, recent imports, collapsible **Projects & recovery** (save/open, portable archives and recovery), source information, calibration and **Channels**. Project controls no longer occupy horizontal bars above the preview. The shared top preview has independent **XY slice / 3D preview** modes and capture controls. The drawing dock is below the XY image. Workspace tabs below the preview open Image & ROI, Background correction, ROI measurements, Channel associations, 3D workspace, Validation, Molecular evidence, Batch analysis and Local assistant. Smaller windows use a **Workspace** dropdown for the same destinations. Switching workspaces does not replace the shared preview. Preview mode is a separate choice.
 
 ---
 
