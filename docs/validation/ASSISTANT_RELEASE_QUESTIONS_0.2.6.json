@@ -1,0 +1,427 @@
+{
+  "suite_sha256": "1917370d00417333c3c44ba32bec8a81cca95597a745ae185a50eadfffde0e2a",
+  "scope": "Fixed before first inference, synthetic-only developer-authored questions. No private images, online lookup or model download. One sampled response per case; semantic review required. This is not an independent held-out microscopy benchmark. Repeating after changes must be labelled a follow-up.",
+  "implementation_sha256": {
+    "assistant.py": "569bbcc6c23b4ea046eb4311729c998dd048bc7a5b5f9221842adefe4cceeeb2",
+    "interpretation.py": "b7de3c7b08e5103e00ff738f0fab96ce36fd413e1d72e779e02e02e3fbb823df",
+    "claim_review.py": "2c06065561914e279e33137cf6e7e16b0348ce9f921adf5269d2414715eb0fd8"
+  },
+  "cases": [
+    {
+      "case": "marker-identity",
+      "question": "The filename suggests a protein and the channels have dye names. Can you identify which protein is in each stored channel and interpret binding?",
+      "review_criteria": [
+        "Do not infer protein identity from filename/dyes",
+        "Request owner/acquisition mapping",
+        "Overlap does not establish binding"
+      ],
+      "semantic_review": "Not scored: inconsistent synthetic input. Dye-versus-protein distinction retained, but an unsupported link between thresholds and zero/undefined fractions escaped the same-model audit.",
+      "answer": "The labels Alexa 488 and Alexa 568 identify the fluorescent dyes used, not the specific proteins they are conjugated to [project]. Manders coefficients are also unavailable or zero in this report [measurements], which is consistent with the zero thresholds used [measurements].",
+      "claim_review": {
+        "algorithm": "claim-source-audit-3",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 2,
+        "withheld_sentences": 3,
+        "checked_answer": "The labels Alexa 488 and Alexa 568 identify the fluorescent dyes used, not the specific proteins they are conjugated to [project]. Manders coefficients are also unavailable or zero in this report [measurements], which is consistent with the zero thresholds used [measurements].",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "I cannot identify specific proteins because the file name and channel labels are not linked to confirmed biological identities in the project [project].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "No matching verbatim quotation in the cited source.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "The labels Alexa 488 and Alexa 568 identify the fluorescent dyes used, not the specific proteins they are conjugated to [project].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "project",
+            "quote": "channel_labels\": [\"Alexa 488\", \"Alexa 568\"]"
+          },
+          {
+            "index": 2,
+            "sentence": "Regarding binding, the measurements provide Pearson and Spearman correlations, but these indicate intensity covariation and rank correlation rather than direct molecular binding [methods].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "No matching verbatim quotation in the cited source.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "Manders coefficients are also unavailable or zero in this report [measurements], which is consistent with the zero thresholds used [measurements].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "measurements",
+            "quote": "A null metric is mathematically undefined/unavailable, NOT evidence that the calculation was not performed. Threshold failure affects thresholded Manders"
+          },
+          {
+            "index": 4,
+            "sentence": "Conventional microscopy cannot establish molecular binding or causality from colocalization alone [methods].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "The quotation does not cover a critical scientific concept in this claim.",
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 325,
+          "prompt_tokens": 1202,
+          "total_tokens": 1527,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "interpretation_notes": [
+        "ROI Manders uses zero thresholds. Positive background can increase overlap; inspect background and threshold sensitivity before interpretation.",
+        "Engine-defined marker order: M1 is the fraction of Alexa 488 intensity at pixels where Alexa 568 exceeds its threshold; M2 is the fraction of Alexa 568 intensity where Alexa 488 exceeds its threshold. Read the recorded values in that order. These are intensity fractions, not shared volume or binding probabilities.",
+        "ROI coefficients describe selected image regions; they do not establish binding or independent biological replication."
+      ],
+      "seconds": 74.45,
+      "tool_record": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "misleading-protein-name.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Alexa 488",
+                  "Alexa 568"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        },
+        {
+          "tool": "read_measurements",
+          "trigger": "application summary context",
+          "result": {
+            "source_id": "measurements",
+            "interpretation_context": {
+              "available": true,
+              "calculation_completed": true,
+              "processing": {
+                "background": "none"
+              },
+              "threshold_mode": "zero",
+              "null_semantics": "This report contains completed calculations. A null metric is mathematically undefined/unavailable, NOT evidence that the calculation was not performed. Threshold failure affects thresholded Manders, not the definition of Pearson.",
+              "constant_channels": [],
+              "channel_summaries": [
+                {
+                  "roi_id": "synthetic-roi",
+                  "channels": [
+                    {
+                      "label": "Alexa 488",
+                      "sum": 100,
+                      "std": 3
+                    },
+                    {
+                      "label": "Alexa 568",
+                      "sum": 100,
+                      "std": 3
+                    }
+                  ]
+                }
+              ],
+              "scope": "Synthetic XY fixture; not a biological acquisition",
+              "validation": null,
+              "pairs": [
+                {
+                  "roi_id": "synthetic-roi",
+                  "direction_definitions": {
+                    "m1": "Alexa 488 intensity where Alexa 568 exceeds its threshold, divided by total Alexa 488 intensity.",
+                    "m2": "Alexa 568 intensity where Alexa 488 exceeds its threshold, divided by total Alexa 568 intensity."
+                  },
+                  "label_a": "Alexa 488",
+                  "label_b": "Alexa 568",
+                  "thresholds": {
+                    "a": 0,
+                    "b": 0
+                  },
+                  "pcc": 0.8,
+                  "spearman": 0.7,
+                  "thresholded_m1": 0,
+                  "thresholded_m2": null,
+                  "gaussian_lrt_note": null,
+                  "warnings": null,
+                  "unavailable_reasons": {
+                    "pcc": "Marker B is constant"
+                  }
+                }
+              ],
+              "controls_note": "Biological controls and independent experimental replicates are not established by this report. Absence from this record is not proof they were not performed."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "case": "clipping-after-offset",
+      "question": "I subtracted a constant background and clipped negative pixels to zero. Should Pearson necessarily stay unchanged because a uniform offset is invariant?",
+      "review_criteria": [
+        "Distinguish affine offset from nonlinear clipping",
+        "No guaranteed invariance after clipping",
+        "Recommend raw/processed sensitivity review"
+      ],
+      "semantic_review": "Developer review: correctly distinguishes nonlinear clipping from affine offset invariance. Useful advice; duplicated hypothesis/advice label is an editorial defect.",
+      "answer": "No, Pearson correlation does not necessarily stay unchanged [methods]. While a uniform offset is invariant in theory, this holds only if there is no clipping, saturation, changed masking, or rounding during the operation. [methods] Clipping negative pixels to zero constitutes a non-linear transformation that can alter the intensity distribution and correlation [methods]. Hypothesis: Advice: check for significant signal loss or changes in the signal-to-noise ratio that may impact the correlation coefficient.",
+      "claim_review": {
+        "algorithm": "claim-source-audit-3",
+        "status": "Automatic claim review completed; human review required",
+        "retained_sentences": 4,
+        "withheld_sentences": 0,
+        "checked_answer": "No, Pearson correlation does not necessarily stay unchanged [methods]. While a uniform offset is invariant in theory, this holds only if there is no clipping, saturation, changed masking, or rounding during the operation. [methods] Clipping negative pixels to zero constitutes a non-linear transformation that can alter the intensity distribution and correlation [methods]. Hypothesis: Advice: check for significant signal loss or changes in the signal-to-noise ratio that may impact the correlation coefficient.",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "No, Pearson correlation does not necessarily stay unchanged [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Positive multiplicative gain or adding a uniform constant alone does not change Pearson if there is no clipping, saturation, changed masking, noise change or rounding; do not say brightness imbalance alone skews it."
+          },
+          {
+            "index": 1,
+            "sentence": "While a uniform offset is invariant in theory, this holds only if there is no clipping, saturation, changed masking, or rounding during the operation. [methods]",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Positive multiplicative gain or adding a uniform constant alone does not change Pearson if there is no clipping, saturation, changed masking, noise change or rounding; do not say brightness imbalance alone skews it."
+          },
+          {
+            "index": 2,
+            "sentence": "Clipping negative pixels to zero constitutes a non-linear transformation that can alter the intensity distribution and correlation [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Positive multiplicative gain or adding a uniform constant alone does not change Pearson if there is no clipping, saturation, changed masking, noise change or rounding; do not say brightness imbalance alone skews it."
+          },
+          {
+            "index": 3,
+            "sentence": "Advice: check for significant signal loss or changes in the signal-to-noise ratio that may impact the correlation coefficient. [methods]",
+            "kind": "hypothesis",
+            "retained": true,
+            "reason": null,
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 237,
+          "prompt_tokens": 553,
+          "total_tokens": 790,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "interpretation_notes": [
+        "No matching measurement report is supplied. Missing documentation does not prove experiments were not performed."
+      ],
+      "seconds": 52.66,
+      "tool_record": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        }
+      ]
+    },
+    {
+      "case": "contradictory-mapping",
+      "question": "I corrected the channel identities after analysing a batch. Can I reuse the earlier marker-specific assistant interpretation and treat copies of the same TIFF as different independent experiments?",
+      "review_criteria": [
+        "Earlier marker-specific interpretation needs revision",
+        "Reference-channel selection may need rerun",
+        "Copies are not independent experiments"
+      ],
+      "semantic_review": "Developer review: correctly advises against treating TIFF copies as independent experiments and reusing outdated marker interpretations. Does not explicitly discuss changed reference-channel candidate selection.",
+      "answer": "Methodological advice: Advice: You should not treat copies of the same TIFF as independent experiments, as cells and ROIs from one culture do not establish independent biological experiments . Methodological advice: Reusing an interpretation from a different marker identity may also lead to inaccurate conclusions if the original analysis was based on incorrect channel mapping. Methodological advice: It is recommended to perform a new analysis with the corrected identities to ensure the measurements reflect the intended biological targets.",
+      "claim_review": {
+        "algorithm": "claim-source-audit-3",
+        "status": "Automatic claim review completed; human review required",
+        "retained_sentences": 3,
+        "withheld_sentences": 0,
+        "checked_answer": "Methodological advice: Advice: You should not treat copies of the same TIFF as independent experiments, as cells and ROIs from one culture do not establish independent biological experiments . Methodological advice: Reusing an interpretation from a different marker identity may also lead to inaccurate conclusions if the original analysis was based on incorrect channel mapping. Methodological advice: It is recommended to perform a new analysis with the corrected identities to ensure the measurements reflect the intended biological targets.",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "Advice: You should not treat copies of the same TIFF as independent experiments, as cells and ROIs from one culture do not establish independent biological experiments [methods].",
+            "kind": "advice",
+            "retained": true,
+            "reason": null,
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "Reusing an interpretation from a different marker identity may also lead to inaccurate conclusions if the original analysis was based on incorrect channel mapping. [methods]",
+            "kind": "advice",
+            "retained": true,
+            "reason": null,
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 2,
+            "sentence": "It is recommended to perform a new analysis with the corrected identities to ensure the measurements reflect the intended biological targets. [methods]",
+            "kind": "advice",
+            "retained": true,
+            "reason": null,
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 162,
+          "prompt_tokens": 540,
+          "total_tokens": 702,
+          "prompt_tokens_details": {
+            "cached_tokens": 190
+          }
+        }
+      },
+      "interpretation_notes": [
+        "No matching measurement report is supplied. Missing documentation does not prove experiments were not performed."
+      ],
+      "seconds": 28.68,
+      "tool_record": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        }
+      ]
+    }
+  ],
+  "model": {
+    "name": "Gemma 4 12B Instruct QAT Q4_0",
+    "filename": "gemma-4-12b-it-qat-q4_0.gguf",
+    "bytes": 6975879296,
+    "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+    "upstream": "https://huggingface.co/google/gemma-4-12B-it",
+    "quantization": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+    "revision": "29d097773436b69ff9feafd636ab4cf873786537",
+    "license": "Apache-2.0",
+    "runtime": "llama.cpp b11669",
+    "context_tokens": 8192,
+    "evidence_review": true,
+    "vision_enabled": false,
+    "thinking_enabled": false,
+    "temperature": 1.0
+  },
+  "fixture_review": "The marker-identity fixture inherited zero/undefined Manders fields while channel summaries and correlations were changed to nonconstant. This inconsistent synthetic record is retained as a diagnostic, excluded from accuracy assessment. Corrected follow-up must be labelled separately."
+}

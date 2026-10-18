@@ -49,7 +49,29 @@ try:
    timed('segmentation_seconds',lambda:client.post(url+'/segmentation',json={**bounds,'threshold':300,'method':'manual','min_voxels':8}))
    qc=timed('full_plane_qc_seconds',lambda:client.post(url+'/processing/diagnostics?z=0',json={'background':'constant','offsets':[100,200,300,400]})).json()
    assert all(c['changed_pixels']==2048**2 for c in qc['channels'])
-   report={'shape_czyx':[4,args.slices,2048,2048],'decoded_bytes':4*args.slices*2048**2*2,'z_depth_um':8,'native_service_health':client.get('/health').json(),'platform':sys.platform,'timings':timings,'memory':measure,'all_four_cuboid_sums_exact':True,'scope':'One deterministic compressed synthetic stack through a native frozen executable, including multipart upload. Process-tree RSS includes the driver and service, not unrelated applications. This is not a realistic acquisition distribution, sustained batch benchmark, human usability assessment or biological validation.'}
+   # Three identical imports are deliberate technical repeats, never independent experiments.
+   batch_items=[]
+   for index in range(3):
+    if index==0: image=record
+    else:
+     with source.open('rb') as stream:image=client.post('/api/images',files={'file':('technical-copy.tif',stream)}).json()
+    batch_items.append({'image_id':image['id'],'reviewed':True,'condition':'synthetic','experiment':'one-technical-source','cell':'same-source','analysis':{'rois':[{'id':'center','kind':'circle','z':args.slices//2,'points':[{'x':1024,'y':1024},{'x':1040,'y':1024}]}],'threshold_mode':'zero'}})
+   def batch_run():
+    saved=client.post('/api/batch/sessions',json={'name':'Synthetic sequential workload','items':batch_items});saved.raise_for_status();saved=saved.json()
+    response=client.post('/api/batch/runs',json={'session_id':saved['id'],'revision':saved['revision']});response.raise_for_status();ident=response.json()['id'];deadline=time.monotonic()+120
+    while True:
+     response=client.get('/api/batch/runs/'+ident);response.raise_for_status()
+     if response.json()['status']!='running':return response
+     if time.monotonic()>deadline:raise RuntimeError('Native batch workload timed out')
+     time.sleep(.05)
+   batch=timed('three_image_sequential_batch_seconds',batch_run).json()
+   assert batch['status']=='completed'
+   assert len(batch['design_review']['repeated_sources'])==1
+   yy,xx=np.mgrid[:2048,:2048];mask=(xx-1024)**2+(yy-1024)**2<=16**2;del yy,xx
+   for item in batch['items']:
+    result=item['result']['results'][0];assert result['pixel_count']==int(mask.sum())
+    for c in range(4):assert result['channel_summary'][c]['sum']==float((base[mask]+c*100+(args.slices//2)*5).sum(dtype='float64'))
+   report={'batch_images_checked':3,'batch_all_channel_sums_exact':True,'technical_repeated_source_flagged':True,'shape_czyx' :[4,args.slices,2048,2048],'decoded_bytes':4*args.slices*2048**2*2,'z_depth_um':8,'native_service_health':client.get('/health').json(),'platform':sys.platform,'timings':timings,'memory':measure,'all_four_cuboid_sums_exact':True,'scope':'One deterministic compressed synthetic stack through a native frozen executable, including multipart upload. Process-tree RSS includes the driver and service, not unrelated applications. This is not a realistic acquisition distribution, sustained batch benchmark, human usability assessment or biological validation.'}
 finally:
  if server:
   server.terminate()

@@ -73,6 +73,7 @@ def workbook(sheets):
 
 
 def export_batch(run):
+    from organelle_scope.batch_design import summarize_design
     if sum(len(r['points'])*8 for i in run['items'] for r in i['analysis']['rois'])>1_800_000:
         raise ValueError('ROI geometry exceeds the Excel export budget. Export full JSON or split the batch.')
     notes=[['Item','Meaning'],['Batch',run['name']],['Run ID',run['id']],['Application version',run['app_version']],['Status',run['status']],['Started UTC',run['started']],['Finished UTC',run.get('finished')],
@@ -100,4 +101,9 @@ def export_batch(run):
                 pairs.append([ident,rid,roi['roi']['z']+1,p['label_a'],p['label_b'],roi['pixel_count'],roi['area_um2'],*[p[k] for k in ('pcc','spearman','moc','m1','m2','thresholded_m1','thresholded_m2')],p['thresholds']['a'],p['thresholds']['b'],p['thresholds']['status'],p['gaussian_lrt_statistic'],'; '.join(roi['warnings']+p['warnings']+[p['gaussian_lrt_note']])])
             for c in roi['channel_summary']:channels.append([ident,rid,c['label'],c['mean'],c['std'],c['sum']])
             reg=roi['regression'];regression.append([ident,rid,reg['r_squared'],reg['coefficient_ratio'],json.dumps(reg['betas']),'; '.join(reg['warnings'])])
-    return workbook([('Read me',notes),('Images',summary),('Settings',settings),('ROI geometry',geometry),('Colocalization',pairs),('Intensities',channels),('Regression',regression)])
+    design=summarize_design(run['items'])
+    design_rows=[['Condition','Images','Labelled experiments','Labelled cells','Images missing design labels']]
+    for g in design['groups']:design_rows.append([g['condition'],g['images'],g['labelled_experiments'],g['labelled_cells'],g['images_missing_design_labels']])
+    design_rows.extend([[],['Scope',design['scope']],['Repeated source SHA-256','Image IDs','Conflicting experiments or conditions']])
+    for source in design['repeated_sources']:design_rows.append([source['source_sha256'],', '.join(source['image_ids']),str(source['conflicting_experiments_or_conditions'])])
+    return workbook([('Read me',notes),('Images',summary),('Settings',settings),('ROI geometry',geometry),('Colocalization',pairs),('Intensities',channels),('Regression',regression),('Design review',design_rows)])

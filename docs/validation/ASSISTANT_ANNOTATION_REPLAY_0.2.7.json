@@ -1,0 +1,50 @@
+{
+  "scope": "Cached reviewer classifications replayed through the later deterministic annotation guard. Not fresh inference, not unseen testing or biological accuracy. Prior full run preserved separately.",
+  "review": {
+    "algorithm": "claim-source-audit-4",
+    "status": "Partial draft: unsupported statements withheld",
+    "retained_sentences": 3,
+    "withheld_sentences": 1,
+    "checked_answer": "No, you cannot reuse the earlier marker-specific assistant interpretation because corrected identities supersede previous interpretations [methods]. If a reference channel changes, candidate selection and measurement must be rerun [methods]. Additionally, copies of one raw TIFF are not independent experiments [methods].",
+    "claims": [
+      {
+        "index": 0,
+        "sentence": "No, you cannot reuse the earlier marker-specific assistant interpretation because corrected identities supersede previous interpretations [methods].",
+        "kind": "record_supported",
+        "retained": true,
+        "reason": null,
+        "source_id": "methods",
+        "quote": "Corrected marker identities supersede earlier marker-specific interpretations; if the reference channel changes, candidate selection and measurement must be rerun."
+      },
+      {
+        "index": 1,
+        "sentence": "If a reference channel changes, candidate selection and measurement must be rerun [methods].",
+        "kind": "record_supported",
+        "retained": true,
+        "reason": null,
+        "source_id": "methods",
+        "quote": "Corrected marker identities supersede earlier marker-specific interpretations; if the reference channel changes, candidate selection and measurement must be rerun."
+      },
+      {
+        "index": 2,
+        "sentence": "Additionally, copies of one raw TIFF are not independent experiments [methods].",
+        "kind": "record_supported",
+        "retained": true,
+        "reason": null,
+        "source_id": "methods",
+        "quote": "Copies of one raw TIFF are not independent experiments."
+      },
+      {
+        "index": 3,
+        "sentence": "Advice: Treat the corrected channel labels as the new ground truth for any subsequent analysis. [methods]",
+        "kind": "advice",
+        "retained": false,
+        "reason": "Channel annotations are not independent biological ground truth.",
+        "source_id": null,
+        "quote": null
+      }
+    ],
+    "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+    "usage": {}
+  }
+}

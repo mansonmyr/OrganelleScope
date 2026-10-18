@@ -134,3 +134,24 @@ def test_excel_undefined_is_blank_and_strings_are_literal():
         assert root.find(".//s:c[@r='A2']",ns).attrib['t']=='inlineStr'
         assert root.find(".//s:c[@r='B3']/s:v",ns).text=='1.25'
         assert not root.findall('.//s:f',ns)
+
+
+def test_channel_correction_invalidates_batch_review_and_preserves_old_run_labels(tmp_path):
+    with TestClient(create_app(tmp_path,'token')) as client:
+        image=upload(client)
+        first=client.post('/api/batch/sessions',headers=H,json={'items':[item(image)]}).json()
+        run=client.post('/api/batch/runs',headers=H,json={'session_id':first['id'],'revision':1}).json()
+        original=wait(client,run['id']);assert original['status']=='completed'
+        assert original['design_review']['groups'][0]['labelled_experiments']==1
+        info=image['info']
+        changed=client.post('/api/images/'+image['id']+'/channels',headers=H,json={'labels':['Marker B','Marker A'],'expected_image_info':info})
+        assert changed.status_code==200,changed.text
+        assert client.post('/api/batch/runs',headers=H,json={'session_id':first['id'],'revision':1}).status_code==409
+        revised=client.post('/api/batch/sessions/'+first['id'],headers=H,json={'revision':1,'items':[item(image)]}).json()
+        assert not revised['items'][0]['reviewed']
+        assert revised['items'][0]['image']['info']['channel_labels']==['Marker B','Marker A']
+        assert revised['items'][0]['analysis']['rois']==first['items'][0]['analysis']['rois']
+        assert client.get('/api/batch/runs/'+run['id'],headers=H).json()==original
+        export=client.get('/api/batch/runs/'+run['id']+'/xlsx',headers=H)
+        with ZipFile(io.BytesIO(export.content)) as book:
+            assert b'Design review' in book.read('xl/workbook.xml')

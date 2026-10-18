@@ -5,7 +5,7 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Research development source 0.2.6.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; automated native startup and synthetic stack checks accompany release candidates; human acceptance testing remains incomplete. Installed builds can lag this source.
+**Research development source 0.2.7.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; automated native startup and synthetic stack checks accompany release candidates; human acceptance testing remains incomplete. Installed builds can lag this source.
 
 ## Main features
 
@@ -14,7 +14,7 @@ A local desktop microscopy workbench for calibrated image inspection, ROI measur
 - Circular/polygonal ROIs, physical circle diameters, line profiles, FWHM and defined Pearson/Spearman/Manders measurements.
 - Background subtraction and optional Gaussian smoothing, matched-contrast previews and processing diagnostics. Noise2Void and deconvolution have been removed.
 - Full-resolution cuboids, inspectable threshold masks/objects, image-based proximity and radial enrichment.
-- Reviewed per-image batches, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
+- Reviewed per-image batches with channel editing and design checks, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
 - Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant for recorded results and evidence.
 - Workspace sidebar project controls, portable archives, recovery state and source/settings/evidence provenance.
 

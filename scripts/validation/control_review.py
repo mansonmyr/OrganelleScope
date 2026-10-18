@@ -3,6 +3,15 @@ from html import escape
 from pathlib import Path
 
 
+def validated_review(review, centers):
+    """Acceptance applies only to the exact source-bound candidate positions reviewed."""
+    if not review or review.get('candidate_centers_zyx') != centers: return None
+    accepted = set(review.get('accepted_candidates', [])); rejected = set(review.get('rejected_candidates', []))
+    if accepted & rejected or not (accepted | rejected) <= {int(key) for key in centers}:
+        raise ValueError('Owner review contains invalid or contradictory candidate IDs.')
+    return review
+
+
 def render_review(report, output):
     def e(value): return escape(str(value), quote=True)
     def number(value): return 'Undefined' if value is None else f'{value:.4f}'
@@ -14,13 +23,17 @@ def render_review(report, output):
         parts += [f'<section><h2>{e(file["filename"])}</h2><p>{e(file["expected_context"])}</p>', f'<p>Source SHA-256: <code>{e(file["source_sha256"])}</code></p>']
         if file.get('annotation_correction'): parts.append(f'<p><strong>Owner correction:</strong> {e(file["annotation_correction"])}</p>')
         parts.append('<p>Stored channels: ' + '; '.join(f'C{i+1}: {e(label)}' for i, label in enumerate(labels)) + '.</p>')
-        parts.append(f'<p>Reference-channel candidate selection: C{file["reference_channel_1based"]} · {e(labels[file["reference_channel_1based"]-1])}. ROI review: pending owner confirmation. No control classification is imposed on coefficients.</p>')
+        review = file.get('owner_roi_review') or {}
+        accepted = set(review.get('accepted_candidates', [])); rejected = set(review.get('rejected_candidates', []))
+        if review: parts.append(f'<p><strong>Owner ROI review:</strong> {e(review.get("note",""))} Accepted: {e(sorted(accepted))}; rejected: {e(sorted(rejected))}.</p>')
+        parts.append(f'<p>Reference-channel candidate selection: C{file["reference_channel_1based"]} · {e(labels[file["reference_channel_1based"]-1])}. ROI review: {e(file.get("roi_review_status", "pending"))}. No control classification is imposed on coefficients.</p>')
         parts.append(f'<img alt="Selected channel projections and proposed ROIs" src="{e(file["review_image"])}">')
         parts.append(f'<p>A: {e(a)}; B: {e(b)}. Direction follows native stored-channel order. M1 is the fraction of A intensity where B exceeds its threshold, divided by total A intensity; M2 reverses A/B. Neither is a shared-volume fraction.</p>')
-        parts.append('<div class="table-scroll"><table><thead><tr><th>Candidate / native Z index</th><th>Diameter</th><th>Threshold</th><th>Pearson</th><th>Spearman</th><th>M1</th><th>M2</th></tr></thead><tbody>')
+        parts.append('<div class="table-scroll"><table><thead><tr><th>Candidate / native Z index</th><th>Owner review</th><th>Diameter</th><th>Threshold</th><th>Pearson</th><th>Spearman</th><th>M1</th><th>M2</th></tr></thead><tbody>')
         for row in file['results']:
             pair = row['pair']; mode = 'Whole-volume Otsu (provided)' if row['threshold_mode'] == 'manual' else 'Zero'
-            fields = [f'{row["candidate"]} / {row["center_zyx"][0]}', f'{row["diameter"]} {row["diameter_unit"]}', mode] + [number(pair.get(key)) for key in ('pcc', 'spearman', 'thresholded_m1', 'thresholded_m2')]
+            status = 'Accepted for testing' if row['candidate'] in accepted else 'Rejected; technical result only' if row['candidate'] in rejected else 'Pending'
+            fields = [f'{row["candidate"]} / {row["center_zyx"][0]}', status, f'{row["diameter"]} {row["diameter_unit"]}', mode] + [number(pair.get(key)) for key in ('pcc', 'spearman', 'thresholded_m1', 'thresholded_m2')]
             parts.append('<tr>' + ''.join(f'<td>{e(value)}</td>' for value in fields) + '</tr>')
         parts.append('</tbody></table></div></section>')
     parts.append('</body></html>')

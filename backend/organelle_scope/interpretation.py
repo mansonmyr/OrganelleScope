@@ -6,6 +6,7 @@ def interpretation_snapshot(record):
     image=record.get('image');notes=[];reports={}
     if image:
         info=image['info']
+        notes.append('Stored channel labels are supplied metadata or owner annotations, not independently verified biological identities. Do not infer marker identity from a filename, dye name or LUT. Corrected identities supersede earlier marker-specific prose; a changed reference channel requires new candidate selection.')
         missing=[a for a,c in info.get('calibration',{}).items() if c.get('value_um') is None or c.get('conflict')]
         if missing:notes.append('Physical sampling is unknown or conflicting for '+', '.join(missing)+'. Do not infer calibrated distances on those axes.')
         if str(info.get('acquisition',{}).get('stored_color_model','')).startswith('RGB'):notes.append('Stored RGB components may be display colours rather than independently acquired molecular channels.')

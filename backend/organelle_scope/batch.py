@@ -12,6 +12,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from organelle_scope import __version__
 from organelle_scope.analysis_service import compute_analysis
+from organelle_scope.batch_design import summarize_design
 from organelle_scope.image_io import ImageInfo
 from organelle_scope.roi_analysis import AnalysisRequest, AreaROI
 
@@ -101,7 +102,7 @@ def register_batch(app, data_dir, stored, image_dir, authorized):
             for item in draft.items:
                 _, record, _ = stored(item.image_id)
                 value=item.model_dump();value['image']=deepcopy(record)
-                # Changed calibration must be reviewed again against the preview.
+                # Changed image metadata/channel identity must be reviewed again against the preview.
                 if item.image_id in old and old[item.image_id]['image'] != record:
                     value['reviewed']=False
                 items.append(value)
@@ -158,10 +159,11 @@ def register_batch(app, data_dir, stored, image_dir, authorized):
             if not all(i['reviewed'] and i['analysis']['rois'] for i in draft['items']): raise HTTPException(422,'Review the ROIs and settings for every image before analysis.')
             for item in draft['items']:
                 _,record,_=stored(item['image_id'])
-                if record!=item['image']: raise HTTPException(409,'An image calibration changed. Save and review this batch again.')
+                if record!=item['image']: raise HTTPException(409,'Image metadata or channel identities changed. Save and review this batch again.')
             run={'id':str(uuid4()),'session_id':draft['id'],'revision':draft['revision'],'name':draft['name'],
                  'app_version':__version__,'started':now(),'status':'running','items':deepcopy(draft['items'])}
             for item in run['items']: item['status']='pending'
+            run['design_review']=summarize_design(run['items'])
             save('runs',run);event=Event();events[run['id']]=event
             response=deepcopy(run)
             Thread(target=worker,args=(run,event),daemon=True).start()

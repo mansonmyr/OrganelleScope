@@ -10,6 +10,7 @@ from pydantic import BaseModel,Field,ConfigDict
 from typing import Literal
 from uuid import UUID
 from organelle_scope.image_io import ImageError
+from organelle_scope.batch_design import summarize_design
 
 class ExperimentRequest(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -42,6 +43,8 @@ def analyze_experiment(run,options):
     if len(set(options.conditions))!=len(options.conditions):raise ImageError('Select distinct conditions.')
     if options.metric!='mean' and options.channel_a>=options.channel_b:raise ImageError('Choose channel A before channel B; Manders directions follow this order.')
     if options.scale=='fisher_z' and options.metric not in ('pcc','spearman'):raise ImageError('Fisher transformation applies only to correlation metrics.')
+    design=summarize_design([i for i in run['items'] if i.get('condition') in options.conditions])
+    if any(s['conflicting_experiments_or_conditions'] for s in design['repeated_sources']):raise ImageError('Identical raw source data were assigned to different conditions or experiments. Correct the batch design; copied files are not independent experiments.')
     by_cell=defaultdict(list);source_rows=[];excluded=[];recipes=set();channel_identities=set()
     for item in run['items']:
         if item.get('condition') not in options.conditions:continue

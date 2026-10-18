@@ -71,6 +71,7 @@ def review_claims(model,answer,payloads,general=False):
    if not re.search(r'\b(not|never|cannot|doesn.t|can.t|no)\b',text[max(0,match.start()-30):match.start()],re.I):reason='Statement exceeds image/database evidence by asserting binding, activation or causality.'
   if re.search(r'\bManders\b',text,re.I) and re.search(r'(fraction|proportion|quantif|measur|represent).{0,40}\b(volume|binding probability)\b',text,re.I) and not re.search(r'\b(not|cannot|never)\b',text,re.I):reason='Manders intensity fractions must not be described as volume fractions or binding probabilities.'
   if re.search(r'\b(publication[- ]ready|publication[- ]certified|biologically certified)\b',text,re.I) and not re.search(r'\b(not|never|cannot|no)\b',text,re.I):reason='The record does not certify publication readiness or biological validity.'
+  if re.search(r'(channel|marker|protein|corrected).{0,70}ground[- ]truth|ground[- ]truth.{0,70}(channel|marker|protein)',text,re.I) and not re.search(r'\b(not|never|cannot|no)\b',text,re.I):reason='Channel annotations are not independent biological ground truth.'
   directional=re.search(r'\b(Manders|M1|M2|fraction|overlap)\b',text,re.I) and re.search(r'contain|within|intensity|signal|mostly|largely|majority|predominant',text,re.I)
   if directional and any(len(a)>=3 and len(b)>=3 and re.search(r'\b'+re.escape(normalized_label(a))+r'\b',normalized_label(text)) and re.search(r'\b'+re.escape(normalized_label(b))+r'\b',normalized_label(text)) for a,b in marker_pairs):reason='Marker-specific Manders direction/magnitude is explained by engine-defined notes and recorded quantities; generated interpretation omitted.'
   accepted=reason is None
@@ -79,11 +80,12 @@ def review_claims(model,answer,payloads,general=False):
    else:
     # Do not attach a record citation to a claim the reviewer classed as general advice/knowledge.
     plain=re.sub(r'\[[\w-]+\]','',text).strip()
+    plain=re.sub(r'^(?:(?:methodological advice|advice|hypothesis)\s*:\s*)+','',plain,flags=re.I)
     label={'advice':'Methodological advice','hypothesis':'Hypothesis','general_knowledge':'General explanation'}[kind]
     retained.append((index,label+': '+plain))
   checked.append({'index':index,'sentence':text,'kind':kind,'retained':accepted,'reason':reason,'source_id':key if accepted and kind=='record_supported' else None,'quote':quote if accepted and kind=='record_supported' else None})
  kept=len(retained);withheld=len(units)-kept
  fallback='I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.'
- return {'algorithm':'claim-source-audit-3','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
+ return {'algorithm':'claim-source-audit-4','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
          'retained_sentences':kept,'withheld_sentences':withheld,'checked_answer':' '.join(text for _,text in sorted(retained)) if retained else fallback,
          'claims':sorted(checked,key=lambda c:c['index']),'limitations':'Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.','usage':response.get('usage',{})}

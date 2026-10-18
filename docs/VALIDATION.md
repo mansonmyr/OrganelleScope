@@ -29,3 +29,14 @@ The initial audit was refined after failure analysis. [Follow-up diagnostics](va
 [Full-size setup verification](validation/FULL_WEIGHT_SETUP_0.2.6.json) uses the existing pinned model bytes through a temporary hard link, avoiding another download/disk copy. It verifies the complete SHA-256 and atomic installation/relaunch state, not a fresh full network transfer. [Local native-stack observations](validation/NATIVE_STACK_MACOS_0.2.6.json) cover a decoded 1 GiB synthetic 32-slice stack while a Gemma assessment was active. All four channel cuboid sums agree exactly; timings are not an isolated hardware comparison. Release assets provide separate build-specific platform checks.
 
 Owner annotation corrections can supersede specimen interpretations even when source hashes and numerical calculations remain unchanged. Two private sample assignments were corrected after owner review on 18 October 2026; reference-based ROIs and reports were rerun where needed. Earlier model diagnostics retain their historical input labels and are not biological ground truth. The public repository contains no private marker map or specimen measurements.
+
+
+## Current 0.2.7 checks
+
+Batch channel-correction tests verify review invalidation, preservation of ROI geometry and immutability of earlier runs. Design tests cover nested cell counts, missing labels and repeated-source conflicts; Excel includes the review without changing raw measurements. These checks prevent specific provenance/pseudoreplication errors, not verify culture independence.
+
+Local candidate reports now retain explicit owner-accepted/rejected statuses. Only accepted regions may support the scoped control review; rejected candidates remain as technical results. The available accepted subset does not establish negative-control discrimination or population-level specificity. Source images and detailed decisions remain private.
+
+[New interpretation diagnostic](validation/ASSISTANT_RELEASE_QUESTIONS_0.2.6.json) and [corrected follow-up](validation/ASSISTANT_RELEASE_FOLLOWUP_0.2.6.json) preserve an inconsistent synthetic fixture and an overconfident annotation claim. Repeated questions are labelled follow-ups. Same-model audit can retain scientifically unsupported prose; no overall accuracy rate is inferred.
+
+[Local 0.2.7 frozen-service workload](validation/NATIVE_STACK_MACOS_0.2.7.json) checks a decoded 1 GiB, 32-slice, four-channel stack and three sequential technical-repeat imports. Cuboid and batch channel sums match exact source expectations; copied sources are flagged. Process-tree RSS includes the driver and service. The synthetic timings and memory are not a real-acquisition distribution or general hardware guarantee.

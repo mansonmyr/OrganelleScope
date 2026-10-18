@@ -66,3 +66,13 @@ def test_direction_guard_normalizes_typographic_marker_separators():
  quote='"label_a": "Marker-A", "label_b": "Marker B", "thresholded_m1": 1.0, "thresholded_m2": 0.1'
  r=review_claims(Reviewer([claim(source='measurements',quote=quote)]),'The Manders fraction indicates Marker B signal is largely contained within Marker‑A. [measurements]',payload)
  assert r['withheld_sentences']==1
+
+
+def test_advice_prefix_is_not_duplicated_by_review_labels():
+ r=review_claims(Reviewer([claim(kind='advice',source='',quote='')]),'Advice: Consider checking the raw image.',{})
+ assert r['checked_answer']=='Methodological advice: Consider checking the raw image.'
+
+
+def test_corrected_annotation_is_not_biological_ground_truth_even_when_framed_as_advice():
+ r=review_claims(Reviewer([claim(kind='advice',source='',quote='')]),'Advice: Treat corrected channel labels as biological ground truth.',{})
+ assert r['withheld_sentences']==1 and r['claims'][0]['reason']=='Channel annotations are not independent biological ground truth.'
