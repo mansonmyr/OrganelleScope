@@ -1,0 +1,107 @@
+{
+  "scope": "Source-service HTTP workloads on one computer, model unloaded. Real images remain local and unmodified. Test ROIs are geometric regions, not approved biological structures. RSS-supervised budgets do not emulate a computer with less physical RAM, GPU memory or different OS. Technical repeats are not independent acquisitions. Single-session timings include warm OS caches.",
+  "host": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "physical_memory_bytes": 25769803776
+  },
+  "service": {
+    "status": "ok",
+    "version": "1.0.7"
+  },
+  "implementation_sha256": {
+    "main.py": "a134e1527984c4cee1e4fe4714fb361ee59424a107d52d416a0542d0b157871b",
+    "image_io.py": "d07635c28aa9988d6227e9bff0b65e5e88fc2d602be128177f7293ce4f5ae828",
+    "analysis_service.py": "4663f79b9e6b11fd20b265e0c3a27cc3ed0e826bf0422fe66eb2787b3fd15147"
+  },
+  "rss_budget_mib": 768,
+  "memory": {
+    "service_peak_rss_bytes": 678608896,
+    "driver_peak_rss_bytes": 975355904
+  },
+  "status": "passed",
+  "rss_budget_exceeded": null,
+  "batch": {
+    "items": 30,
+    "elapsed_seconds": 0.7998291659168899,
+    "all_completed": true,
+    "exact_repeat_results": true,
+    "repeated_source_flagged": true,
+    "maximum_ready_latency_seconds": 0.0033794159535318613,
+    "ready_probes": 13,
+    "excel_bytes": 28515,
+    "scope": "Repeated imports of one real field, or synthetic data when no real directory supplied. Technical throughput, not biological replication."
+  },
+  "source_files_unchanged": true,
+  "cases": [
+    {
+      "kind": "real",
+      "timings": {
+        "upload_seconds": 0.7551788750570267,
+        "preview_seconds": 0.3199943749932572,
+        "volume_seconds": 0.05742133408784866,
+        "roi_job_seconds": 0.08470020804088563
+      },
+      "decoded_bytes": 603979776,
+      "stored_bytes": 605961463,
+      "maximum_ready_latency_seconds": 0.0015551670221611857,
+      "ready_probes": 4,
+      "independent_roi_counts_sums_pearson_match": true
+    },
+    {
+      "kind": "real",
+      "timings": {
+        "upload_seconds": 0.14135020808316767,
+        "preview_seconds": 0.25462420796975493,
+        "volume_seconds": 0.011198917054571211,
+        "roi_job_seconds": 0.0617209579795599
+      },
+      "decoded_bytes": 100663296,
+      "stored_bytes": 101157426,
+      "maximum_ready_latency_seconds": 0.003129249904304743,
+      "ready_probes": 3,
+      "independent_roi_counts_sums_pearson_match": true
+    },
+    {
+      "kind": "real",
+      "timings": {
+        "upload_seconds": 0.024281749967485666,
+        "preview_seconds": 0.13085774995852262,
+        "roi_job_seconds": 0.03200783301144838
+      },
+      "decoded_bytes": 15244920,
+      "stored_bytes": 15247970,
+      "maximum_ready_latency_seconds": 0.0018660409841686487,
+      "ready_probes": 2,
+      "independent_roi_counts_sums_pearson_match": true
+    },
+    {
+      "kind": "real",
+      "timings": {
+        "upload_seconds": 0.18146512494422495,
+        "preview_seconds": 0.26678283303044736,
+        "volume_seconds": 0.012979499995708466,
+        "roi_job_seconds": 0.07687562506180257
+      },
+      "decoded_bytes": 100663296,
+      "stored_bytes": 101157331,
+      "maximum_ready_latency_seconds": 0.0019415420247241855,
+      "ready_probes": 4,
+      "independent_roi_counts_sums_pearson_match": true
+    },
+    {
+      "kind": "synthetic",
+      "timings": {
+        "upload_seconds": 0.07193400000687689,
+        "preview_seconds": 0.28206129104364663,
+        "volume_seconds": 0.2734428329858929,
+        "roi_job_seconds": 0.07469283300451934
+      },
+      "decoded_bytes": 2147483648,
+      "stored_bytes": 43025320,
+      "maximum_ready_latency_seconds": 0.002121833967976272,
+      "ready_probes": 3,
+      "independent_roi_counts_sums_pearson_match": true
+    }
+  ],
+  "real_file_count": 4
+}

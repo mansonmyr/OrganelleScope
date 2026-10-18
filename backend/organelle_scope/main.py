@@ -314,12 +314,13 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             raise HTTPException(422, "Confirm X, Y and Z spacing before calibrated 3D rendering.")
         if info.dimensions["Z"] < 2:
             raise HTTPException(422, "A 3D volume requires at least two Z planes.")
+        # Copy each reduced slice so its view cannot retain a full source plane.
         # Bounded display-only preview. Source planes remain unchanged for measurements.
         sx = max(1, int(np.ceil(info.dimensions["X"] / 128)))
         sy = max(1, int(np.ceil(info.dimensions["Y"] / 128)))
         sz = max(1, int(np.ceil(info.dimensions["Z"] / 64)))
         try:
-            data = np.stack([read_plane(folder / "source.tiff", info, channel, z)[::sy, ::sx]
+            data = np.stack([read_plane(folder / "source.tiff", info, channel, z)[::sy, ::sx].copy()
                              for z in range(0, info.dimensions["Z"], sz)])
         except (ImageError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from exc
