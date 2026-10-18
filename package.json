@@ -85,8 +85,7 @@
       "allowToChangeInstallationDirectory": true
     },
     "afterSign": "scripts/verify-mac-signature.cjs",
-    "afterPack": "scripts/prepare-mac-signature.cjs",
-    "electronDist": "node_modules/electron/dist"
+    "afterPack": "scripts/prepare-mac-signature.cjs"
   },
   "devDependencies": {
     "electron": "^44.8.0",

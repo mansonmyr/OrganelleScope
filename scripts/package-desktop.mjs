@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readdir, copyFile,writeFile,readFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -17,6 +18,8 @@ const notices=spawnSync(python,['scripts/dependency-notices.py'],{cwd:root,stdio
 if(notices.status!==0)process.exit(notices.status??1);
 const fullAI=process.env.ORGANELLESCOPE_INCLUDE_ASSISTANT==='1';
 const extra=[];
+const installedElectron=path.join(root,'node_modules','electron','dist');
+if(existsSync(installedElectron))extra.push('--config.electronDist='+installedElectron);
 if(fullAI){
  const {createHash}=await import('node:crypto');const {createReadStream}=await import('node:fs');const model=path.join(root,'.local-models','gemma-4-12b-it-qat-q4_0.gguf');
  const hash=createHash('sha256');for await(const chunk of createReadStream(model))hash.update(chunk);
