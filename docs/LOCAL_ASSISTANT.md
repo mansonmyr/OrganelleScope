@@ -33,6 +33,10 @@ The assistant now receives a compact application-method reference clarifying Pea
 
 These weights are **not** the full-precision model evaluated in upstream benchmarks. A successful local test does not transfer all upstream benchmark claims to this quantization or to microscopy interpretation.
 
+## Installed application setup
+
+The installed desktop app bundles the pinned local runtime and automatically starts the 6.98 GB weight download on first launch. A banner shows progress, pause and resume. The download uses a fixed HTTPS source/revision, validates resumed ranges, checks available disk space and requires exact size/SHA-256 before atomic installation. Partial files remain resumable; a corrupt complete download is discarded. Cancellation does not remove images or analysis data. Completed setup enables offline local inference without Python, Ollama, an API key or a separate model installation. Source checkouts do not automatically download weights.
+
 ## Explicit development setup
 
 With the documented backend environment installed:
@@ -41,9 +45,9 @@ With the documented backend environment installed:
 backend/.venv/bin/python scripts/setup-local-assistant.py --download
 ```
 
-On native Windows x64 use `backend\.venv\Scripts\python.exe`. The script selects the pinned Apple Silicon Metal runtime or Windows x64 CPU runtime, verifies downloaded bytes before installation, and stores them under ignored `.local-runtime/` and `.local-models/`. Running without `--download` only prints the manifest. Downloading model/runtime assets is never an automatic side effect of importing an image or starting the application.
+On native Windows x64 use `backend\.venv\Scripts\python.exe`. The script selects the pinned Apple Silicon Metal runtime or Windows x64 CPU runtime, verifies downloaded bytes before installation, and stores them under ignored `.local-runtime/` and `.local-models/`. Running without `--download` only prints the manifest. Source setup is explicit. Installed releases automatically set up the weights on first launch, independently of image import; the runtime is already bundled.
 
-Apple Silicon has been smoke-tested on the development M3/24 GB system. Native Windows CPU runtime execution and installation are **not yet qualified**; Parallels/Windows ARM is not a native Windows x64 qualification. Custom bundled locations can be supplied using `ORGANELLESCOPE_LLAMA_SERVER` and `ORGANELLESCOPE_MODEL`; the pinned model checksum still applies. Compact release installers do not bundle these assets. Optional full-offline packaging has not been qualified for distribution.
+Apple Silicon has been smoke-tested on the development M3/24 GB system. Native Windows CPU runtime execution and installation are **not yet qualified**; Parallels/Windows ARM is not a native Windows x64 qualification. Custom bundled locations can be supplied using `ORGANELLESCOPE_LLAMA_SERVER` and `ORGANELLESCOPE_MODEL`; the pinned model checksum still applies. Compact release installers bundle the runtime and download the weights through integrated first-launch setup. Optional full-offline packaging has not been qualified for distribution.
 
 Start the development app and open **Local assistant**. Enter a question and choose **Ask local assistant**; an installed model starts automatically. **Start local model** is also available to load it in advance. No project save or online lookup is required. **Unload model** releases the owned process. The app also stops its owned model on normal backend shutdown. No subscription, cloud inference service, API key or Ollama installation is needed. The loopback server uses a random port/session secret; no arbitrary remote inference endpoint is accepted.
 
@@ -90,3 +94,11 @@ The repeated current-ROI question, still without saving or online refresh, corre
 ## Current modality and selection clarification — 0.2.2
 
 Text-only describes this application input path, not an inherent limit of upstream Gemma 4 12B. No image pixels are sent to the current assistant. The [model assessment](../README_MODEL_DECISIONS.md#preserved-assessment-model-selection) records Google's multimodal card, possible Llama Vision replacement, optional Qwen2-VL and GPT-OSS comparisons; none has replaced the active model.
+
+## Claim review
+
+Generated drafts now pass a separate, bounded automatic source audit. It checks record quotations, critical-topic coverage and claim scope, and exposes evidence links/quotes in the interface. The reviewer uses the same Gemma weights; it is not an independent reviewer and cannot guarantee semantic entailment or biological correctness. Unseen synthetic-question results retain withheld drafts and operational failures. See the manual and verification status.
+
+## Memory and disk requirements
+
+The weight file is 6.98 GB, not the total memory requirement. Leave at least about 7.5 GB of free disk space for setup, and additional space for research images. A computer with at least 16 GB RAM is recommended for the retained 12B profile; the development target is an M3 with 24 GB. Model context, native libraries, the viewer and TIFF stacks consume memory in addition to weights. Smaller-memory computers may be slow or unable to load this profile; image analysis remains independent of model setup. These are engineering recommendations, not universal hardware qualification.

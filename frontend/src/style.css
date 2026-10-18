@@ -86,3 +86,5 @@ input:not([type=file]):not([type=range]),select,.assistant textarea{background:v
 .shell input[type=checkbox],.shell input[type=range]{accent-color:#245B7B}
 
 .contrast-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:8px 24px}.contrast-toolbar label{flex:1 1 270px;min-width:0}.contrast-toolbar .hint{flex:1 1 220px}.contrast-toolbar select{width:100%}
+
+.assistant-setup{padding:16px 24px;background:#FDF0D5;color:#173747;border-bottom:2px solid #6DB1BF}.assistant-setup p{margin:8px 0}.assistant-setup progress{width:min(50%,360px);accent-color:#6DB1BF}.assistant-setup button{margin-left:16px}

@@ -1,0 +1,7 @@
+{
+  "scope": "Bounded live provider resume probe; only last 64 KiB requested, no user image/data sent. Not a fresh full-weight download.",
+  "http_status": 206,
+  "content_range": "bytes 6975813760-6975879295/6975879296",
+  "bytes_read": 65536,
+  "pinned_tail_matches": true
+}

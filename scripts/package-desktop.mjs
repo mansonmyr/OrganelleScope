@@ -11,6 +11,8 @@ if(!mac && process.platform!=='win32')throw new Error('Build desktop installers 
 const output=mac?await mkdtemp(path.join(os.tmpdir(),'OrganelleScope-package-')):path.join(root,'release');
 const cli=path.join(root,'node_modules','electron-builder','cli.js');
 const python=process.env.ORGANELLESCOPE_PYTHON||(process.platform==='win32'?'python':'python3');
+const runtime=spawnSync(python,['scripts/setup-local-assistant.py','--runtime-only','--download'],{cwd:root,stdio:'inherit'});
+if(runtime.status!==0)process.exit(runtime.status??1);
 const notices=spawnSync(python,['scripts/dependency-notices.py'],{cwd:root,stdio:'inherit'});
 if(notices.status!==0)process.exit(notices.status??1);
 const fullAI=process.env.ORGANELLESCOPE_INCLUDE_ASSISTANT==='1';
@@ -20,7 +22,7 @@ if(fullAI){
  const hash=createHash('sha256');for await(const chunk of createReadStream(model))hash.update(chunk);
  if(hash.digest('hex')!=='93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b')throw new Error('Bundled model checksum mismatch.');
  const configuration=JSON.parse(await readFile(path.join(root,'package.json'),'utf8')).build;
- configuration.extraResources.push({from:'.local-models',to:'local-ai/model',filter:['gemma-4-12b-it-qat-q4_0.gguf']},{from:'.local-runtime/llama-b11669',to:'local-ai/runtime',filter:['**/*']});
+ configuration.extraResources.push({from:'.local-models',to:'local-ai/model',filter:['gemma-4-12b-it-qat-q4_0.gguf']});
  const configPath=path.join(root,'build','offline-desktop.json');await mkdir(path.dirname(configPath),{recursive:true});await writeFile(configPath,JSON.stringify(configuration));extra.push('--config',configPath);
 }
 const result=spawnSync(process.execPath,[cli,...extra,...(mac?['--mac','--arm64']:['--win','--x64']),'--publish','never',`--config.directories.output=${output}`],{cwd:root,stdio:'inherit'});

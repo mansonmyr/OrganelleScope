@@ -1,0 +1,324 @@
+{
+  "implementation_sha256": {
+    "assistant.py": "4fa6046bd19c7d38b0da815910b5a772b31fe093d37bd8317f506a5d1d5f4f94",
+    "claim_review.py": "ea3254ce513e1d44f6e134bc100c2f67da1c290ae0d041e2f6df2af4af45c4f8",
+    "local_model.py": "3f3e8d282b35069e8dae1c974f1414c42485f8a00d925999d0963c28fb1bc6c0"
+  },
+  "followup_after_development": true,
+  "suite_sha256": "1ca01614ee17b278c36a4f365d050e364b4b6e19efa708261db297f5644efe68",
+  "protocol": "Repeat diagnostic after development changes; these questions have already been seen. Not a fresh held-out accuracy assessment. Same-model audit and draft-return rates do not establish scientific correctness.",
+  "model": {
+    "name": "Gemma 4 12B Instruct QAT Q4_0",
+    "filename": "gemma-4-12b-it-qat-q4_0.gguf",
+    "bytes": 6975879296,
+    "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+    "upstream": "https://huggingface.co/google/gemma-4-12B-it",
+    "quantization": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+    "revision": "29d097773436b69ff9feafd636ab4cf873786537",
+    "license": "Apache-2.0",
+    "runtime": "llama.cpp b11669",
+    "context_tokens": 8192,
+    "evidence_review": true,
+    "vision_enabled": false,
+    "thinking_enabled": false,
+    "temperature": 1.0
+  },
+  "cases": [
+    {
+      "case": "overlap-disagreement",
+      "question": "My overlap fractions are high but both correlation measures are negative. Can I report strong interaction, or how can these results coexist?",
+      "review_criteria": [
+        "Distinguish threshold occupancy from intensity covariation",
+        "Background/threshold sensitivity",
+        "No binding conclusion"
+      ],
+      "human_review": "pending",
+      "answer": "High Manders overlap fractions indicate that most of the signal from Marker A is within the threshold of Marker B, and vice versa [measurements]. These results can coexist if both proteins occupy the same general region but exhibit opposing intensity patterns, such as one being highly concentrated in a specific sub-compartment while the other is excluded or diffuse in that same area [methods]. Conventional microscopy cannot establish molecular binding or causality from these colocalization metrics [interpretation]. Advice: You should inspect the background and threshold settings, as zero thresholds can result in high overlap fractions from pervasive diffuse signal that does not represent specific interaction [interpretation].",
+      "claim_review": {
+        "algorithm": "claim-source-audit-2",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 4,
+        "withheld_sentences": 2,
+        "checked_answer": "High Manders overlap fractions indicate that most of the signal from Marker A is within the threshold of Marker B, and vice versa [measurements]. These results can coexist if both proteins occupy the same general region but exhibit opposing intensity patterns, such as one being highly concentrated in a specific sub-compartment while the other is excluded or diffuse in that same area [methods]. Conventional microscopy cannot establish molecular binding or causality from these colocalization metrics [interpretation]. Advice: You should inspect the background and threshold settings, as zero thresholds can result in high overlap fractions from pervasive diffuse signal that does not represent specific interaction [interpretation].",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "The reported results are contradictory for claiming a strong interaction. [measurements] [methods] [interpretation]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "High Manders overlap fractions indicate that most of the signal from Marker A is within the threshold of Marker B, and vice versa [measurements].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "measurements",
+            "quote": "\"thresholded_m1\": 0.99, \"thresholded_m2\": 0.98"
+          },
+          {
+            "index": 2,
+            "sentence": "However, the negative Pearson and Spearman correlation coefficients indicate that as the intensity of Marker A increases, the intensity of Marker B tends to decrease within the selected pixels [methods].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "No matching verbatim quotation in the cited source.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "These results can coexist if both proteins occupy the same general region but exhibit opposing intensity patterns, such as one being highly concentrated in a specific sub-compartment while the other is excluded or diffuse in that same area [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Negative Pearson indicates negative centered intensity covariation in selected pixels; it can coexist with high threshold-overlap fractions. Shared organelle localization can be image-scale colocalization without direct molecular interaction."
+          },
+          {
+            "index": 4,
+            "sentence": "Conventional microscopy cannot establish molecular binding or causality from these colocalization metrics [interpretation].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "ROI coefficients describe selected image regions; they do not establish binding or independent biological replication."
+          },
+          {
+            "index": 5,
+            "sentence": "Advice: You should inspect the background and threshold settings, as zero thresholds can result in high overlap fractions from pervasive diffuse signal that does not represent specific interaction [interpretation].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "ROI Manders uses zero thresholds. Positive background can increase overlap; inspect background and threshold sensitivity before interpretation."
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 370,
+          "prompt_tokens": 1143,
+          "total_tokens": 1513,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "tool_record": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        },
+        {
+          "tool": "read_measurements",
+          "trigger": "application summary context",
+          "result": {
+            "source_id": "measurements",
+            "interpretation_context": {
+              "available": true,
+              "calculation_completed": true,
+              "processing": {
+                "background": "none"
+              },
+              "threshold_mode": "zero",
+              "null_semantics": "This report contains completed calculations. A null metric is mathematically undefined/unavailable, NOT evidence that the calculation was not performed. Threshold failure affects thresholded Manders, not the definition of Pearson.",
+              "constant_channels": [],
+              "channel_summaries": [
+                {
+                  "roi_id": "synthetic-roi",
+                  "channels": [
+                    {
+                      "label": "Marker A",
+                      "sum": 100,
+                      "std": 2
+                    },
+                    {
+                      "label": "Marker B",
+                      "sum": 110,
+                      "std": 3
+                    }
+                  ]
+                }
+              ],
+              "scope": "Synthetic XY fixture; not a biological acquisition",
+              "validation": null,
+              "pairs": [
+                {
+                  "roi_id": "synthetic-roi",
+                  "label_a": "Marker A",
+                  "label_b": "Marker B",
+                  "thresholds": {
+                    "a": 0,
+                    "b": 0
+                  },
+                  "pcc": -0.2,
+                  "spearman": -0.1,
+                  "thresholded_m1": 0.99,
+                  "thresholded_m2": 0.98,
+                  "gaussian_lrt_note": null,
+                  "warnings": null,
+                  "unavailable_reasons": {}
+                }
+              ],
+              "controls_note": "Biological controls and independent experimental replicates are not established by this report. Absence from this record is not proof they were not performed."
+            }
+          }
+        }
+      ],
+      "seconds": 76.26,
+      "draft_returned": true
+    },
+    {
+      "case": "network-posterior",
+      "question": "Can I interpret this STRING score as the probability that TUBG1 binds PCNT in my current cells?",
+      "review_criteria": [
+        "Database score is not specimen binding posterior",
+        "No images or measurements in this fixture",
+        "Association evidence scope"
+      ],
+      "human_review": "pending",
+      "answer": "This score represents a database association derived from various sources, not an experiment-specific binding probability [interpretation]. General methodological advice indicates that shared organelle localization or database associations are not evidence of direct molecular interaction. [evidence-1-1] [interpretation]",
+      "claim_review": {
+        "algorithm": "claim-source-audit-2",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 2,
+        "withheld_sentences": 2,
+        "checked_answer": "This score represents a database association derived from various sources, not an experiment-specific binding probability [interpretation]. General methodological advice indicates that shared organelle localization or database associations are not evidence of direct molecular interaction. [evidence-1-1] [interpretation]",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "No, a STRING score cannot be interpreted as the probability of a physical binding event in your specific cells [evidence-1-1].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "No matching verbatim quotation in the cited source.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "This score represents a database association derived from various sources, not an experiment-specific binding probability [interpretation].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "STRING scores are association evidence, not ROI binding probabilities."
+          },
+          {
+            "index": 2,
+            "sentence": "General methodological advice indicates that shared organelle localization or database associations are not evidence of direct molecular interaction. [evidence-1-1] [interpretation]",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "General methodological advice is available; there are no current-image findings."
+          },
+          {
+            "index": 3,
+            "sentence": "To assess binding in your cells, you would require proximity ligation assays or FRET with appropriate controls. [evidence-1-1] [interpretation]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 151,
+          "prompt_tokens": 633,
+          "total_tokens": 784,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "tool_record": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": null,
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        },
+        {
+          "tool": "read_evidence",
+          "trigger": "application selected evidence",
+          "result": {
+            "source_ids": [
+              "evidence-1-1"
+            ],
+            "records": [
+              {
+                "provider": "string",
+                "query": {
+                  "operation": "network"
+                },
+                "rows": [
+                  {
+                    "preferredName_A": "TUBG1",
+                    "preferredName_B": "PCNT",
+                    "score": 0.99
+                  }
+                ],
+                "sources": [
+                  {
+                    "source_url": "https://version-12-5.string-db.org/api/json/network?identifiers=TUBG1%0dPCNT",
+                    "retrieved_utc": "synthetic fixture",
+                    "response_sha256": "synthetic",
+                    "source_id": "evidence-1-1"
+                  }
+                ]
+              }
+            ],
+            "note": "Retrieved association/pathway evidence is not an experimental causal finding."
+          }
+        }
+      ],
+      "seconds": 45.01,
+      "draft_returned": true
+    }
+  ]
+}

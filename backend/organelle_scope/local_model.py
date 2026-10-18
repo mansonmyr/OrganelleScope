@@ -19,7 +19,7 @@ MODEL={
  'quantization':'https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf',
  'revision':'29d097773436b69ff9feafd636ab4cf873786537','license':'Apache-2.0',
  'runtime':'llama.cpp b11669','context_tokens':8192,
- 'vision_enabled':False,'thinking_enabled':False,'temperature':1.0,
+ 'evidence_review':True,'vision_enabled':False,'thinking_enabled':False,'temperature':1.0,
 }
 
 
@@ -61,7 +61,8 @@ class LocalModel:
  def start(self):
   with self.lock:
    if self.process is not None and self.process.poll() is None:return self.status()
-   if not self.binary.is_file() or not self.model.is_file():raise ValueError('Install the pinned local runtime and model first. See docs/LOCAL_ASSISTANT.md.')
+   if not self.binary.is_file():raise ValueError('The assistant runtime is missing. Reinstall OrganelleScope or see docs/LOCAL_ASSISTANT.md for source setup.')
+   if not self.model.is_file():raise ValueError('Gemma setup is not complete. Resume the download in the setup banner; image analysis remains available.')
    stamp=(self.model.stat().st_size,self.model.stat().st_mtime_ns)
    if stamp!=self.verified:
     digest=hashlib.sha256()
@@ -97,7 +98,7 @@ class LocalModel:
         'stream':False,'chat_template_kwargs':{'enable_thinking':self.manifest.get('thinking_enabled',False)}}
   if 'repeat_penalty' in self.manifest:body['repeat_penalty']=self.manifest['repeat_penalty']
   if tools:body.update(tools=tools,parallel_tool_calls=False)
-  if response_format:body.update(response_format=response_format,max_tokens=1200)
+  if response_format:body.update(response_format=response_format,max_tokens=2400 if response_format.get('schema',{}).get('title')=='claim-source-audit' else 1200)
   # Model prefill plus generation can exceed two minutes on a CPU or a busy Mac.
   return self._request('/v1/chat/completions',body,timeout=300)
 

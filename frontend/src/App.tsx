@@ -16,6 +16,7 @@ import { ValidationPanel } from "./ValidationPanel";
 import { OrthogonalWorkspace } from "./OrthogonalWorkspace";
 import { EvidencePanel } from "./EvidencePanel";
 import {ProjectStateProvider,type WorkspaceData} from './ProjectContext';
+import {AssistantSetupBanner} from './AssistantSetupBanner';
 import {AssistantPanel} from './AssistantPanel';
 import {sliceSnapshot,downloadSnapshot,type VolumeCapture} from './previewSnapshot';
 import { VolumeView } from "./VolumeView";
@@ -206,7 +207,7 @@ export default function App() {
     try { setAnalysis(await json<AnalysisResult>(`/api/images/${image.id}/analysis`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({processing:selectedProcessing,rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})})); }
     catch(e){setError(String(e));}finally{setBusy(false);}
   }
-  return <div className="shell">
+  return <div className="shell"><AssistantSetupBanner/>
     <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
       <span className="badge">Development build · ROI statistics</span><span className="local"><i /> Local processing</span></header>
     <div className="workspace"><aside aria-label="Workspace">

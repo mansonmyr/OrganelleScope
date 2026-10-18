@@ -14,6 +14,6 @@ report={'version':version,'platform':label,'commit':subprocess.check_output(['gi
         'installer':asset.name,'bytes':asset.stat().st_size,'sha256':digest,
         'source_tests':'backend and frontend passed before packaging', 'frozen_backend':'synthetic API smoke passed',
         'signing':'ad-hoc, not notarized' if suffix=='dmg' else 'unsigned',
-        'assistant_weights_bundled':False,'scope':'Build checks do not establish native user acceptance or biological validity.'}
+        'assistant_runtime_bundled':True,'assistant_weight_setup':'automatic first-launch download; pinned size and SHA-256; pause/resume','assistant_weights_bundled':False,'scope':'Build checks do not establish native user acceptance or biological validity.'}
 (release/f'verification-{label}.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 print(json.dumps(report))

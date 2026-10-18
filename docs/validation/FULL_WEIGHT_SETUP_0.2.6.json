@@ -1,0 +1,9 @@
+{
+  "model_sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+  "bytes": 6975879296,
+  "complete_staged_weight_verification": "passed",
+  "atomic_install": "passed",
+  "subsequent_launch_state": "complete, no repeat download",
+  "seconds": 3.2592364579904824,
+  "scope": "Full-size pinned model bytes staged via a temporary hard link to the existing verified weights; no new full network download or disk duplicate. Hash/atomic installation path exercised. Real inference is assessed separately."
+}

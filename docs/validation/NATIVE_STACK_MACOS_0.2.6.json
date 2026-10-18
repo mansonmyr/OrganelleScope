@@ -1,0 +1,30 @@
+{
+  "shape_czyx": [
+    4,
+    32,
+    2048,
+    2048
+  ],
+  "decoded_bytes": 1073741824,
+  "z_depth_um": 8,
+  "native_service_health": {
+    "status": "ok",
+    "version": "0.2.6.dev0"
+  },
+  "platform": "darwin",
+  "timings": {
+    "upload_and_inspection_seconds": 0.05842791707254946,
+    "volume_seconds": 0.5502383330604061,
+    "cuboid_seconds": 4.320559666957706,
+    "segmentation_seconds": 9.629333541961387,
+    "full_plane_qc_seconds": 1.1483242909889668
+  },
+  "memory": {
+    "peak_process_tree_rss_bytes": 893796352,
+    "minimum_system_available_bytes": 4330864640
+  },
+  "all_four_cuboid_sums_exact": true,
+  "scope": "One deterministic compressed synthetic stack through a native frozen executable, including multipart upload. Process-tree RSS includes the driver and service, not unrelated applications. This is not a realistic acquisition distribution, sustained batch benchmark, human usability assessment or biological validation.",
+  "host": "Apple M3, 24 GB unified memory (user-supplied configuration)",
+  "concurrent_activity": "Gemma follow-up assessment running concurrently; operational timings are not an isolated hardware benchmark."
+}

@@ -30,6 +30,9 @@ for label,suffix in [('macos-arm64','dmg'),('windows-x64','exe')]:
 assets.append(folder/'SHA256SUMS.txt')
 installer_check=folder/'installer-check-macos-arm64.json'
 if installer_check.is_file():assets.append(installer_check)
+for name in ('desktop-check-windows-x64.json','workload-macos-arm64.json','workload-windows-x64.json','runtime-check-macos-arm64.json','runtime-check-windows-x64.json'):
+ record=folder/name
+ if record.is_file():assets.append(record)
 body=(root/'docs/RELEASE_NOTES.md').read_text(encoding='utf-8')+'\n\nSee [MANUAL.md](https://github.com/'+repo+'/blob/'+tag+'/MANUAL.md) for installation, features, interpretation and references.\n'
 # A failed upload intentionally leaves a draft. Do not silently replace a published asset.
 existing=request(base+'/releases?per_page=100')

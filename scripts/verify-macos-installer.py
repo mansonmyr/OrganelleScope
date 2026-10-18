@@ -32,12 +32,21 @@ if(!source.equals(packed))throw Error('Packaged frontend differs from verified s
 const info=JSON.parse(asar.extractFile(archive,'package.json').toString());
 console.log(JSON.stringify({version:info.version,frontend_index_sha256:crypto.createHash('sha256').update(packed).digest('hex')}));"""
         front=json.loads(run(['node','-e',source_check,str(app/'Contents/Resources/app.asar'),str(root)],cwd=root).stdout)
+        runtime_report=Path(temporary)/'runtime.json'
+        run([sys.executable,str(root/'scripts/smoke-runtime.py'),'--runtime',str(app/'Contents/Resources/local-ai/runtime/llama-server'),'--output',str(runtime_report)],cwd=root)
+        runtime=json.loads(runtime_report.read_text(encoding='utf-8'))
+        installed=Path(temporary)/'installed/OrganelleScope.app'
+        installed.parent.mkdir()
+        run(['/usr/bin/ditto',str(app),str(installed)])
+        desktop_report=Path(temporary)/'desktop.json'
+        run([sys.executable,str(root/'scripts/smoke-desktop.py'),'--app',str(installed),'--output',str(desktop_report)],cwd=root)
+        desktop=json.loads(desktop_report.read_text(encoding='utf-8'))
         environment={**os.environ,'ORGANELLESCOPE_FROZEN_BACKEND':str(binary)}
         result=run([sys.executable,str(root/'scripts/smoke-frozen.py')],env=environment,cwd=root)
         smoke=json.loads(result.stdout.strip().splitlines()[-1])
         report={'artifact':dmg.name,'bytes':dmg.stat().st_size,'sha256':hashlib.file_digest(dmg.open('rb'),'sha256').hexdigest(),
                 'dmg_integrity':'passed','app_and_backend_signature_verification':'passed','signing':'ad-hoc development; not Apple Developer ID/notarized',
-                'frontend':front,'mounted_packaged_backend':smoke,'assistant_weights_bundled':False,
+                'desktop_temporary_install_startup':desktop,'bundled_runtime':runtime,'frontend':front,'mounted_packaged_backend':smoke,'assistant_weights_bundled':False,
                 'scope':'Read-only DMG mounting, signature/frontend checks and synthetic backend API checks. No installed-app overwrite, native Windows test, full Electron interaction qualification or biological validation.'}
         args.output.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report),flush=True)
     finally:

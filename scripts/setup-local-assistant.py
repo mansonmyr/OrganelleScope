@@ -37,6 +37,7 @@ def download(url,path,size,digest):
 def main():
  parser=argparse.ArgumentParser(description='Install the pinned local runtime and selected model; --candidate liquid is for explicit comparison only.')
  parser.add_argument('--candidate',choices=['selected','liquid'],default='selected',help='Comparison profile; does not change the application model. Selected model is the default.')
+ parser.add_argument('--runtime-only',action='store_true',help='Prepare the redistributable runtime without downloading weights.')
  parser.add_argument('--download',action='store_true',help='Explicitly download and verify the model/runtime.')
  args=parser.parse_args();key=platform.system()+'-'+platform.machine()
  if key not in RUNTIMES:parser.error('Supported setup: Apple Silicon macOS or native Windows x64. Windows ARM/emulation and other targets need separate qualification.')
@@ -44,7 +45,7 @@ def main():
  runtime=RUNTIMES[key];manifest={'model':selected,'runtime':runtime,'runtime_tag':'b11669'}
  print(json.dumps(manifest,indent=2))
  if not args.download:return
- download(selected['quantization']+'/resolve/'+selected['revision']+'/'+selected['filename'],ROOT/'.local-models'/selected['filename'],selected['bytes'],selected['sha256'])
+ if not args.runtime_only:download(selected['quantization']+'/resolve/'+selected['revision']+'/'+selected['filename'],ROOT/'.local-models'/selected['filename'],selected['bytes'],selected['sha256'])
  runtime_root=ROOT/'.local-runtime';destination=runtime_root/'llama-b11669';receipt=runtime_root/'installed-runtime.json'
  installed=False
  if receipt.is_file():
@@ -67,6 +68,7 @@ def main():
    source.extractall(destination)
  files={str(path.relative_to(destination)):sha(path) for path in destination.rglob('*') if path.is_file() and not path.is_symlink()}
  receipt.write_text(json.dumps({'archive_sha256':runtime['sha256'],'files':files},indent=2))
- print('Verified local assistant files are ready. Start the app, save a project, then use Local assistant → Start local model.')
+ archive.unlink()
+ print('Verified local assistant runtime is ready. Weight setup is managed by the installed application.')
 
 if __name__=='__main__':main()

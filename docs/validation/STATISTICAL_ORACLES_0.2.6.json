@@ -1,0 +1,78 @@
+{
+  "exact_permutations": [
+    {
+      "paired": false,
+      "a": [
+        -1,
+        0,
+        2
+      ],
+      "b": [
+        2,
+        3,
+        5
+      ],
+      "assignments": 20,
+      "rational_oracle_p": "1/5",
+      "engine_p": 0.2,
+      "agreed": true
+    },
+    {
+      "paired": true,
+      "a": [
+        1,
+        2,
+        3
+      ],
+      "b": [
+        2,
+        4,
+        7
+      ],
+      "assignments": 8,
+      "rational_oracle_p": "1/4",
+      "engine_p": 0.25,
+      "agreed": true
+    },
+    {
+      "paired": false,
+      "a": [
+        2,
+        2,
+        2
+      ],
+      "b": [
+        2,
+        2,
+        2
+      ],
+      "assignments": 20,
+      "rational_oracle_p": "1",
+      "engine_p": 1.0,
+      "agreed": true
+    }
+  ],
+  "bayesian_posterior": {
+    "method": "Prior importance sampling with original Gaussian likelihood; independent of closed-form posterior updates",
+    "seed": 20261018,
+    "prior_draws": 1000000,
+    "effective_sample_size": 276259.6261803981,
+    "importance_posterior_mean": 0.6707413652792151,
+    "closed_form_mean": 0.6698113207547168,
+    "importance_ci95": [
+      -0.009100171270206663,
+      1.3491672918717623
+    ],
+    "closed_form_ci95": [
+      -0.00886378612039207,
+      1.3484864276298256
+    ],
+    "comparison_tolerances": {
+      "mean_absolute": 0.02,
+      "interval_endpoint_absolute": 0.025
+    },
+    "agreed_within_mc_tolerance": true,
+    "scope": "One prior/dataset. Monte Carlo agreement is not frequentist coverage or proof of a binding-specific model."
+  },
+  "scope": "Developer-run mathematical cross-checks using separate enumeration/integration implementations; no independent human review or biological certification."
+}

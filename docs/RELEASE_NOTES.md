@@ -1,7 +1,9 @@
-# OrganelleScope 0.2.5 release candidate
+# OrganelleScope 0.2.6 research preview
 
-This research preview consolidates the user documentation, preserves the detailed local-model assessment history and packages build-specific dependency notices. Both Windows 11 x64 and Apple Silicon macOS installers are published together with checksums and verification records after native build checks pass.
+The installed application bundles its pinned local inference runtime and automatically sets up Gemma with a one-time 6.98 GB weight download. Setup shows progress, supports pause/resume and checks size/SHA-256 before installation. Images and conversations are never sent to the model provider. Image analysis works during setup; completed local inference works offline.
 
-The analysis features from 0.2.4 include native-range main previews, editable channel identities, selected-plane signal checks and report-aware local assistant interpretation. The [manual](../MANUAL.md) documents all current workflows and [verification status](VALIDATION.md) distinguishes numerical checks from biological validation.
+Assistant drafts receive an additional automatic claim/source review with inspectable quotations and scope checks. The same model reviews its own text; this is not independent scientific review, and matching quotations do not prove semantic support. Evaluation records retain withheld drafts and limitations.
 
-The compact installers exclude the optional Gemma model/runtime. macOS signing is ad-hoc, not Apple notarization; Windows has no publisher certificate. Independent biological validation and native user acceptance remain incomplete. Preserve acquisition files and review scientific interpretation before research use.
+Native build checks include initial desktop renderer startup, a Windows installer extraction/launch check and synthetic large-stack workloads against frozen backends. Numerical oracle checks and owner-supplied sample-control analyses are separate from general biological validation. Private sample images and measurements remain local. Trusted publisher signing is outside this release's scope; existing development signature/integrity checks remain.
+
+Read the [manual](../MANUAL.md) and [verification status](VALIDATION.md) for assumptions, interpretation and limits.

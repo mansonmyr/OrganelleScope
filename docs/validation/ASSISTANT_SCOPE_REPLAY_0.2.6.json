@@ -1,0 +1,125 @@
+{
+  "protocol": "Replay of recorded reviewer outputs against a stricter source-topic check; not fresh inference or an unseen assessment. Previously withheld clauses remain withheld.",
+  "input_sha256": "ef6de85aee643d19dbfe7133a41fdfb7c78aa68d35c1cadbb135f1b535863612",
+  "claim_checker_sha256": "dc00aea87761cdc1c23180910c5eb891a41f90fda8b5e2cb48c300f58c78d1c7",
+  "cases": [
+    {
+      "case": "overlap-disagreement",
+      "review": {
+        "algorithm": "claim-source-audit-2",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 3,
+        "withheld_sentences": 3,
+        "checked_answer": "High Manders overlap fractions indicate that most of the signal from Marker A is within the threshold of Marker B, and vice versa [measurements]. These results can coexist if both proteins occupy the same general region but exhibit opposing intensity patterns, such as one being highly concentrated in a specific sub-compartment while the other is excluded or diffuse in that same area [methods]. Advice: You should inspect the background and threshold settings, as zero thresholds can result in high overlap fractions from pervasive diffuse signal that does not represent specific interaction [interpretation].",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "The reported results are contradictory for claiming a strong interaction. [measurements] [methods] [interpretation]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "High Manders overlap fractions indicate that most of the signal from Marker A is within the threshold of Marker B, and vice versa [measurements].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "measurements",
+            "quote": "\"thresholded_m1\": 0.99, \"thresholded_m2\": 0.98"
+          },
+          {
+            "index": 2,
+            "sentence": "However, the negative Pearson and Spearman correlation coefficients indicate that as the intensity of Marker A increases, the intensity of Marker B tends to decrease within the selected pixels [methods].",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "These results can coexist if both proteins occupy the same general region but exhibit opposing intensity patterns, such as one being highly concentrated in a specific sub-compartment while the other is excluded or diffuse in that same area [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Negative Pearson indicates negative centered intensity covariation in selected pixels; it can coexist with high threshold-overlap fractions. Shared organelle localization can be image-scale colocalization without direct molecular interaction."
+          },
+          {
+            "index": 4,
+            "sentence": "Conventional microscopy cannot establish molecular binding or causality from these colocalization metrics [interpretation].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "The quotation does not cover a critical scientific concept in this claim.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 5,
+            "sentence": "Advice: You should inspect the background and threshold settings, as zero thresholds can result in high overlap fractions from pervasive diffuse signal that does not represent specific interaction [interpretation].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "ROI Manders uses zero thresholds. Positive background can increase overlap; inspect background and threshold sensitivity before interpretation."
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {}
+      }
+    },
+    {
+      "case": "network-posterior",
+      "review": {
+        "algorithm": "claim-source-audit-2",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 1,
+        "withheld_sentences": 3,
+        "checked_answer": "This score represents a database association derived from various sources, not an experiment-specific binding probability [interpretation].",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "No, a STRING score cannot be interpreted as the probability of a physical binding event in your specific cells [evidence-1-1].",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "This score represents a database association derived from various sources, not an experiment-specific binding probability [interpretation].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "STRING scores are association evidence, not ROI binding probabilities."
+          },
+          {
+            "index": 2,
+            "sentence": "General methodological advice indicates that shared organelle localization or database associations are not evidence of direct molecular interaction. [evidence-1-1] [interpretation]",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "The quotation does not cover a critical scientific concept in this claim.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "To assess binding in your cells, you would require proximity ligation assays or FRET with appropriate controls. [evidence-1-1] [interpretation]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {}
+      }
+    }
+  ]
+}

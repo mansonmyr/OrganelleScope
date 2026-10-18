@@ -1,6 +1,6 @@
 {
   "name": "organellescope",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "description": "Calibrated spatial microscopy workbench",
   "author": "Kai Hong Ooi",
@@ -38,6 +38,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": ".local-runtime/llama-b11669",
+        "to": "local-ai/runtime",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
@@ -55,7 +62,8 @@
       "entitlements": "resources/entitlements.mac.dev.plist",
       "entitlementsInherit": "resources/entitlements.mac.dev.plist",
       "binaries": [
-        "Contents/Resources/backend/organellescope-backend"
+        "Contents/Resources/backend/organellescope-backend",
+        "Contents/Resources/local-ai/runtime/llama-server"
       ],
       "icon": "resources/icon.png",
       "artifactName": "OrganelleScope-${version}-macos-${arch}.${ext}"
@@ -77,7 +85,8 @@
       "allowToChangeInstallationDirectory": true
     },
     "afterSign": "scripts/verify-mac-signature.cjs",
-    "afterPack": "scripts/prepare-mac-signature.cjs"
+    "afterPack": "scripts/prepare-mac-signature.cjs",
+    "electronDist": "node_modules/electron/dist"
   },
   "devDependencies": {
     "electron": "^44.8.0",

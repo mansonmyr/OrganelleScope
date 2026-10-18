@@ -192,8 +192,8 @@ def test_questions_without_project_start_local_model_and_do_not_save(tmp_path,mo
  import organelle_scope.assistant as module
  calls=[]
  class ReadyFake(Fake):
-  def __init__(self,*a):super().__init__(response('General microscopy advice is available without an image. [project]'));self.ready=False
-  def status(self):return {'ready':self.ready,'running':self.ready}
+  def __init__(self,*a):super().__init__(response('General microscopy advice is available without an image. [project]'));self.ready=False;self.manifest={'bytes':1};self.model=tmp_path/'missing.gguf';self.binary=tmp_path/'missing-runtime'
+  def status(self):return {'ready':self.ready,'running':self.ready,'model_available':False}
   def start(self):calls.append('start');self.ready=True
   def stop(self):pass
   def cleanup_after_success(self):pass

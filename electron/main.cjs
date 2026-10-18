@@ -1,11 +1,13 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 const crypto = require('node:crypto');
 const path = require('node:path');
 const net = require('node:net');
 const http = require('node:http');
 const fs = require('node:fs');
 
+const smokeTest=process.argv.includes('--organelle-smoke-test');
+if(smokeTest&&process.env.ORGANELLESCOPE_SMOKE_DATA)app.setPath('userData',process.env.ORGANELLESCOPE_SMOKE_DATA);
 const root = path.resolve(__dirname, '..');
 const token = crypto.randomBytes(32).toString('hex');
 let backend;
@@ -37,6 +39,8 @@ async function start() {
   const env = { ...process.env, ORGANELLESCOPE_SESSION_TOKEN: token };
   const args = ['--port', String(port), '--data-dir', path.join(app.getPath('userData'), 'images')];
   if (app.isPackaged) {
+    env.ORGANELLESCOPE_AUTO_SETUP=process.env.ORGANELLESCOPE_DISABLE_AUTO_SETUP==='1'?'0':'1';
+    env.ORGANELLESCOPE_MODEL=path.join(app.getPath('userData'),'assistant','models','gemma-4-12b-it-qat-q4_0.gguf');
     const bundledModel=path.join(process.resourcesPath,'local-ai','model','gemma-4-12b-it-qat-q4_0.gguf');
     const bundledRuntime=path.join(process.resourcesPath,'local-ai','runtime',process.platform==='win32'?'llama-server.exe':'llama-server');
     if(fs.existsSync(bundledModel))env.ORGANELLESCOPE_MODEL=bundledModel;
@@ -49,6 +53,7 @@ async function start() {
     backend = spawn(python, ['-m', 'organelle_scope.main', ...args], { env, cwd: root, stdio: ['ignore','pipe','pipe'] });
   }
   backend.on('error', error => { dialog.showErrorBox('Image service unavailable', error.message); app.quit(); });
+  backend.stdout.resume();
   backend.stderr.on('data', chunk => console.error(String(chunk)));
   backend.on('exit', code => { if (!quitting && mainWindow) dialog.showErrorBox('Image service stopped', `Restart OrganelleScope. Exit code: ${code}`); });
   await ready();
@@ -57,6 +62,22 @@ async function start() {
     return { apiUrl, token };
   });
   await createWindow();
+  if(smokeTest){
+    const target=process.env.ORGANELLESCOPE_SMOKE_REPORT;
+    if(!target)throw new Error('Smoke report path required.');
+    const deadline=Date.now()+30000;let renderer;
+    do{
+      renderer=await mainWindow.webContents.executeJavaScript('({title:document.title,text:document.body.innerText,root:!!document.getElementById("root")})');
+      if(renderer.root&&renderer.text.includes('OrganelleScope')&&renderer.text.includes('Open TIFF'))break;
+      await new Promise(resolve=>setTimeout(resolve,200));
+    }while(Date.now()<deadline);
+    if(!renderer?.root||!renderer.text.includes('Open TIFF'))throw new Error('Packaged renderer did not mount its image workflow.');
+    const picture=await mainWindow.webContents.capturePage();
+    if(picture.isEmpty())throw new Error('Packaged renderer returned an empty capture.');
+    fs.mkdirSync(path.dirname(target),{recursive:true});
+    fs.writeFileSync(target,JSON.stringify({version:app.getVersion(),platform:process.platform,architecture:process.arch,packaged:app.isPackaged,renderer_mounted:true,renderer_capture_size:picture.getSize(),local_backend_ready:true,automatic_download_disabled_for_test:process.env.ORGANELLESCOPE_DISABLE_AUTO_SETUP==='1',scope:'Native application startup and initial renderer paint; not a human interaction, GPU workload, fresh full-weight download or biological validation.'},null,2));
+    app.quit();
+  }
 }
 async function createWindow() {
   mainWindow = new BrowserWindow({ width: 1440, height: 960, minWidth: 950, minHeight: 680,
@@ -75,7 +96,17 @@ async function createWindow() {
   if (process.env.ORGANELLESCOPE_UI_URL && !app.isPackaged) await mainWindow.loadURL(process.env.ORGANELLESCOPE_UI_URL);
   else await mainWindow.loadFile(path.join(root, 'frontend', 'dist', 'index.html'));
 }
-app.whenReady().then(start).catch(error => { dialog.showErrorBox('Startup failed', error.message); app.quit(); });
+if(!app.requestSingleInstanceLock())app.quit();
+else app.whenReady().then(start).catch(error => {
+  if(smokeTest){console.error(error);quitting=true;backend?.kill();app.exit(1);}
+  else{dialog.showErrorBox('Startup failed', error.message);app.quit();}
+});
 app.on('activate', () => { if (!mainWindow && apiUrl) void createWindow(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-app.on('before-quit', () => { quitting = true; backend?.kill(); });
+app.on('before-quit', () => {
+  quitting=true;
+  if(process.platform==='win32'&&backend?.pid&&backend.exitCode===null){
+    // Terminate only this app's owned backend/model tree; do not leave a CPU model orphaned.
+    spawnSync(path.join(process.env.SystemRoot||'C:/Windows','System32','taskkill.exe'),['/PID',String(backend.pid),'/T','/F'],{windowsHide:true,stdio:'ignore',timeout:10000});
+  }else backend?.kill();
+});
