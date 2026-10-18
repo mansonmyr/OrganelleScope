@@ -14,7 +14,10 @@ dmg=(args.dmg or root/'release'/f'OrganelleScope-{version}-macos-arm64.dmg').res
 if sys.platform!='darwin' or not dmg.is_file():parser.error('Select an existing macOS disk image on a Mac.')
 
 def run(arguments,**kwargs):
-    return subprocess.run(arguments,check=True,capture_output=True,text=True,**kwargs)
+    try:
+        return subprocess.run(arguments,check=True,capture_output=True,text=True,**kwargs)
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f'Installer check failed: {Path(arguments[0]).name} (exit {exc.returncode})\n{(exc.stderr or "")[-6000:]}\n{(exc.stdout or "")[-2000:]}') from exc
 
 run(['/usr/bin/hdiutil','verify',str(dmg)])
 with tempfile.TemporaryDirectory(prefix='OrganelleScope-installer-check-') as temporary:

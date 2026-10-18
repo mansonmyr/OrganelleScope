@@ -1,0 +1,10 @@
+{
+  "platform": "darwin-arm64",
+  "version": "0.2.7",
+  "local_artifact_sha256": "5c2c8c165cc404ea9c98f5f12dcfaecf589d2ebccaebbaf6634920a8467f9b38",
+  "initial_temporary_install_launch": "Failed with exit 1; original wrapper hid child stderr; cause not isolated.",
+  "subsequent_staging_app_launch": "Passed with isolated user profile and automatic model setup disabled.",
+  "subsequent_dmg_temporary_install_launch": "Passed: image integrity, ad-hoc signatures, bundled runtime, frontend identity, renderer paint and frozen APIs.",
+  "diagnostic_change": "Verifier now includes captured child stderr/stdout on failure. No security setting was disabled and no application source change was made to obtain the recheck pass.",
+  "scope": "Local operational observations, not a launch reliability estimate or full human/native Windows qualification. Initial failure remains a limitation; release candidate status retained."
+}
