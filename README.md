@@ -5,7 +5,7 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Version 1.0.6 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
+**Version 1.0.7 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
 
 ## Main features
 
@@ -16,7 +16,7 @@ A local desktop microscopy workbench for calibrated image inspection, ROI measur
 - Full-resolution cuboids, threshold masks, bidirectional calibrated voxel-centre proximity and radial enrichment, with ROI/threshold/cuboid sensitivity sweeps.
 - Reviewed per-image batches with channel editing, design checks and failed-item recovery, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
 - Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant with separate claim support and question-coverage reviews.
-- Cancellable ROI analysis with progress, portable analysis-review reports linking engine results to embedded ROI previews, and source/settings/evidence provenance.
+- Source-plane memory release during reduced 3D preview generation, cancellable ROI analysis with progress, portable analysis-review reports linking engine results to embedded ROI previews, and source/settings/evidence provenance.
 - Workspace sidebar project controls, portable archives and recovery state.
 
 ## Start here

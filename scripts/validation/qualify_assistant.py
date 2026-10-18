@@ -7,7 +7,8 @@ from html import escape
 from pathlib import Path
 import numpy as np
 from evaluate_interpretation import fixtures
-from organelle_scope.assistant import ChatRequest,run_agent,ensure_ready,workspace_record,WorkspaceContext
+from organelle_scope.assistant import ChatRequest,run_agent,ensure_ready,workspace_record,WorkspaceContext,METHOD_REFERENCE,bounded
+from organelle_scope.interpretation import interpretation_snapshot
 from organelle_scope.local_model import LocalModel
 from organelle_scope.proximity import proximity_summary
 
@@ -56,36 +57,51 @@ def cases():
 def make_packet(report,folder):
     """Withhold model name and automatic/developer ratings from the reviewer page."""
     by_id={case['id']:case for case in report['frozen_cases']};rows=list(report['cases']);random.Random(report['suite_sha256']).shuffle(rows)
-    html=['<!doctype html><meta charset="utf-8"><title>Research assistant review</title><style>body{font:16px system-ui;max-width:950px;margin:30px auto;padding:20px}article{border:1px solid #6db1bf;padding:20px;margin:20px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere}textarea{width:100%;min-height:100px}</style><h1>Independent review packet</h1><p>No independent reviewer has completed this packet. Model identity and automatic/development ratings are withheld here. For each response, assess factual support, completeness, numerical consistency and potentially misleading interpretation. Mark complete, partial, incorrect or withheld; explain any critical error. This is a single-model development assessment, not a blinded model comparison. Print/save the completed page or return a separate review keyed by response ID.</p>']
+    html=['<!doctype html><meta charset="utf-8"><title>Research assistant review</title><style>body{font:16px system-ui;max-width:950px;margin:30px auto;padding:20px}article{border:1px solid #6db1bf;padding:20px;margin:20px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere}textarea{width:100%;min-height:100px}</style><h1>Independent review packet</h1><p>No independent reviewer has completed this packet. Model identity and automatic/development ratings are withheld here. For each response, assess factual support, completeness, numerical consistency and potentially misleading interpretation. Mark complete, partial, incorrect or withheld; explain any critical error. Judge the actual question; criteria are scope checks, not a requirement to volunteer unasked details. This is a single-model development assessment, not a blinded model comparison. Print/save the completed page or return a separate review keyed by response ID.</p>']
+    html.append('<details><summary>Application method definitions supplied to the assistant</summary><pre>'+escape(report.get('reference_snapshot',{}).get('methods',METHOD_REFERENCE))+'</pre></details>')
     key=[]
     for n,row in enumerate(rows,1):
         case=by_id[row['id']];blind=f'R{n:02d}';key.append({'response_id':blind,'case_id':row['id']})
-        context=json.dumps(case['record'],indent=2,ensure_ascii=False)
+        context=json.dumps({'initial_record':case['record'],'application_reading_guide':bounded(interpretation_snapshot(case['record']),5000),'tool_records':row.get('audit',[])},indent=2,ensure_ascii=False)
         html.append('<article><h2>'+blind+'</h2><p>'+escape(case['question'])+'</p><details><summary>Supplied synthetic context</summary><pre>'+escape(context)+'</pre></details><p><strong>Displayed response</strong></p><p>'+escape(row.get('answer','Answer withheld or failed: '+row.get('error','unknown')))+'</p><label>Reviewer assessment and supporting reason<textarea></textarea></label></article>')
     folder.mkdir(parents=True,exist_ok=True);(folder/'REVIEW.html').write_text(''.join(html),encoding='utf-8')
     (folder/'KEY.json').write_text(json.dumps({'status':'independent human review pending','suite_sha256':report['suite_sha256'],'mapping':key,'criteria':[{k:c[k] for k in ('id','criteria','reference')} for c in report['frozen_cases']]},indent=2)+'\n')
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--freeze',action='store_true');p.add_argument('--output',type=Path,required=True);p.add_argument('--packet',type=Path,required=True);args=p.parse_args()
-    root=Path(__file__).resolve().parents[2];suite=cases();suite_hash=hashlib.sha256(json.dumps(suite,sort_keys=True).encode()).hexdigest()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--freeze',action='store_true');p.add_argument('--packet-only',action='store_true');p.add_argument('--followup-from',type=Path);p.add_argument('--case',action='append',default=[]);p.add_argument('--output',type=Path,required=True);p.add_argument('--packet',type=Path,required=True);args=p.parse_args()
+    root=Path(__file__).resolve().parents[2];suite=cases()
+    baseline=None
+    if args.followup_from:
+        baseline=json.loads(args.followup_from.read_text());suite=baseline['frozen_cases']
+        if not args.case:raise ValueError('Choose explicit already-seen cases for a follow-up.')
+    elif args.case:raise ValueError('Case selection requires --followup-from; initial suites must run all questions.')
+    if set(args.case)-{case['id'] for case in suite}:raise ValueError('Unknown case selection.')
+    suite_hash=hashlib.sha256(json.dumps(suite,sort_keys=True).encode()).hexdigest()
     if args.output.exists():
         report=json.loads(args.output.read_text())
+        if args.packet_only:
+            make_packet(report,args.packet);return
         if report['cases'] or report['suite_sha256']!=suite_hash:raise ValueError('Keep original results; use a new record for repeats or changed questions.')
     else:
         report={'scope':'Twelve newly authored question formulations, frozen before inference; several concepts overlap prior tests. Single sampled answer per question with the same model generating/reviewing. No private microscopy data, cloud inference or online refresh. Not an external blind benchmark or an estimate of biomedical accuracy.','suite_sha256':suite_hash,'frozen_cases':suite,'independent_human_review':'pending; reviewer not available','cases':[]}
+    if baseline:
+        report.update(scope='Targeted follow-up on already-seen questions after method/guard changes. Not new unseen questions or independent human review.',baseline_path=str(args.followup_from),selected_case_ids=args.case,frozen_question_commit=baseline['frozen_question_commit'])
     def save():args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
     save()
     if args.freeze:print('Frozen',len(suite),'questions',suite_hash,flush=True);return
-    report['frozen_question_commit']=subprocess.run(['git','rev-parse','HEAD'],cwd=root,capture_output=True,text=True,check=True).stdout.strip()
+    report['reference_snapshot']={'methods':METHOD_REFERENCE,'references':REFS}
+    report['implementation_commit']=subprocess.run(['git','rev-parse','HEAD'],cwd=root,capture_output=True,text=True,check=True).stdout.strip()
+    report.setdefault('frozen_question_commit',report['implementation_commit'])
     report['implementation_sha256']={name:hashlib.sha256((root/'backend/organelle_scope'/name).read_bytes()).hexdigest() for name in ('assistant.py','interpretation.py','claim_review.py','completeness.py')}
     model=LocalModel(root/'assistant/broader-qualification');report['model']=model.manifest;save()
     try:
         ensure_ready(model)
         for case in suite:
+            if args.case and case['id'] not in args.case:continue
             entry={'id':case['id'],'semantic_review':'pending'}
             try:
-                result=run_agent(model,case['record'],ChatRequest(message=case['question']),lambda _:(_ for _ in ()).throw(ValueError('Online lookup disabled')))
+                result=run_agent(model,copy.deepcopy(case['record']),ChatRequest(message=case['question']),lambda _:(_ for _ in ()).throw(ValueError('Online lookup disabled')))
                 entry.update({key:result.get(key) for key in ('answer','evidence_review','question_coverage','recorded_quantities','sources','audit','elapsed_seconds','report_findings','interpretation_notes')})
                 entry['automatic_checks']={'coverage_marked_complete':bool((result.get('question_coverage') or {}).get('all_parts_addressed')),'retained_sentences':(result.get('evidence_review') or {}).get('retained_sentences'),'withheld_sentences':(result.get('evidence_review') or {}).get('withheld_sentences')}
             except Exception as exc:entry.update(error=str(exc),withheld_details=getattr(exc,'details',None))

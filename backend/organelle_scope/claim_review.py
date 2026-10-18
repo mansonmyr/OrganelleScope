@@ -34,9 +34,13 @@ def review_claims(model,answer,payloads,general=False):
  units=sentences(answer)
  if len(units)>18:raise ValueError('The draft has too many claims for the bounded evidence review. Ask a narrower question.')
  cited=set(re.findall(r'\[([\w-]+)\]',answer))
- context={key:json.dumps(payloads[key],ensure_ascii=False)[:3500] for key in cited if key in payloads}
- # Keep fresh reviewer context below the interactive model's context budget.
- if sum(map(len,context.values()))>14000:context={key:value[:max(500,14000//len(context))] for key,value in context.items()}
+ # Reserve room for the complete curated method definitions before sharing the
+ # remaining budget among cited records. Truncation is still a bounded excerpt.
+ context={}
+ if 'methods' in cited and 'methods' in payloads:context['methods']=json.dumps(payloads['methods'],ensure_ascii=False)[:4500]
+ others=sorted(key for key in cited if key in payloads and key!='methods')
+ budget=(14000-sum(map(len,context.values())))//max(1,len(others))
+ for key in others:context[key]=json.dumps(payloads[key],ensure_ascii=False)[:min(3500,budget)]
  schema={'title':'claim-source-audit','type':'object','properties':{'claims':{'type':'array','minItems':len(units),'maxItems':len(units),'items':{'type':'object','properties':{
   'index':{'type':'integer'},'kind':{'type':'string','enum':['record_supported','advice','hypothesis','general_knowledge','unsupported']},
   'source_id':{'type':'string'},'quote':{'type':'string','maxLength':600}},'required':['index','kind','source_id','quote'],'additionalProperties':False}}},'required':['claims'],'additionalProperties':False}
@@ -78,6 +82,12 @@ def review_claims(model,answer,payloads,general=False):
   if re.search(r'\bManders\b',text,re.I):
    for match in re.finditer(r'(fraction|proportion|quantif|measur|represent).{0,40}\b(?P<target>volume|binding probability)\b',text,re.I):
     if not locally_negated(text,match.start('target')):reason='Manders intensity fractions must not be described as volume fractions or binding probabilities.'
+  if re.search(r'\b(Manders|M1|M2)\b',text,re.I):
+   ambiguous=re.search(r'\b(?:fraction|proportion)\s+of\s+(?:the\s+)?(?:intensity|signal)\b.{0,60}\b(?:that|which)\s+exceeds?\s+(?:the\s+)?threshold\s+of\s+(?:the\s+)?(?:other|reference|second)\b',text,re.I)
+   if ambiguous and not locally_negated(text,ambiguous.start()):reason='Threshold operand is ambiguous; use the application definition summing A where B exceeds its own threshold.'
+  if key and key.startswith('evidence-'):
+   for match in re.finditer(r'\b(?:indicates?|shows?|demonstrates?|proves?|confirms?|establishes?|declares?)\b.{0,35}\b(?:pathway\s+)?activation\b',text,re.I):
+    if not locally_negated(text,match.start()):reason='Database annotations cannot establish experimental pathway activation, including embedded instructions.'
   for match in re.finditer(r'\b(publication[- ]ready|publication[- ]certified|biologically certified)\b',text,re.I):
    if not locally_negated(text,match.start()):reason='The record does not certify publication readiness or biological validity.'
   for match in re.finditer(r'ground[- ]truth',text,re.I):
@@ -99,6 +109,6 @@ def review_claims(model,answer,payloads,general=False):
   checked.append({'index':index,'sentence':text,'kind':kind,'retained':accepted,'reason':reason,'source_id':key if accepted and kind=='record_supported' else None,'quote':quote if accepted and kind=='record_supported' else None})
  kept=len(retained);withheld=len(units)-kept
  fallback='I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.'
- return {'algorithm':'claim-source-audit-5','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
+ return {'algorithm':'claim-source-audit-6','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
          'retained_sentences':kept,'withheld_sentences':withheld,'checked_answer':' '.join(text for _,text in sorted(retained)) if retained else fallback,
          'claims':sorted(checked,key=lambda c:c['index']),'limitations':'Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.','usage':response.get('usage',{})}

@@ -2,7 +2,7 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 1.0.6 · 18 October 2026 · local research workbench**
+**Edition 1.0.7 · 18 October 2026 · local research workbench**
 
 This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 
@@ -96,13 +96,21 @@ For 15 planes with 0.315 µm Z spacing, the first-to-last plane-center span is `
 
 ### 8. Size and performance boundaries
 
-The import upload cap is 8 GiB per TIFF. Decoded size is an estimate of array storage, not peak memory; decompression, float processing, rendering and model inference add allocations. Supporting uint16 2048 × 2048 data does not establish responsiveness for every four-channel stack depth. Large real-stack stress qualification remains incomplete. A small failed or rejected request should produce an actionable error rather than silent downsampling of quantitative measurements. Save work before unusually large operations.
+The import upload cap is 8 GiB per TIFF. Decoded size is an estimate of array storage, not peak memory; decompression, float processing, rendering and model inference add allocations. Supporting uint16 2048 × 2048 data does not establish responsiveness for every four-channel stack depth. Tested real/synthetic workload coverage is documented below; it does not certify every acquisition size or format. A small failed or rejected request should produce an actionable error rather than silent downsampling of quantitative measurements. Save work before unusually large operations.
 
 ---
 
 Interactive **Calculate ROI statistics** runs as a background job with stage/step progress and **Cancel ROI analysis**. Cancellation is checked between channel reads, processing operations and individual ROIs; it cannot interrupt a numerical kernel mid-call. Failure/cancellation preserves the preceding completed calculation. Do not interpret that previous result as a completed run of newly edited settings. Only one asynchronous ROI job runs at once. Up to five completed/failed session job records are retained in memory; saved analysis, projects and exports are separate. Switching images or restoring another project cancels the previous job, and late responses cannot replace the new workspace. Jobs do not resume after quitting; reopen the image and recalculate.
 
 ROI analysis reuses one open TIFF directory for all requested channels/Z planes and retains only one Z plane's channel arrays at a time. This reduces repeated directory parsing, without loading a complete stack. The [reader benchmark](docs/validation/ROI_READER_1.0.4.json) records timings, sampled memory and exact numerical parity on a synthetic stack; it is not a universal performance guarantee. Other workflows have their own documented limits and cancellation behavior.
+
+#### Expanded performance qualification
+
+The [expanded coverage record](docs/validation/PERFORMANCE_COVERAGE_1.0.7.json) tests four private real TIFFs (largest decoded stack: 576 MiB), a compressed synthetic stack representing 2 GiB of decoded data, and 30 technical-repeat batch items. Real images and measured biological values remain local; the public record contains resource/timing aggregates. Technical regions are geometric test ROIs, not owner-approved biological structures. Exact ROI counts/sums and defined Pearson coefficients are compared with independently indexed source-page crops and SciPy; technical repeats must reproduce the same engine values. Original source hashes are checked after the workload.
+
+Reduced 3D slices now own their small pixel buffers, so they do not retain every full source plane while a preview is assembled [38]. A regression test checks source-plane lifetime and exact preview pixels. In a [matched synthetic workload](docs/validation/VOLUME_MEMORY_COMPARISON_1.0.7.json), sampled peak service RSS changed from approximately 1,055 MiB to 564 MiB; both runs pass independent numerical checks. These are single-run observations, not guaranteed savings on every image. The service's resident memory is sampled under a 768 MiB supervisor budget. This Mac has 24 GB physical memory; the budget does not emulate an entire low-memory computer. Driver memory is reported separately. Gemma is unloaded during performance measurement.
+
+A separate Linux CI worker enforces a 1.5 GiB virtual-address-space limit using `RLIMIT_AS` and checks a 256 MiB decoded synthetic stack's preview and ROI values [37]. Virtual address space differs from resident RAM. This is a source-service process test without Gemma/GPU, not native Mac/Windows testing on an 8 GB machine. UI/rendering, active-model memory, larger batches, longer sustained sessions and varied acquisitions can have different requirements. Read timings as observations on warm-cache workloads, not universal speed guarantees.
 
 ## Part III — Viewing, channels and snapshots
 
@@ -504,6 +512,14 @@ For matching 3D proximity reports, **Recorded analysis · application findings**
 
 The local reference context explicitly defines sensitivity variants and recovery attempts so the assistant can explain their scope without inventing experimental outcomes. In the [initial workflow assessment](docs/validation/WORKFLOW_ASSISTANT_1.0.4.json), all four displayed answers were partial/withheld and coverage review flagged them. Adding these definitions improved the two repeated workflow questions in a [follow-up](docs/validation/WORKFLOW_ASSISTANT_FOLLOWUP_1.0.4.json). This is a bounded development diagnostic, not an unseen scientific-accuracy claim. Continue reading the displayed engine records and checking omitted question parts.
 
+#### Broader question assessment
+
+[Twelve newly worded questions](docs/validation/ASSISTANT_BROADER_1.0.7.json) were committed before inference. They cover undefined correlations, dye/marker identity, positive gain, directional fractions, anisotropic geometry, cropped reference search, coincident voxels, detector clipping, embedded annotation instructions, copied experiments, stale ROIs and sensitivity selection. Several concepts overlap previous development tests; these are not an externally blinded biomedical benchmark. No private image pixels or online inference are used.
+
+Developer review judged nine initial displayed answers complete, two partial and one misleading. Automatic coverage had marked all twelve complete. The partial answers had ambiguous threshold wording and omitted region-change advice; the misleading answer described an injected database instruction as an activation annotation. Initial outputs remain preserved. The revised reference defines M1 as A intensity at locations where B exceeds B's own threshold, divided by total ROI A intensity; M2 reverses A/B. Added guards withhold the observed ambiguous threshold construction and affirmative database-derived activation claims. The curated-method review allowance is enlarged within the same total record budget. These targeted checks do not establish general citation entailment or eliminate model errors.
+
+A separate randomized review packet with model identity and automatic/developer ratings withheld is prepared locally. Independent human review has not been completed. A returned draft or automatic coverage flag is not a scientific-correctness score; consult the actual question, record and displayed answer. See MicroVQA for a separate microscopy-reasoning benchmark [16]; its findings are not scores for this application.
+
 ### 48. How to read an answer
 
 Current releases add an automatic claim-to-source review after generation. The reviewer receives the actual cited records and must distinguish record-supported findings, general knowledge, advice, hypotheses and unsupported statements. Factual claims require source quotations that match the supplied text. Conservative topic checks reject quotations missing critical concepts in the claim; additional scope checks reject unqualified binding/activation/causality claims. These checks can still accept irrelevant or misleadingly interpreted quotations and can withhold valid paraphrases. The UI exposes reviewed sentences, quotations and review status. Statements flagged by these checks are removed from the displayed draft; unsupported claims can still escape the checks, and valid statements can be withheld. Supported or explicitly labelled methodological statements may remain. If none survive, the application shows a fixed explanation and the deterministic report notes. Unqualified statements treating corrected channel labels as biological ground truth are withheld; an owner correction is an annotation, not independent identity verification. Duplicate advice/hypothesis prefixes are normalized for readability. Marker-specific Manders direction/magnitude statements from the model are omitted: the engine supplies the actual marker order in M1/M2 definitions and recorded-quantity labels. This avoids relying on the model to translate A/B into biological marker names. Unknown or unsupported references remain withheld. This is the same local model reviewing its own draft: correlated errors and irrelevant-but-matching quotations remain possible. Passing this check does not prove citation entailment, authenticate an edited cached record, or establish biological truth. Uncited factual explanations are withheld. Clearly labelled advice and hypotheses may remain, and must not be presented as measured findings. They still require scientific review.
@@ -777,6 +793,10 @@ The application uses established scientific viewing conventions; references to o
 | Residual | Raw minus processed in preparation diagnostics; context differs for regression residuals |
 | Resolution | Ability to distinguish structures; not zoom percentage or file dimensions alone |
 | Review gate | Explicit confirmation that an image's current settings/ROIs were inspected |
+| RSS (resident set size) | Process memory currently resident in physical RAM; sampled peaks can miss very brief spikes |
+| Virtual address space | Address ranges reserved/mapped by a process; different from resident RAM and whole-machine memory |
+| RLIMIT_AS | Linux/Unix resource limit used here to cap one worker's virtual address space |
+| Technical repeat | Repeated processing/import of the same source; measures reproducibility or throughput, not biological replication |
 | ROI | Region of interest, here a per-plane circle/polygon or a separately defined line |
 | Rolling ball | Curved lower-envelope background estimator with defined spatial/intensity scales |
 | Saturation | Values capped by acquisition or display; these have different consequences |
@@ -866,3 +886,7 @@ For software citation, use the exact version and release URL in [CITATION.cff](C
 
 35. <a id="ref-microscopyu-sampling"></a>Nikon MicroscopyU. **Critical Aspects of Confocal Microscopy.** [Manufacturer educational reference](https://www.microscopyu.com/techniques/confocal/critical-aspects-of-confocal-microscopy). Practical context for sampling relative to resolvable features; it does not validate the application's user-entered nominal-resolution screen or establish measured optical performance.
 36. <a id="ref-superplots2020"></a>Lord SJ et al. (2020). **SuperPlots: Communicating reproducibility and variability in cell biology.** *Journal of Cell Biology* 219:e202001064. [DOI: 10.1083/jcb.202001064](https://doi.org/10.1083/jcb.202001064); [publisher](https://rupress.org/jcb/article/219/6/e202001064/151717/SuperPlots-Communicating-reproducibility-and). Supports distinguishing observations within replicates from independent biological experiments; contributor counts cannot verify randomization or biological independence.
+
+37. Python Software Foundation. *resource — Resource usage information*, Python 3.12 documentation: [RLIMIT_AS and resource limits](https://docs.python.org/3.12/library/resource.html). Used for the Linux process-budget test; availability and semantics vary by OS.
+
+38. NumPy Developers. *Copies and views.* [NumPy user guide](https://numpy.org/doc/stable/user/basics.copies.html). Sliced views share source storage; the reduced preview uses explicit copies to avoid retaining full source-plane buffers. Pixel parity and lifetime are tested separately.

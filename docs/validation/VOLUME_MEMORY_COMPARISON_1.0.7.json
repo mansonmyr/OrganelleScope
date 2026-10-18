@@ -1,0 +1,69 @@
+{
+  "scope": "Matched generated geometry, decoded uint16 pixel construction and workload options in separate source-service runs on the same Mac; model unloaded. Single runs with warm OS caches, not a general performance guarantee. TIFF container checksums differ because generated metadata may vary; both runs pass the independent numerical oracle. No physical low-memory computer tested.",
+  "host": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "physical_memory_bytes": 25769803776
+  },
+  "workload": {
+    "channels": 4,
+    "z_planes": 64,
+    "width": 2048,
+    "height": 2048,
+    "decoded_bytes": 2147483648,
+    "technical_batch_items": 2
+  },
+  "before": {
+    "status": "passed",
+    "service": {
+      "status": "ok",
+      "version": "1.0.6"
+    },
+    "implementation_sha256": null,
+    "rss_budget_mib": 1536,
+    "memory": {
+      "service_peak_rss_bytes": 1106411520,
+      "driver_peak_rss_bytes": 1026867200
+    },
+    "batch": {
+      "items": 2,
+      "elapsed_seconds": 0.19481175008695573,
+      "all_completed": true,
+      "exact_repeat_results": true,
+      "repeated_source_flagged": true,
+      "maximum_ready_latency_seconds": 0.014854666078463197,
+      "ready_probes": 4,
+      "excel_bytes": 13401,
+      "scope": "Repeated imports of one real field, or synthetic data when no real directory supplied. Technical throughput, not biological replication."
+    }
+  },
+  "after": {
+    "status": "passed",
+    "service": {
+      "status": "ok",
+      "version": "1.0.7"
+    },
+    "implementation_sha256": {
+      "main.py": "a134e1527984c4cee1e4fe4714fb361ee59424a107d52d416a0542d0b157871b",
+      "image_io.py": "d07635c28aa9988d6227e9bff0b65e5e88fc2d602be128177f7293ce4f5ae828",
+      "analysis_service.py": "4663f79b9e6b11fd20b265e0c3a27cc3ed0e826bf0422fe66eb2787b3fd15147"
+    },
+    "rss_budget_mib": 1536,
+    "memory": {
+      "service_peak_rss_bytes": 591757312,
+      "driver_peak_rss_bytes": 926908416
+    },
+    "batch": {
+      "items": 2,
+      "elapsed_seconds": 0.19752475002314895,
+      "all_completed": true,
+      "exact_repeat_results": true,
+      "repeated_source_flagged": true,
+      "maximum_ready_latency_seconds": 0.014418582897633314,
+      "ready_probes": 4,
+      "excel_bytes": 13403,
+      "scope": "Repeated imports of one real field, or synthetic data when no real directory supplied. Technical throughput, not biological replication."
+    }
+  },
+  "mechanism": "A downsampled view previously retained each complete source plane until stacking. Copying the reduced slice releases the complete plane immediately. Regression tests verify source-plane lifetime and exact volume pixels.",
+  "both_independent_roi_oracles_pass": true
+}
