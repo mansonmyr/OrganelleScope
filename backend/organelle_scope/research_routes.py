@@ -13,6 +13,7 @@ from organelle_scope.processing import process_plane, provenance
 from organelle_scope.roi_analysis import AnalysisRequest, analyze_roi
 from organelle_scope.spatial_validation import SpatialRequest, spatial_shift, reference_benchmarks
 from organelle_scope.volume_analysis import CuboidRequest, summarize_cuboid
+from organelle_scope.sensitivity import RoiSweepRequest,scaled_roi
 
 
 def register_research(app, stored, authorized):
@@ -53,6 +54,37 @@ def register_research(app, stored, authorized):
                     results.append({'roi':roi.model_dump(),'raw':before,'processed':after,'deltas_processed_minus_raw':changes})
             return {**stamp(record),'processing':provenance(options.processing,folder.parent),'request':options.model_dump(),'results':results,
                     'reference_benchmarks':reference_benchmarks(),'scope':'Descriptive processing sensitivity; no biological confidence intervals or publication certification.'}
+        except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
+
+    @app.post('/api/images/{image_id}/validation/parameter-sweep', dependencies=[Depends(authorized)])
+    def parameter_sweep(image_id:str,options:RoiSweepRequest):
+        folder,record,info=stored(image_id)
+        try:
+            if options.threshold_mode=='costes':raise ImageError('Choose explicit manual or zero thresholds for sensitivity sweeps.')
+            if len(options.rois)>10 or info.dimensions['X']*info.dimensions['Y']*len({r.z for r in options.rois})*info.dimensions['C']>64_000_000:raise ImageError('Sweep budget: ten ROIs and 64 million source-plane values.')
+            options.processing.validate_channels(info.dimensions['C'],info.bit_depth)
+            if options.target_channel>=info.dimensions['C']:raise ImageError('Select an available target channel.')
+            thresholds=options.thresholds if options.threshold_mode=='manual' else [0.]*info.dimensions['C']
+            ceiling=2**info.bit_depth-1
+            if len(thresholds)!=info.dimensions['C'] or any(not math.isfinite(t) or t<0 or t>ceiling for t in thresholds):raise ImageError('Provide valid thresholds for every channel.')
+            if options.threshold_step>ceiling:raise ImageError('Threshold step exceeds the source storage range.')
+            results=[]
+            for z in sorted({r.z for r in options.rois}):
+                planes=[process_plane(read_plane(folder/'source.tiff',info,c,z),options.processing,c,folder.parent,z) for c in range(info.dimensions['C'])]
+                for roi in (r for r in options.rois if r.z==z):
+                    variants=[('baseline',roi,thresholds),('size_smaller',scaled_roi(roi,1-options.size_fraction),thresholds),('size_larger',scaled_roi(roi,1+options.size_fraction),thresholds)]
+                    for channel in range(info.dimensions['C']):
+                        for sign in [-1,1]:
+                            adjusted=list(thresholds);adjusted[channel]=max(0,min(ceiling,adjusted[channel]+sign*options.threshold_step))
+                            variants.append((f'threshold_C{channel+1}_{"lower" if sign<0 else "higher"}',roi,adjusted))
+                    rows=[]
+                    for name,region,levels in variants:
+                        try:
+                            measured=analyze_roi(planes,region,info.channel_labels,options.target_channel,'manual',levels,(info.calibration['X'].value_um,info.calibration['Y'].value_um))
+                            rows.append({'variant':name,'thresholds':levels,'result':measured})
+                        except ImageError as exc:rows.append({'variant':name,'thresholds':levels,'unavailable_reason':str(exc)})
+                    results.append({'roi_id':roi.id,'variants':rows})
+            return {**stamp(record),'request':options.model_dump(),'results':results,'scope':'One factor at a time: size or one channel threshold. Polygon scaling uses the vertex-average centre; circles keep their centre and scale diameter/radius. Thresholds clip at storage bounds; repeated settings can result. Image-edge intersections are reported. These are descriptive settings sensitivity, not independent replicates, confidence intervals or an automatic best-setting selection.'}
         except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
 
     @app.post('/api/images/{image_id}/validation/spatial', dependencies=[Depends(authorized)])

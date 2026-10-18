@@ -21,7 +21,7 @@ def interpretation_snapshot(record):
             for channel in row.get('channel_summary',[]):
                 if channel.get('std')==0:notes.append(str(channel.get('label','A channel'))+(' is all zero in a selected ROI. High-intensity saturation is not an explanation for this recorded zero range.' if channel.get('sum')==0 else ' has constant intensity in a selected ROI.')+' Correlation is undefined; this does not establish biological absence. Changing a threshold cannot restore intensity variation.')
         notes.append('ROI coefficients describe selected image regions; they do not establish binding or independent biological replication.')
-    keys={'cuboid':'OrthogonalWorkspace.report','segmentation':'Segmentation.report','spatial':'ValidationPanel.spatial','sensitivity':'ValidationPanel.sensitivity','acquisition':'ChannelPanel.quality'}
+    keys={'cuboid':'OrthogonalWorkspace.report','segmentation':'Segmentation.report','spatial':'ValidationPanel.spatial','sensitivity':'ValidationPanel.sensitivity','acquisition':'ChannelPanel.quality','parameter_sweep':'ValidationPanel.parameterSweep','segmentation_sensitivity':'Segmentation.sensitivity'}
     for kind,key in keys.items():
         report=work.get(key)
         if not isinstance(report,dict):continue
@@ -46,12 +46,13 @@ def interpretation_snapshot(record):
             notes.append('Proximity uses separate directed foreground denominators and reference signal inside the selected cuboid only. Outside reference signal is not searched; zero distance means coincident occupied voxel centres, not zero molecular separation. Threshold/ROI choices and anisotropic Z/Y/X spacing affect the result.')
             notes.append('Segmentation identifies threshold-defined foreground in the selected cuboid, not an automatic organelle identity. Edge-touching objects may be truncated; proximity describes occupied voxel centers, not molecular binding distances.')
         else:
-            reports[kind]={k:report.get(k) for k in ('request','z','channels','pairs','voxel_count','region_volume_um3','scope','calibration_notes','results','definition') if k in report}
+            reports[kind]={k:report.get(k) for k in ('request','z','channels','pairs','voxel_count','region_volume_um3','scope','calibration_notes','results','definition','sampling_review','variants') if k in report}
+        if kind in ('parameter_sweep','segmentation_sensitivity'):notes.append('Settings sweeps vary one factor at a time. The resulting differences are descriptive, not confidence intervals, independent replicates or a prescription to select a favourable setting.')
         if kind=='acquisition':notes.append('Signal checks describe only the recorded XY plane. Storage-ceiling pixels do not establish detector saturation; no ceiling pixels does not exclude acquisition clipping below that ceiling.')
     experiment=work.get('ExperimentPanel.report')
     if isinstance(experiment,dict) and experiment.get('request',{}).get('run_id')==work.get('ExperimentPanel.runId'):
-        reports['experiment']={k:experiment.get(k) for k in ('algorithm','request','selected_channel_labels','groups','contrasts','aggregation','multiple_comparisons','scope')}
-        notes.append('The experiment comparison belongs to its batch, not necessarily the current image. Effects and intervals are conditional on the selected design; pixels, Z planes and multiple ROIs are not independent experiments. Bayesian intervals depend on the supplied prior; a likelihood ratio is not a binding posterior.')
+        reports['experiment']={k:experiment.get(k) for k in ('algorithm','request','selected_channel_labels','groups','contrasts','aggregation','multiple_comparisons','scope','replication_review')}
+        notes.append('The experiment comparison belongs to its batch, not necessarily the current image. Experiment counts are supplied labels, not verified culture independence. Exact raw-source ROI duplicates are rejected; distinct ROIs/cells still require design review. Effects and intervals are conditional on the selected design; pixels, Z planes and multiple ROIs are not independent experiments. Bayesian intervals depend on the supplied prior; a likelihood ratio is not a binding posterior.')
     elif experiment:notes.append('Experiment report excluded: its selected batch does not match.')
     if not reports and not analysis:notes.append('No matching measurement report is supplied. Missing documentation does not prove experiments were not performed.')
     return {'source_id':'interpretation','scope':'Application-generated reading guide from supplied reports; not independent biological validation or an LLM finding.',

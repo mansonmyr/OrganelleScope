@@ -98,7 +98,7 @@ class LocalModel:
         'stream':False,'chat_template_kwargs':{'enable_thinking':self.manifest.get('thinking_enabled',False)}}
   if 'repeat_penalty' in self.manifest:body['repeat_penalty']=self.manifest['repeat_penalty']
   if tools:body.update(tools=tools,parallel_tool_calls=False)
-  if response_format:body.update(response_format=response_format,max_tokens=2400 if response_format.get('schema',{}).get('title')=='claim-source-audit' else 1200)
+  if response_format:body.update(response_format=response_format,max_tokens=2400 if response_format.get('schema',{}).get('title')=='claim-source-audit' else 900 if response_format.get('schema',{}).get('title')=='answer-completeness' else 1200)
   # Model prefill plus generation can exceed two minutes on a CPU or a busy Mac.
   return self._request('/v1/chat/completions',body,timeout=300)
 

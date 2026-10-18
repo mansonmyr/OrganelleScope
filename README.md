@@ -5,17 +5,17 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Version 1.0.2 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
+**Version 1.0.3 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
 
 ## Main features
 
-- TIFF / OME-TIFF / ImageJ TIFF, native 8/16-bit data, static images/Z stacks and up to four channels, with metadata review and physical calibration.
+- TIFF / OME-TIFF / ImageJ TIFF, native 8/16-bit data, static images/Z stacks and up to four channels, with metadata review, physical calibration and acquisition sampling/ceiling checks.
 - Persistent native-range XY/3D preview, optional automatic contrast, editable channel names, signal checks, per-channel LUTs, trackpad zoom/panning, linked sections and PNG snapshots with display provenance.
 - Circular/polygonal ROIs, physical circle diameters, line profiles, FWHM and defined Pearson/Spearman/Manders measurements.
 - Background subtraction and optional Gaussian smoothing, matched-contrast previews and processing diagnostics.
-- Full-resolution cuboids, inspectable threshold masks/objects, bidirectional calibrated voxel-centre proximity and radial enrichment.
+- Full-resolution cuboids, threshold masks, bidirectional calibrated voxel-centre proximity and radial enrichment, with ROI/threshold/cuboid sensitivity sweeps.
 - Reviewed per-image batches with channel editing and design checks, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
-- Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant for recorded results and evidence.
+- Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant with separate claim support and question-coverage reviews.
 - Workspace sidebar project controls, portable archives, recovery state and source/settings/evidence provenance.
 
 ## Start here

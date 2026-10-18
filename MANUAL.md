@@ -2,7 +2,7 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 1.0.2 · 18 October 2026 · local research workbench**
+**Edition 1.0.3 · 18 October 2026 · local research workbench**
 
 This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 
@@ -117,6 +117,10 @@ A **lookup table (LUT)** maps normalized display intensity to colour. In **Chann
 Selections apply to the selected single-image workspace's XY preview, VTK volume, linked sections, preparation/background previews and line-chart colours. Captures inherit their displayed colours. The segmentation label/mask surface uses an annotation colour to distinguish geometry; it is not another acquisition-channel LUT. Batch queue images retain their separate viewing context and default colours; the single-image sidebar does not recolour unrelated queued images. The batch workflow does not yet expose per-item LUT editing.
 
 LUT selections are saved with the project and recovery workspace and recorded in inspection/snapshot details. **Reset channel LUTs** restores the standard per-channel palette. Changing a LUT does not change source TIFF pixels, masks, ROI geometry, background recipes, thresholds, channel order, regression target or statistical results. It does not clear a valid measurement. Existing projects without LUT settings use defaults. This follows the distinction between display colour and measurement emphasized in [ImageJ's colocalization guide](https://imagej.net/imaging/colocalization-analysis).
+
+**Optional acquisition specifications** accepts nominal lateral/axial resolution in micrometres and a detector ceiling in native intensity units. Leave unknown quantities blank. A supplied ceiling applies to every channel in that check; values at/above it are counted, while values exceeding it flag a potentially inconsistent setting or acquisition/export scaling. This remains a possible-clipping screen, not proof of detector saturation. A 12-bit acquisition stored in a 16-bit TIFF may have a ceiling such as 4095; the software does not assume that from the observed maximum.
+
+For each axis, the sampling report calculates `supplied nominal resolution / physical spacing` when both are usable. Spacing coarser than half the supplied resolution prompts an undersampling review; otherwise the report states that there are at least two samples per supplied resolution. This is a screening comparison, **not a certified Nyquist test or a measured PSF**: resolution definitions and optical conditions matter. Conflicting/missing calibration remains unassessed. Z sampling is not applicable to a single plane. Registration stays **not measured**; no accuracy or displacement correction is inferred from spacing or microscope specifications. [MicroscopyU](#ref-microscopyu-sampling) discusses practical sampling considerations. The check reads only the selected XY plane, even though spacing describes the stack.
 
 ### 10. Display contrast and composites
 
@@ -330,6 +334,14 @@ For each channel/shell, the engine reports voxel count, sampled physical volume,
 
 Use the same source ROI and zero/manual thresholds to compare raw and prepared intensities. The report supplies each result and processed-minus-raw metric deltas. Automatic threshold mode is excluded from this matched comparison because changing thresholds simultaneously would confound the processing effect. Sensitivity is descriptive: it does not choose the scientifically correct recipe automatically. A small delta under one recipe is not universal robustness.
 
+**ROI size & threshold sensitivity**, in Validation, compares a baseline with smaller/larger ROIs and lower/higher thresholds for one channel at a time. Select zero or manual thresholds in ROI measurements; automatic Costes thresholds are excluded from this controlled comparison. The threshold step is additive in native intensity units. The default step is a starting entry, not an acquisition-derived recommendation. Thresholds clip at zero/storage ceiling, so some tested settings may coincide.
+
+The linear-size change defaults to ±20%, not ±20% area: circle radius/physical diameter scales about its unchanged centre; polygons scale about the average of their vertices. Area changes roughly with the square of linear scale, with discrete pixel and image-edge effects. Every variant records thresholds, geometry, pixel count, coefficients and any clipping/undefined reason. Threshold-only changes do not alter unthresholded Pearson/Spearman at fixed ROI and processing, but can alter directional Manders masks. Sweeps support at most ten ROIs and 64 million channel-plane values. They preserve the original analysis and source TIFF; export the sensitivity JSON to retain all variants.
+
+**Cuboid boundary & threshold sensitivity**, in the 3D segmentation workspace, requires a manual marker threshold and no excluded object IDs. It varies marker/reference thresholds separately and expands/contracts every cuboid face by a declared source-voxel step. An equal voxel step has different physical extent on anisotropic axes. Bounds clamp to the image; invalid shrunken regions and empty masks remain explicitly unavailable. Each row records bounds, thresholds, marker voxel count and directed proximity summaries. Source windows are prepared once and reused for that sweep. Radial shells and display surfaces are not recomputed. The combined budget is two million cuboid voxels over all variants, and the existing per-cuboid limits still apply. Changing thresholds/bounds may change object identities and denominators; restore object exclusions before sweeping.
+
+Both sweeps are **one factor at a time**, not a complete factorial analysis. Their observed spread is not a confidence interval, their variants are not independent replicates, and the software does not select a favourable setting. Consider whether the biological conclusion changes across justified settings and report the sensitivity alongside the baseline. Small changes over a narrow tested range do not establish universal robustness.
+
 ### 35. Whole-plane spatial shift control
 
 The optional control keeps one ROI and channel A fixed and translates channel B over the **entire XY plane**, wrapping at edges. It computes an upper-tail positive-association Pearson comparison. This preserves the shifted channel's spatial arrangement on a torus; it does not independently shuffle pixels. The user must judge whether translation invariance across the field is defensible. Cell borders, organelle compartments, gradients and ROI selection based on visible overlap can violate this null.
@@ -345,6 +357,8 @@ The operational minimum is three independent experiments per condition, not a re
 The app also checks that the selected marker names match exactly across batch images in the same native channel positions. A matching index alone is insufficient. Missing names or a changed selected marker stops the comparison; reconcile channel identities and recalculate first. Matching names are a necessary bookkeeping check, not independent confirmation that labelling is biologically correct.
 
 The experimental unit follows the independently applied intervention and design, rather than the number of observations a microscope produces. [Lazic et al. 2018](#ref-lazic2018) discuss cell-culture examples; [Hurlbert 1984](#ref-hurlbert1984) describes the general pseudoreplication problem. OrganelleScope's experiment/cell hierarchy is a supported design, not an automatic determination of which unit was randomized in your experiment.
+
+The comparison also exposes **Replication and contribution counts**: labelled experiments, cells, contributing ROI values, unique raw-source hashes and cells per experiment. These count supplied labels rather than verifying culture independence. The same raw-source ROI geometry cannot enter the selected comparison twice, even after renaming image/ROI/cell IDs. Polygon start point/direction and circle edge direction are normalized for this exact-geometry check. Distinct ROIs in one source image can represent different labelled cells in the same condition/experiment, but labels and image hashes alone cannot establish that those cells are independent biological experiments. Re-encoded images and different overlapping ROI geometries are not automatically identified as duplicates. The current workflow still requires each raw source to belong to one condition and experiment; mixed-condition fields require a different explicitly designed annotation workflow. [SuperPlots](#ref-superplots2020) explains why displaying cell-level observations and biological replicates separately is important.
 
 ### 37. Paired versus independent design
 
@@ -484,6 +498,10 @@ Each new answer includes expandable **Measurement context · application checks*
 For example, a threshold mask's high conditional proximity fraction can support an image-scale spatial description. It cannot establish molecular binding. A constant-channel correlation is undefined despite a completed calculation; changing a threshold does not restore missing variation. KEGG membership can motivate a hypothesis for knockdown studies, but does not establish that a pathway was active or predict a causal direction in the imaged cells. Review measurement interpretation against [Dunn et al.](#ref-dunn2011), acquisition limitations against [Jost & Waters](#ref-jost2019), and replicate claims against [Lazic et al.](#ref-lazic2018).
 
 Local generation can take minutes on a CPU or a busy computer. Each completion request has a five-minute timeout; a timeout is an operational failure and is not evidence for an answer. The synthetic assessment records both accepted drafts and timeouts. See [current interpretation/QC verification](docs/VALIDATION.md) and [qualitative model review](README_MODEL_DECISIONS.md#preserved-assessment-assistant-interpretation-review).
+
+**Question coverage · automatic** is a separate bounded review of the displayed AI draft after claim/source review. It identifies up to six request parts using question marks, lines and numbered items, then marks each as addressed, partial or unanswered. An addressed/partial item must include an exact quotation from the displayed answer. Invented quotations, malformed mappings or truncated reviewer output cannot claim completeness. Requests beyond the limit keep the overall result incomplete; compound clauses may contain requirements that the splitter/reviewer misses. Missing coverage never blocks asking a question or hides an otherwise usable draft. It adds one local model review and may increase response time.
+
+Coverage is not truth: a fluent answer can address a question incorrectly, and a correctly cited answer can omit a requested explanation. Both automatic reviews use the same model and remain fallible. Partial coverage opens its review by default for inspection. [Four controlled answer-pair diagnostics](docs/validation/COMPLETENESS_REVIEW_1.0.3.json) matched developer labels for complete versus deliberately incomplete answers. This small assessment is not general assistant accuracy, an independent biomedical benchmark or evidence that every future omission will be detected.
 
 ### 49. One model, vision options and GPT-OSS
 
@@ -732,6 +750,9 @@ The application uses established scientific viewing conventions; references to o
 | R² | In-sample fraction of target variation explained by the fitted regression |
 | Radius | Center-to-edge distance; not the physical circle editor's diameter |
 | Raw | Original acquisition intensities before the applied preparation recipe |
+| Question coverage | Automatic review of which identified request parts an AI draft addresses; separate from truth and citation support |
+| Nominal resolution | User-supplied optical specification, distinct from physical pixel/Z spacing or a measured PSF |
+| Settings sweep | Descriptive one-factor variation around a baseline; not a confidence interval or best-setting search |
 | Registration | Alignment of channels/images; calibration alone does not perform it |
 | Residual | Raw minus processed in preparation diagnostics; context differs for regression residuals |
 | Resolution | Ability to distinguish structures; not zoom percentage or file dimensions alone |
@@ -822,3 +843,6 @@ These papers support the concepts identified below. A citation is not an endorse
 - [Third-party notices](third_party/NOTICE.md) and [release notes](docs/RELEASE_NOTES.md).
 
 For software citation, use the exact version and release URL in [CITATION.cff](CITATION.cff). Cite the original statistical/imaging methods separately; a software citation does not substitute for acquisition or analysis details.
+
+35. <a id="ref-microscopyu-sampling"></a>Nikon MicroscopyU. **Critical Aspects of Confocal Microscopy.** [Manufacturer educational reference](https://www.microscopyu.com/techniques/confocal/critical-aspects-of-confocal-microscopy). Practical context for sampling relative to resolvable features; it does not validate the application's user-entered nominal-resolution screen or establish measured optical performance.
+36. <a id="ref-superplots2020"></a>Lord SJ et al. (2020). **SuperPlots: Communicating reproducibility and variability in cell biology.** *Journal of Cell Biology* 219:e202001064. [DOI: 10.1083/jcb.202001064](https://doi.org/10.1083/jcb.202001064); [publisher](https://rupress.org/jcb/article/219/6/e202001064/151717/SuperPlots-Communicating-reproducibility-and). Supports distinguishing observations within replicates from independent biological experiments; contributor counts cannot verify randomization or biological independence.

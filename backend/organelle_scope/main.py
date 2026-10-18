@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import argparse
 import hashlib
 import io
@@ -147,14 +149,15 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             return record
 
     @app.get('/api/images/{image_id}/quality', dependencies=[Depends(authorized)])
-    def acquisition_quality(image_id: str, z: int = 0) -> dict:
+    def acquisition_quality(image_id: str, z: int = 0, lateral_resolution_um:float|None=None, axial_resolution_um:float|None=None, detector_ceiling:int|None=None) -> dict:
         folder, record, info = stored(image_id)
-        from organelle_scope.acquisition_quality import plane_quality
+        from organelle_scope.acquisition_quality import plane_quality,sampling_review
         try:
-            rows = [plane_quality(read_plane(folder/'source.tiff', info, c, z), c, label) for c, label in enumerate(info.channel_labels)]
+            if any(v is not None and (not math.isfinite(v) or v<=0 or v>1000) for v in [lateral_resolution_um,axial_resolution_um]):raise ImageError('Supply a finite positive nominal resolution up to 1000 µm.')
+            rows = [plane_quality(read_plane(folder/'source.tiff', info, c, z), c, label,detector_ceiling) for c, label in enumerate(info.channel_labels)]
         except (ImageError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from exc
-        return {'source_sha256': record['sha256'], 'image_info': record['info'], 'z': z, 'channels': rows,
+        return {'source_sha256': record['sha256'], 'image_info': record['info'], 'z': z, 'channels': rows,'sampling_review':sampling_review(info,lateral_resolution_um,axial_resolution_um),
                 'scope': 'Exact raw pixels of the selected XY plane only, not the whole stack or an ROI. Storage-ceiling counts do not establish detector saturation; acquisition bit depth/gain and controls require review.',
                 'calibration_notes': [f'{a} sampling is unknown or conflicting.' for a in 'XYZ' if (a!='Z' or info.dimensions['Z']>1) and (info.calibration[a].value_um is None or info.calibration[a].conflict)]}
 

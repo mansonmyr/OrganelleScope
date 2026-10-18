@@ -16,3 +16,8 @@ it('shows application notes without a model or project and keeps a failed questi
  await waitFor(()=>expect(screen.getByText(/AI draft unavailable/)).toBeTruthy());
  expect((screen.getByLabelText('Ask the local assistant') as HTMLTextAreaElement).value).toBe('What does this result mean?');
 });
+it('shows incomplete question coverage separately from the answer and source review',async()=>{
+ vi.mocked(json).mockImplementation(async path=>path==='/api/assistant/status'?{ready:true,model_available:true,runtime_available:true,model:{name:'Gemma',bytes:6975879296}}:{...summary,response_mode:'generated_draft',question_coverage:{assessed:true,all_parts_addressed:false,limitations:'Same-model review.',parts:[{index:0,request:'Why is this undefined?',status:'addressed',answer_quote:'The reference is empty.'},{index:1,request:'Is it absent from the cell?',status:'unanswered',answer_quote:''}]}});
+ render(<AssistantPanel projectId={null}/>);fireEvent.change(screen.getByLabelText('Ask the local assistant'),{target:{value:'Why is this undefined? Is it absent from the cell?'}});fireEvent.click(screen.getByText('Ask local assistant'));
+ await screen.findByText('Question coverage · automatic');expect(screen.getByText('unanswered')).toBeTruthy();expect(screen.getByText(/Some identified parts may be incomplete/)).toBeTruthy();
+});

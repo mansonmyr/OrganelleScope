@@ -10,7 +10,7 @@ from pydantic import BaseModel,Field,ConfigDict
 from typing import Literal
 from uuid import UUID
 from organelle_scope.image_io import ImageError
-from organelle_scope.batch_design import summarize_design
+from organelle_scope.batch_design import summarize_design,roi_geometry_key
 
 class ExperimentRequest(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -45,7 +45,7 @@ def analyze_experiment(run,options):
     if options.scale=='fisher_z' and options.metric not in ('pcc','spearman'):raise ImageError('Fisher transformation applies only to correlation metrics.')
     design=summarize_design([i for i in run['items'] if i.get('condition') in options.conditions])
     if any(s['conflicting_experiments_or_conditions'] for s in design['repeated_sources']):raise ImageError('Identical raw source data were assigned to different conditions or experiments. Correct the batch design; copied files are not independent experiments.')
-    by_cell=defaultdict(list);source_rows=[];excluded=[];recipes=set();channel_identities=set()
+    by_cell=defaultdict(list);source_rows=[];excluded=[];recipes=set();channel_identities=set();seen_regions={}
     for item in run['items']:
         if item.get('condition') not in options.conditions:continue
         if item['status']!='completed':raise ImageError('Every selected image must have completed measurements; failed/cancelled images are not silently excluded.')
@@ -61,6 +61,12 @@ def analyze_experiment(run,options):
         if any(c>=len(labels) or not isinstance(labels[c],str) or not labels[c].strip() for c in selected):raise ImageError('Selected channel identities are missing. Assign marker names and recalculate the batch before comparing conditions.')
         channel_identities.add(tuple(labels[c] for c in selected))
         for row in result['results']:
+            roi=row['roi']
+            if roi.get('kind') and roi.get('points') and result.get('source_sha256'):
+                geometry=roi_geometry_key(roi,result.get('image_info',{}))
+                region=(result['source_sha256'],geometry) if geometry is not None else None
+                if region is not None and region in seen_regions:raise ImageError('The same raw-source ROI geometry is repeated in the selected batch. Remove the duplicate measurement; renamed ROI/image/cell IDs do not create independent observations.')
+                if region is not None:seen_regions[region]=(condition,experiment,cell)
             if options.metric=='mean':
                 target=next((c for c in row['channel_summary'] if c['channel']==options.channel_a),None);value=target.get('mean') if target else None
             else:
@@ -104,7 +110,7 @@ def analyze_experiment(run,options):
         assignments=2**len(va) if paired else math.comb(len(va)+len(vb),len(va))
         contrasts.append({'permutation_assignments_possible':assignments,'permutation_exact':assignments<=options.iterations,'minimum_attainable_two_sided_p':min(1.,2/(assignments if assignments<=options.iterations else options.iterations+1)),'condition_a':a,'condition_b':b,'difference_b_minus_a':difference,'hierarchical_bootstrap_ci95':list(map(float,np.quantile(draws,[.025,.975]))),'permutation_p_two_sided':float(permutation.pvalue),'bootstrap_replicates':options.iterations,'experimental_units':len(va) if paired else len(va)+len(vb)})
     for contrast,q in zip(contrasts,bh_adjust([c['permutation_p_two_sided'] for c in contrasts])):contrast['bh_adjusted_p_within_report']=q
-    return {'selected_channel_labels':list(next(iter(channel_identities))),'algorithm':'experiment-inference-2','request':options.model_dump(),'groups':summary,'contrasts':contrasts,'source_rows':source_rows,'batch_run_id':run['id'],'batch_run_sha256':sha256(json.dumps(run,sort_keys=True).encode()).hexdigest(),'aggregation':'Average ROIs within each (condition, experiment, cell); average cells within experiment; weight independent experiments equally. Bootstrap resamples experiments then cells; paired resampling preserves experiment pairing. No pixels are independent replicates.','multiple_comparisons':'Benjamini-Hochberg adjustment over all contrasts in this report for this one metric. Other metrics/reports are not part of this family.','scope':'Measured condition association under the selected design and resampling assumptions. No causal knockdown claim, molecular binding probability or biological validation certificate.'}
+    return {'selected_channel_labels':list(next(iter(channel_identities))),'algorithm':'experiment-inference-2','request':options.model_dump(),'groups':summary,'contrasts':contrasts,'source_rows':source_rows,'batch_run_id':run['id'],'batch_run_sha256':sha256(json.dumps(run,sort_keys=True).encode()).hexdigest(),'aggregation':'Average ROIs within each (condition, experiment, cell); average cells within experiment; weight independent experiments equally. Bootstrap resamples experiments then cells; paired resampling preserves experiment pairing. No pixels are independent replicates.','multiple_comparisons':'Benjamini-Hochberg adjustment over all contrasts in this report for this one metric. Other metrics/reports are not part of this family.','replication_review':{'independence_verified':False,'counts_source':'Supplied experiment/cell labels; acquisition independence must be established from the experimental design.','conditions':[{'condition':name,'experiments':len(g),'cells':sum(len(v) for v in g.values()),'roi_values':sum(r['condition']==name for r in source_rows),'unique_raw_sources':len({r['source_sha256'] for r in source_rows if r['condition']==name}),'cells_per_experiment':{key:len(value) for key,value in g.items()}} for name,g in groups.items()],'design_review':design,'scope':'ROI values are averaged within labelled cells, then cells within experiments. Equal experiment weights avoid treating numerous cells/ROIs from one experiment as independent experiments. Exact repeated source/ROI geometries are rejected, not silently removed. Labels and hash checks cannot independently verify culture independence.'},'scope':'Measured condition association under the selected design and resampling assumptions. No causal knockdown claim, molecular binding probability or biological validation certificate.'}
 
 def register_experiments(app,data_dir,authorized):
     @app.post('/api/experiments/analyze',dependencies=[Depends(authorized)])

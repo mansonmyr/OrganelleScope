@@ -1,13 +1,9 @@
-# OrganelleScope 1.0.2
+# OrganelleScope 1.0.3
 
-This update improves the interpretation and verification of image-based 3D proximity.
+- ROI linear-size/manual-threshold and 3D cuboid-boundary/threshold sweeps compare explicitly recorded settings without choosing a preferred result. Undefined/clamped variants remain visible; exports preserve the complete comparison.
+- Acquisition checks accept optional nominal lateral/axial resolution and a native-unit detector ceiling. Reports distinguish missing/conflicting calibration, coarse sampling, possible clipping and unmeasured registration. Signal counts describe the selected plane, not an entire stack.
+- Experiment comparisons expose experiment/cell/ROI/source counts and reject repeated raw-source ROI geometry despite renamed IDs or equivalent polygon/circle parameterization. Biological independence remains a property of the experimental design.
+- The assistant adds separate question-coverage review after claim/source review. Four controlled complete/incomplete answer pairs matched expected labels; this is a bounded diagnostic, not general model accuracy. Coverage failures do not prevent asking questions or discard usable drafts.
+- The manual includes detailed workflows, interpretation, limits and primary references for these additions.
 
-- Separate marker-to-reference and reference-to-marker summaries report the source voxel count, count/fraction within the selected distance, minimum, median and 95th percentile. Existing forward export fields remain compatible.
-- Calibration uses separate Z/Y/X spacing. Reports expose search-domain, mask definitions and cuboid-face voxel counts; empty masks have an explicit unavailable reason.
-- Sixty synthetic geometries agree with an independent exhaustive pairwise-distance oracle in both directions. API tests check full Z signal and reference containment within the chosen cuboid.
-- A separate report-backed findings section, deterministic assistant notes and recorded quantities explain direction, existing reverse summaries and empty cropped masks. Stronger local negation and quotation-topic checks address specific overclaims.
-- New synthetic assistant questions, developer claim-level review and targeted follow-up/replay records distinguish useful answers, omissions and unsupported statements. These diagnostics are separate from a general biomedical accuracy benchmark.
-
-The existing compact workspace layout, background subtraction, Gaussian smoothing, local Gemma setup, per-channel LUTs and native-range preview remain available. New users start with empty research storage; upgrades preserve their own data. Download the Apple Silicon Mac `.dmg` or Windows x64 `.exe` below. Gemma weights use a resumable one-time 6.98 GB download; inference then runs locally.
-
-See the [manual](../MANUAL.md) and [verification scope](VALIDATION.md) for definitions, references and evidence. Voxel-centre distances describe threshold-defined image geometry, rather than molecular binding or super-resolution accuracy. AI drafts require human review.
+Download the Apple Silicon macOS `.dmg` or Windows x64 `.exe`. The compact interface, local Gemma setup, native-range previews and existing research data remain compatible. First installations have empty research storage; upgrades preserve the account's data and verified model weights. See the [manual](../MANUAL.md) and [verification scope](VALIDATION.md).

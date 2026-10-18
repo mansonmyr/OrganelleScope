@@ -386,3 +386,15 @@ def test_proximity_reading_notes_explain_empty_masks_and_existing_reverse_summar
  assert any(f['value']==1 and 'Reference → marker' in f['label'] for f in facts)
  record['image']['sha256']='changed'
  assert not any('Cuboid proximity' in f['label'] for f in recorded_quantities(record))
+
+
+@pytest.mark.parametrize('malformed',[False,True])
+def test_generated_draft_has_separate_nonblocking_question_coverage(malformed):
+ answer='Pearson measures linear intensity correlation. [methods]'
+ claim={'claims':[{'index':0,'kind':'record_supported','source_id':'methods','quote':'Pearson is centered linear intensity correlation.'}]}
+ coverage={'coverage':[{'index':0,'status':'addressed','answer_quote':'Pearson measures linear intensity correlation.'},{'index':1,'status':'unanswered','answer_quote':''}]}
+ model=Fake(response(answer),response(json.dumps(claim)),response('not json' if malformed else json.dumps(coverage)));model.manifest={'name':'test','evidence_review':True}
+ result=run_agent(model,RECORD,ChatRequest(message='What does Pearson measure? Does it prove binding?'),None)
+ assert result['answer']==answer
+ assert result['question_coverage']['assessed'] is (not malformed)
+ assert not result['question_coverage']['all_parts_addressed']

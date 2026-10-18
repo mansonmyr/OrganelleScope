@@ -1,0 +1,189 @@
+{
+  "scope": "Four developer-labelled answer pairs frozen before review. Tests identification of omissions, not generation accuracy, truth or citation entailment. These are controlled diagnostic cases, not unseen microscopy questions or a biomedical accuracy estimate.",
+  "suite_sha256": "a8101abe3111f7b4c98980cb59a5f79a8646b491330f4d48f6c179a32964984d",
+  "implementation_sha256": "38d02368b75e403efdaca4c9aec3fbf2beee3cdf953d4146b7469d5e6f32e4f5",
+  "frozen_cases": [
+    {
+      "id": "empty-mask-incomplete",
+      "question": "Why is reference distance unavailable? Does this show absence from the cell?",
+      "answer": "The reference mask is empty, so the distance is undefined.",
+      "expected": [
+        "addressed",
+        "unanswered"
+      ]
+    },
+    {
+      "id": "empty-mask-complete",
+      "question": "Why is reference distance unavailable? Does this show absence from the cell?",
+      "answer": "The reference mask is empty, so the distance is undefined. This cropped mask does not show that the protein is absent from the cell.",
+      "expected": [
+        "addressed",
+        "addressed"
+      ]
+    },
+    {
+      "id": "reverse-incomplete",
+      "question": "What weights does proximity use? Must I rerun to obtain the reverse direction?",
+      "answer": "Proximity uses equal source-voxel weighting.",
+      "expected": [
+        "addressed",
+        "unanswered"
+      ]
+    },
+    {
+      "id": "reverse-complete",
+      "question": "What weights does proximity use? Must I rerun to obtain the reverse direction?",
+      "answer": "Proximity uses equal source-voxel weighting. Both directions are already recorded, so no rerun is needed unless you change the measurement settings.",
+      "expected": [
+        "addressed",
+        "addressed"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "empty-mask-incomplete",
+      "review": {
+        "assessed": true,
+        "all_parts_addressed": false,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "Why is reference distance unavailable?",
+            "index": 0,
+            "status": "addressed",
+            "answer_quote": "The reference mask is empty, so the distance is undefined."
+          },
+          {
+            "request": "Does this show absence from the cell?",
+            "index": 1,
+            "status": "unanswered",
+            "answer_quote": ""
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "expected": [
+        "addressed",
+        "unanswered"
+      ],
+      "observed": [
+        "addressed",
+        "unanswered"
+      ],
+      "matches_controlled_labels": true
+    },
+    {
+      "id": "empty-mask-complete",
+      "review": {
+        "assessed": true,
+        "all_parts_addressed": true,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "Why is reference distance unavailable?",
+            "index": 0,
+            "status": "addressed",
+            "answer_quote": "The reference mask is empty, so the distance is undefined."
+          },
+          {
+            "request": "Does this show absence from the cell?",
+            "index": 1,
+            "status": "addressed",
+            "answer_quote": "This cropped mask does not show that the protein is absent from the cell."
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "expected": [
+        "addressed",
+        "addressed"
+      ],
+      "observed": [
+        "addressed",
+        "addressed"
+      ],
+      "matches_controlled_labels": true
+    },
+    {
+      "id": "reverse-incomplete",
+      "review": {
+        "assessed": true,
+        "all_parts_addressed": false,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "What weights does proximity use?",
+            "index": 0,
+            "status": "addressed",
+            "answer_quote": "Proximity uses equal source-voxel weighting."
+          },
+          {
+            "request": "Must I rerun to obtain the reverse direction?",
+            "index": 1,
+            "status": "unanswered",
+            "answer_quote": ""
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "expected": [
+        "addressed",
+        "unanswered"
+      ],
+      "observed": [
+        "addressed",
+        "unanswered"
+      ],
+      "matches_controlled_labels": true
+    },
+    {
+      "id": "reverse-complete",
+      "review": {
+        "assessed": true,
+        "all_parts_addressed": true,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "What weights does proximity use?",
+            "index": 0,
+            "status": "addressed",
+            "answer_quote": "Proximity uses equal source-voxel weighting."
+          },
+          {
+            "request": "Must I rerun to obtain the reverse direction?",
+            "index": 1,
+            "status": "addressed",
+            "answer_quote": "Both directions are already recorded, so no rerun is needed unless you change the measurement settings."
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "expected": [
+        "addressed",
+        "addressed"
+      ],
+      "observed": [
+        "addressed",
+        "addressed"
+      ],
+      "matches_controlled_labels": true
+    }
+  ],
+  "model": {
+    "name": "Gemma 4 12B Instruct QAT Q4_0",
+    "filename": "gemma-4-12b-it-qat-q4_0.gguf",
+    "bytes": 6975879296,
+    "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+    "upstream": "https://huggingface.co/google/gemma-4-12B-it",
+    "quantization": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+    "revision": "29d097773436b69ff9feafd636ab4cf873786537",
+    "license": "Apache-2.0",
+    "runtime": "llama.cpp b11669",
+    "context_tokens": 8192,
+    "evidence_review": true,
+    "vision_enabled": false,
+    "thinking_enabled": false,
+    "temperature": 1.0
+  }
+}

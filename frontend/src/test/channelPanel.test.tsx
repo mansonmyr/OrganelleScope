@@ -19,3 +19,12 @@ it('shows selected-plane quality scope without treating storage counts as detect
  await screen.findByText('Selected plane only');expect(vi.mocked(json).mock.calls[0][0]).toBe('/api/images/test/quality?z=1');
  expect(screen.getByText(/clipping below the storage ceiling/)).toBeTruthy();
 });
+it('sends optional nominal resolution and detector ceiling without inserting zero into cleared values',async()=>{
+ vi.mocked(json).mockResolvedValue({z:0,scope:'Selected plane only',channels:[],calibration_notes:[]});
+ render(<ChannelPanel image={image} z={0} disabled={false} onUpdate={vi.fn()}/>);
+ fireEvent.click(screen.getByText('Optional acquisition specifications'));
+ const lateral=screen.getByLabelText('Lateral resolution (µm)');fireEvent.change(lateral,{target:{value:'.25'}});fireEvent.change(lateral,{target:{value:''}});expect((lateral as HTMLInputElement).value).toBe('');
+ fireEvent.change(lateral,{target:{value:'.3'}});fireEvent.change(screen.getByLabelText('Detector ceiling (native intensity)'),{target:{value:'4095'}});fireEvent.click(screen.getByText('Check selected-plane signal'));
+ await waitFor(()=>expect(json).toHaveBeenCalled());
+ const query=new URL(String(vi.mocked(json).mock.calls[0][0]),'http://localhost').searchParams;expect(Number(query.get('lateral_resolution_um'))).toBe(.3);expect(Number(query.get('detector_ceiling'))).toBe(4095);
+});

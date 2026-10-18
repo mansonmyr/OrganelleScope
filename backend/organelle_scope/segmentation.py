@@ -30,7 +30,12 @@ class SegmentationRequest(CuboidRequest):
     near_distance_um:float=Field(default=1,gt=0,le=1000,allow_inf_nan=False)
 
 
-def segment_volume(volume,options,spacing):
+class SegmentationSweepRequest(SegmentationRequest):
+    threshold_step:float=Field(default=10,gt=0,allow_inf_nan=False)
+    boundary_step:int=Field(default=1,ge=1,le=10)
+
+
+def segment_volume(volume,options,spacing,make_mesh=True):
     from skimage.filters import threshold_otsu
     from skimage.measure import marching_cubes
     threshold=float(threshold_otsu(volume)) if options.method=='otsu' and float(volume.max())>float(volume.min()) else (float(volume.max()) if options.method=='otsu' else options.threshold)
@@ -55,7 +60,7 @@ def segment_volume(volume,options,spacing):
         coords=np.argwhere(labels==ident);centroid=coords.mean(axis=0)+[options.z0,options.y0,options.x0];eigen=np.linalg.eigvalsh(np.cov((coords*scale).T,bias=True)) if len(coords)>1 else np.zeros(3)
         objects.append({'label':int(ident),'voxel_count':len(coords),'volume_um3':float(len(coords)*scale.prod()) if physical else None,'centroid_zyx':centroid.tolist(),'centroid_zyx_um':(centroid*scale).tolist() if physical else None,'principal_rms_extents_um':np.sqrt(np.maximum(eigen,0)).tolist() if physical else None,'mean':float(volume[labels==ident].mean()),'sum':float(volume[labels==ident].sum(dtype=np.float64)),'touches_cuboid_edge':bool(np.any(coords.min(axis=0)==0) or np.any(coords.max(axis=0)==np.asarray(mask.shape)-1))})
     mesh=None
-    if mask.any() and sum(mask.shape)>3:
+    if make_mesh and mask.any() and sum(mask.shape)>3:
         # Zero padding closes cut faces; flagged as cuboid boundaries, not real membranes.
         vertices,faces,_,_=marching_cubes(np.pad(mask.astype(np.float32),1),.5,spacing=tuple(scale))
         if len(vertices)<=50000 and len(faces)<=100000:
@@ -65,12 +70,17 @@ def segment_volume(volume,options,spacing):
 
 
 def register_segmentation(app,stored,authorized):
-    def calculate(image_id,options):
+    def calculate(image_id,options,make_mesh=True,source_windows=None):
         folder,record,info=stored(image_id);options.validate_bounds(info.dimensions);options.processing.validate_channels(info.dimensions['C'],info.bit_depth)
         if options.channel>=info.dimensions['C']:raise ImageError('Select an available marker channel.')
         spacing=[info.calibration[a].value_um for a in ['Z','Y','X']]
-        volume=np.stack([process_plane(read_plane(folder/'source.tiff',info,options.channel,z),options.processing,options.channel,folder.parent,z)[options.y0:options.y1+1,options.x0:options.x1+1].copy() for z in range(options.z0,options.z1+1)])
-        labels,result=segment_volume(volume,options,spacing)
+        def channel_values(channel):
+            if source_windows is not None:
+                (x0,y0),windows=source_windows
+                return np.stack([windows[channel,z][options.y0-y0:options.y1-y0+1,options.x0-x0:options.x1-x0+1] for z in range(options.z0,options.z1+1)])
+            return np.stack([process_plane(read_plane(folder/'source.tiff',info,channel,z),options.processing,channel,folder.parent,z)[options.y0:options.y1+1,options.x0:options.x1+1].copy() for z in range(options.z0,options.z1+1)])
+        volume=channel_values(options.channel)
+        labels,result=segment_volume(volume,options,spacing,make_mesh)
         radial=None
         if options.radial_bin_um is not None:
             if not all(v is not None for v in spacing):raise ImageError('Radial enrichment requires known XYZ spacing.')
@@ -86,7 +96,7 @@ def register_segmentation(app,stored,authorized):
             indices=np.searchsorted(edges,distances,side='right')-1
             radial={'center_source_zyx':center.tolist(),'bin_edges_um':edges.tolist(),'channels':[],'definition':'Mean intensity in spherical radial shells intersected with the selected cuboid; enrichment divides each shell mean by the whole-cuboid channel mean. Shell voxel counts and sampled volumes are reported; cut shells are not extrapolated. No radial pixels are independent biological replicates.'}
         for c in range(info.dimensions['C']):
-            values=volume if c==options.channel else np.stack([process_plane(read_plane(folder/'source.tiff',info,c,z),options.processing,c,folder.parent,z)[options.y0:options.y1+1,options.x0:options.x1+1].copy() for z in range(options.z0,options.z1+1)])
+            values=volume if c==options.channel else channel_values(c)
             if radial is not None:
                 whole=float(values.mean(dtype=np.float64));shells=[]
                 for i in range(len(edges)-1):
@@ -99,7 +109,7 @@ def register_segmentation(app,stored,authorized):
         if options.reference_channel is not None:
             c=options.reference_channel
             if c>=info.dimensions['C'] or c==options.channel:raise ImageError('Select a different available reference channel.')
-            reference=np.stack([process_plane(read_plane(folder/'source.tiff',info,c,z),options.processing,c,folder.parent,z)[options.y0:options.y1+1,options.x0:options.x1+1].copy() for z in range(options.z0,options.z1+1)])>options.reference_threshold
+            reference=channel_values(c)>options.reference_threshold
             if all(v is not None for v in spacing):
                 result['proximity']=proximity_summary(labels>0,reference,spacing,options.near_distance_um)
                 result['proximity'].update(marker_channel=options.channel,reference_channel=c,marker_label=info.channel_labels[options.channel],reference_label=info.channel_labels[c],marker_mask='Threshold, connected-size filtering, exclusions and manual edits applied.',reference_mask='Strictly above reference threshold; no connected-size filter or marker-mask edits applied.')
@@ -111,6 +121,52 @@ def register_segmentation(app,stored,authorized):
     def segment(image_id:str,options:SegmentationRequest):
         try:return calculate(image_id,options)[1]
         except (ImageError,ValueError,ImportError) as exc:raise HTTPException(422,str(exc)) from exc
+    @app.post('/api/images/{image_id}/segmentation/sensitivity',dependencies=[Depends(authorized)])
+    def segmentation_sensitivity(image_id:str,options:SegmentationSweepRequest):
+        try:
+            _,record,info=stored(image_id)
+            if options.method!='manual':raise ImageError('Select a manual marker threshold before a controlled sensitivity sweep.')
+            ceiling=2**info.bit_depth-1
+            if options.threshold_step>ceiling or options.threshold>ceiling or options.reference_threshold>ceiling:raise ImageError('Threshold settings exceed the source storage range.')
+            base=SegmentationRequest.model_validate(options.model_dump(exclude={'threshold_step','boundary_step'}))
+            base.validate_bounds(info.dimensions)
+            if base.exclude_labels:raise ImageError('Restore excluded objects before sweeping; object IDs may change.')
+            base=base.model_copy(update={'radial_bin_um':None})
+            variants=[('baseline',base)]
+            for field in ['threshold','reference_threshold']:
+                if field=='reference_threshold' and options.reference_channel is None:continue
+                for sign in [-1,1]:variants.append((field+('_lower' if sign<0 else '_higher'),base.model_copy(update={field:max(0,min(ceiling,getattr(base,field)+sign*options.threshold_step))})))
+            for sign in [-1,1]:
+                bounds={}
+                for a in 'xyz':
+                    bounds[a+'0']=max(0,getattr(base,a+'0')-sign*options.boundary_step)
+                    bounds[a+'1']=min(info.dimensions[a.upper()]-1,getattr(base,a+'1')+sign*options.boundary_step)
+                variants.append(('cuboid_smaller' if sign<0 else 'cuboid_larger',base.model_copy(update=bounds)))
+            budget=sum(max(0,v.x1-v.x0+1)*max(0,v.y1-v.y0+1)*max(0,v.z1-v.z0+1) for _,v in variants)
+            if budget>2_000_000:raise ImageError('Sensitivity sweep exceeds two million total cuboid voxels. Use a smaller baseline cuboid.')
+            valid=[]
+            for _,value in variants:
+                try:value.validate_bounds(info.dimensions);valid.append(value)
+                except ImageError:pass
+            union={a+'0':min(getattr(v,a+'0') for v in valid) for a in 'xyz'}
+            union.update({a+'1':max(getattr(v,a+'1') for v in valid) for a in 'xyz'})
+            folder,_,_=stored(image_id);windows={}
+            base.processing.validate_channels(info.dimensions['C'],info.bit_depth)
+            for channel in range(info.dimensions['C']):
+                for z in range(union['z0'],union['z1']+1):
+                    plane=process_plane(read_plane(folder/'source.tiff',info,channel,z),base.processing,channel,folder.parent,z)
+                    windows[channel,z]=plane[union['y0']:union['y1']+1,union['x0']:union['x1']+1].copy()
+            rows=[]
+            for name,value in variants:
+                try:
+                    value.validate_bounds(info.dimensions)
+                    if value.exclude_labels:raise ImageError('Restore excluded objects before sweeping; object IDs can change with threshold or bounds.')
+                    _,result,_=calculate(image_id,value,make_mesh=False,source_windows=((union['x0'],union['y0']),windows))
+                    rows.append({'variant':name,'request':value.model_dump(),'foreground_voxels':result['foreground_voxels'],'object_count':result['object_count'],'edit_warnings':result['edit_warnings'],'proximity':result.get('proximity'),'scope':result['scope']})
+                except (ImageError,ValueError) as exc:rows.append({'variant':name,'request':value.model_dump(),'unavailable_reason':str(exc)})
+            return {'source_sha256':record['sha256'],'image_info':record['info'],'request':options.model_dump(),'variants':rows,'scope':'One-factor threshold or cuboid-boundary changes. Radial shells and display surfaces are not recomputed. Processed source windows are reused within this request. Object IDs/denominators may change. Boundary steps are source voxels and have axis-specific physical sizes. Clamped/repeated settings are recorded. Unavailable variants are retained. This is descriptive sensitivity, not a confidence interval or a search for a favourable result.'}
+        except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
+
     @app.post('/api/images/{image_id}/segmentation/preview',dependencies=[Depends(authorized)])
     def preview(image_id:str,options:SegmentationRequest,z:int=0):
         from PIL import Image
