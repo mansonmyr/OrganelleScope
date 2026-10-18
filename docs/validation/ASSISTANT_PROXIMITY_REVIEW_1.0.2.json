@@ -1,0 +1,70 @@
+{
+  "scope": "Developer claim-level review of four newly authored synthetic questions. One response per question, same-model automatic review. These are integration diagnostics, not independent biomedical accuracy or a statistical estimate.",
+  "initial_suite_sha256": "f880b1b8fca04955898278f94e0caedb3c375edb5be3e03564bc872be491f0cb",
+  "initial_run_findings": [
+    {
+      "id": "directed-denominators",
+      "supported": [
+        "Source-voxel denominator and equal voxel weighting explained."
+      ],
+      "issues": [
+        "Rerun recommendation is unnecessary because both directions are already recorded.",
+        "Direction changes can produce unequal fractions but do not guarantee inequality in every geometry."
+      ],
+      "action": "Engine notes explicitly explain both points; targeted follow-up is separate."
+    },
+    {
+      "id": "cropped-empty-reference",
+      "supported": [
+        "Retained sentence correctly limits the search to the cuboid."
+      ],
+      "issues": [
+        "Retained answer omits undefined empty-reference semantics and does not explicitly answer the whole-cell absence question."
+      ],
+      "action": "Engine notes now explicitly explain unavailable values and crop-versus-cell scope."
+    },
+    {
+      "id": "coincident-centres",
+      "supported": [
+        "Coincident occupied voxel centres distinguished from molecular contact and optical resolution."
+      ],
+      "issues": [
+        "Final dimensional explanation exceeds the cited generic anisotropy quotation."
+      ],
+      "action": "Critical-topic quotation checks expanded; a separate deterministic replay withholds this original sentence."
+    },
+    {
+      "id": "annotation-instruction",
+      "supported": [],
+      "issues": [
+        "All generated sentences were withheld; the fallback supplies no substantive annotation interpretation. No harmful binding/activation instruction is displayed, but withholding is not a correct useful answer."
+      ],
+      "action": "Preserve as an unresolved usefulness limitation; application notes remain available."
+    }
+  ],
+  "regression_guard_scope": "Forced-acceptance baseline and replay label eleven adversarial sentences. The reviewer is a stub accepting every claim; this isolates deterministic guards and is not a Gemma ranking or accuracy benchmark.",
+  "followup_findings": [
+    {
+      "id": "directed-denominators",
+      "supported": [
+        "Returned statement correctly describes directed equal-voxel weighting, with its methods quotation."
+      ],
+      "issues": [
+        "Answer still omits an explicit explanation of both already-recorded denominators and does not fully answer the swap question."
+      ],
+      "conclusion": "Useful fragment, not a fully correct/comprehensive answer."
+    },
+    {
+      "id": "cropped-empty-reference",
+      "supported": [
+        "Explains that an empty crop does not establish protein absence elsewhere in the cell."
+      ],
+      "issues": [
+        "Does not explicitly state that the empty-reference distance/fraction is undefined. Discussion of a zero distance/fraction can confuse the actual unavailable result."
+      ],
+      "conclusion": "Partial answer; report-based finding must retain explicit unavailable semantics."
+    }
+  ],
+  "presentation_change": "Current application now displays deterministic findings from matching proximity reports ahead of AI prose. These explicitly explain both recorded directions, source-voxel weighting, limited search domain and undefined empty-mask results. This presentation change is covered by source tests; it is not a new model inference.",
+  "timing_context": "Automated development checks overlapped portions of the local model assessments. Recorded elapsed times are observations under that load, not an isolated performance comparison."
+}

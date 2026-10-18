@@ -19,10 +19,16 @@ def sentences(answer):
 
 def source_scope_mismatch(text,quote):
  # Conservative topic checks catch unrelated boilerplate quotations; this is not an entailment model.
- patterns={'binding':r'bind|direct.{0,20}interaction','activation':r'activat','causality':r'causal|knockdown|silenc','probability':r'probabil|posterior','volume':r'volume'}
+ patterns={'binding':r'bind|direct.{0,20}interaction','activation':r'activat','causality':r'causal|knockdown|silenc','probability':r'probabil|posterior','volume':r'volume','sampling':r'sampl|spacing|calibrat','resolution':r'resol|diffraction|PSF','direction':r'denominator|directed|direction|weight|revers','coincidence':r'zero|coinciden'}
  for pattern in patterns.values():
   if re.search(pattern,text,re.I) and not re.search(pattern,quote,re.I):return True
  return False
+
+def locally_negated(text, position):
+ # A denial in an earlier clause cannot excuse a later affirmative overclaim.
+ prefix=re.split(r'[;,:.!?]|\b(?:but|however|therefore|yet)\b',text[:position],flags=re.I)[-1][-70:]
+ if re.search(r'\bnot\s+(?:only|merely|just)\b',prefix,re.I):return False
+ return bool(re.search(r"\b(?:not|never|cannot|can't|doesn't|isn't|aren't|no evidence)\b",prefix,re.I))
 
 def review_claims(model,answer,payloads,general=False):
  units=sentences(answer)
@@ -68,10 +74,17 @@ def review_claims(model,answer,payloads,general=False):
   elif kind=='general_knowledge':reason='Factual explanation lacks an auditable quotation from the supplied methods/evidence.'
   else:fail('Unknown claim-review category; draft withheld.')
   for match in re.finditer(r'\b(proves?|confirms?|establishes?|demonstrates?)\b.{0,45}\b(binding|activation|causality|causal effect|direct interaction)\b',text,re.I):
-   if not re.search(r'\b(not|never|cannot|doesn.t|can.t|no)\b',text[max(0,match.start()-30):match.start()],re.I):reason='Statement exceeds image/database evidence by asserting binding, activation or causality.'
-  if re.search(r'\bManders\b',text,re.I) and re.search(r'(fraction|proportion|quantif|measur|represent).{0,40}\b(volume|binding probability)\b',text,re.I) and not re.search(r'\b(not|cannot|never)\b',text,re.I):reason='Manders intensity fractions must not be described as volume fractions or binding probabilities.'
-  if re.search(r'\b(publication[- ]ready|publication[- ]certified|biologically certified)\b',text,re.I) and not re.search(r'\b(not|never|cannot|no)\b',text,re.I):reason='The record does not certify publication readiness or biological validity.'
-  if re.search(r'(channel|marker|protein|corrected).{0,70}ground[- ]truth|ground[- ]truth.{0,70}(channel|marker|protein)',text,re.I) and not re.search(r'\b(not|never|cannot|no)\b',text,re.I):reason='Channel annotations are not independent biological ground truth.'
+   if not locally_negated(text,match.start()):reason='Statement exceeds image/database evidence by asserting binding, activation or causality.'
+  if re.search(r'\bManders\b',text,re.I):
+   for match in re.finditer(r'(fraction|proportion|quantif|measur|represent).{0,40}\b(?P<target>volume|binding probability)\b',text,re.I):
+    if not locally_negated(text,match.start('target')):reason='Manders intensity fractions must not be described as volume fractions or binding probabilities.'
+  for match in re.finditer(r'\b(publication[- ]ready|publication[- ]certified|biologically certified)\b',text,re.I):
+   if not locally_negated(text,match.start()):reason='The record does not certify publication readiness or biological validity.'
+  for match in re.finditer(r'ground[- ]truth',text,re.I):
+   if re.search(r'channel|marker|protein|corrected',text,re.I) and not locally_negated(text,match.start()):reason='Channel annotations are not independent biological ground truth.'
+  if re.search(r'proximity|foreground fraction|STRING.{0,20}score',text,re.I):
+   for match in re.finditer(r'(?:posterior\s+)?probability\s+of\s+(?:direct\s+)?binding|binding\s+probability',text,re.I):
+    if not locally_negated(text,match.start()):reason='Image proximity and database association scores are not molecular binding probabilities.'
   directional=re.search(r'\b(Manders|M1|M2|fraction|overlap)\b',text,re.I) and re.search(r'contain|within|intensity|signal|mostly|largely|majority|predominant',text,re.I)
   if directional and any(len(a)>=3 and len(b)>=3 and re.search(r'\b'+re.escape(normalized_label(a))+r'\b',normalized_label(text)) and re.search(r'\b'+re.escape(normalized_label(b))+r'\b',normalized_label(text)) for a,b in marker_pairs):reason='Marker-specific Manders direction/magnitude is explained by engine-defined notes and recorded quantities; generated interpretation omitted.'
   accepted=reason is None
@@ -86,6 +99,6 @@ def review_claims(model,answer,payloads,general=False):
   checked.append({'index':index,'sentence':text,'kind':kind,'retained':accepted,'reason':reason,'source_id':key if accepted and kind=='record_supported' else None,'quote':quote if accepted and kind=='record_supported' else None})
  kept=len(retained);withheld=len(units)-kept
  fallback='I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.'
- return {'algorithm':'claim-source-audit-4','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
+ return {'algorithm':'claim-source-audit-5','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
          'retained_sentences':kept,'withheld_sentences':withheld,'checked_answer':' '.join(text for _,text in sorted(retained)) if retained else fallback,
          'claims':sorted(checked,key=lambda c:c['index']),'limitations':'Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.','usage':response.get('usage',{})}

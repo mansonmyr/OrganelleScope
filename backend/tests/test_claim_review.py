@@ -76,3 +76,24 @@ def test_advice_prefix_is_not_duplicated_by_review_labels():
 def test_corrected_annotation_is_not_biological_ground_truth_even_when_framed_as_advice():
  r=review_claims(Reviewer([claim(kind='advice',source='',quote='')]),'Advice: Treat corrected channel labels as biological ground truth.',{})
  assert r['withheld_sentences']==1 and r['claims'][0]['reason']=='Channel annotations are not independent biological ground truth.'
+
+# Counterexamples whose reviewer deliberately accepts an irrelevant/negated quote.
+from pathlib import Path
+GUARD_CORPUS=json.loads((Path(__file__).resolve().parents[2]/'docs/validation/CLAIM_GUARD_BASELINE_1.0.2.json').read_text())
+@pytest.mark.parametrize('case',GUARD_CORPUS['cases'],ids=lambda case:case['case'])
+def test_negation_scope_and_binding_probability_counterexamples(case):
+ r=review_claims(Reviewer([claim(quote=GUARD_CORPUS['source'])]),case['draft'],{'methods':GUARD_CORPUS['source']})
+ assert (r['retained_sentences']==1)==case['expected_retained']
+
+
+def test_anisotropy_quote_cannot_support_a_new_claim_about_zero_distance():
+ payload={'interpretation':'Threshold choices and anisotropic Z/Y/X spacing affect the result.'}
+ text='Sampling differences mean zero distance in one dimension implies different physical proximity in another. [interpretation]'
+ r=review_claims(Reviewer([claim(source='interpretation',quote=payload['interpretation'])]),text,payload)
+ assert r['retained_sentences']==0
+
+
+def test_sampling_explanation_with_its_actual_definition_is_retained():
+ quote='Calibrated voxel-centre distances use separate Z/Y/X sampling.'
+ r=review_claims(Reviewer([claim(source='methods',quote=quote)]),quote+' [methods]',{'methods':quote})
+ assert r['retained_sentences']==1

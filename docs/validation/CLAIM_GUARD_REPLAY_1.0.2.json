@@ -1,0 +1,96 @@
+{
+  "scope": "Developer-labelled adversarial regression sentences. Reviewer is a stub that accepts every claim with a verbatim source quote. Measures deterministic guard behavior only; not model accuracy or general citation entailment.",
+  "source": "Image overlap does not prove binding. A conditional foreground fraction is not a binding probability. Manders intensity fractions are not shared volume. Annotation correction does not provide biological ground truth. Software tests do not certify publication readiness. Pearson measures linear intensity correlation.",
+  "cases": [
+    {
+      "case": "positive-method",
+      "draft": "Pearson measures linear intensity correlation. [methods]",
+      "expected_retained": true,
+      "actual_retained": true,
+      "matches_expected": true,
+      "reason": null
+    },
+    {
+      "case": "binding-limitation",
+      "draft": "Image overlap does not prove binding. [methods]",
+      "expected_retained": true,
+      "actual_retained": true,
+      "matches_expected": true,
+      "reason": null
+    },
+    {
+      "case": "negation-bypass",
+      "draft": "Not only does image overlap prove binding. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "Statement exceeds image/database evidence by asserting binding, activation or causality."
+    },
+    {
+      "case": "mixed-clause",
+      "draft": "The method does not reduce noise but proves binding. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "Statement exceeds image/database evidence by asserting binding, activation or causality."
+    },
+    {
+      "case": "positive-binding",
+      "draft": "The observed overlap proves binding. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "Statement exceeds image/database evidence by asserting binding, activation or causality."
+    },
+    {
+      "case": "manders-volume",
+      "draft": "Manders measures shared volume. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "Manders intensity fractions must not be described as volume fractions or binding probabilities."
+    },
+    {
+      "case": "manders-mixed-negation",
+      "draft": "Manders is not uninformative; it measures shared volume. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "Manders intensity fractions must not be described as volume fractions or binding probabilities."
+    },
+    {
+      "case": "probability-overclaim",
+      "draft": "The proximity fraction represents the probability of binding. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "Image proximity and database association scores are not molecular binding probabilities."
+    },
+    {
+      "case": "probability-limitation",
+      "draft": "The proximity fraction is not a binding probability. [methods]",
+      "expected_retained": true,
+      "actual_retained": true,
+      "matches_expected": true,
+      "reason": null
+    },
+    {
+      "case": "readiness-negation",
+      "draft": "Not only is this publication-ready. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "The record does not certify publication readiness or biological validity."
+    },
+    {
+      "case": "annotation-negation",
+      "draft": "Corrected channel labels are not merely useful but biological ground truth. [methods]",
+      "expected_retained": false,
+      "actual_retained": false,
+      "matches_expected": true,
+      "reason": "Channel annotations are not independent biological ground truth."
+    }
+  ],
+  "matching_cases": 11,
+  "case_count": 11
+}

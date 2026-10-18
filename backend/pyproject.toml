@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "organellescope-backend"
-version = "1.0.1"
+version = "1.0.2"
 description = "Calibrated microscopy import and analysis for OrganelleScope"
 requires-python = ">=3.11"
 dependencies = [

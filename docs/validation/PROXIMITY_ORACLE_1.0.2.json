@@ -1,0 +1,908 @@
+{
+  "seed": 20261018,
+  "oracle": "Exhaustive pairwise distances in physical Z/Y/X coordinates; no EDT or nearest-neighbour library in oracle.",
+  "tolerance_um": 1e-12,
+  "cases": [
+    {
+      "case": 0,
+      "shape_zyx": [
+        4,
+        7,
+        7
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 1,
+      "shape_zyx": [
+        4,
+        3,
+        4
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 2,
+      "shape_zyx": [
+        1,
+        5,
+        4
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 3,
+      "shape_zyx": [
+        1,
+        2,
+        3
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 4,
+      "shape_zyx": [
+        1,
+        7,
+        2
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 5,
+      "shape_zyx": [
+        1,
+        4,
+        2
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 6,
+      "shape_zyx": [
+        1,
+        7,
+        7
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 7,
+      "shape_zyx": [
+        2,
+        3,
+        5
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 8,
+      "shape_zyx": [
+        4,
+        5,
+        5
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 9,
+      "shape_zyx": [
+        1,
+        4,
+        3
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 10,
+      "shape_zyx": [
+        4,
+        2,
+        2
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 11,
+      "shape_zyx": [
+        4,
+        7,
+        6
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 12,
+      "shape_zyx": [
+        2,
+        2,
+        7
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 13,
+      "shape_zyx": [
+        2,
+        5,
+        3
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 14,
+      "shape_zyx": [
+        5,
+        6,
+        7
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 15,
+      "shape_zyx": [
+        2,
+        6,
+        3
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 16,
+      "shape_zyx": [
+        5,
+        5,
+        6
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 17,
+      "shape_zyx": [
+        4,
+        4,
+        2
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 18,
+      "shape_zyx": [
+        2,
+        5,
+        3
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 19,
+      "shape_zyx": [
+        5,
+        6,
+        7
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 20,
+      "shape_zyx": [
+        4,
+        5,
+        7
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 21,
+      "shape_zyx": [
+        4,
+        2,
+        3
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 22,
+      "shape_zyx": [
+        3,
+        2,
+        7
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 23,
+      "shape_zyx": [
+        5,
+        3,
+        4
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 24,
+      "shape_zyx": [
+        5,
+        2,
+        6
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 25,
+      "shape_zyx": [
+        5,
+        4,
+        5
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 26,
+      "shape_zyx": [
+        4,
+        6,
+        2
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 27,
+      "shape_zyx": [
+        5,
+        6,
+        5
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 28,
+      "shape_zyx": [
+        1,
+        7,
+        6
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 29,
+      "shape_zyx": [
+        5,
+        3,
+        7
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 30,
+      "shape_zyx": [
+        2,
+        3,
+        4
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 31,
+      "shape_zyx": [
+        4,
+        7,
+        6
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 32,
+      "shape_zyx": [
+        1,
+        4,
+        5
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 33,
+      "shape_zyx": [
+        5,
+        5,
+        6
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 34,
+      "shape_zyx": [
+        5,
+        3,
+        7
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 35,
+      "shape_zyx": [
+        2,
+        5,
+        7
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 36,
+      "shape_zyx": [
+        5,
+        2,
+        6
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 37,
+      "shape_zyx": [
+        4,
+        3,
+        5
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 38,
+      "shape_zyx": [
+        5,
+        3,
+        5
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 39,
+      "shape_zyx": [
+        1,
+        4,
+        4
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 40,
+      "shape_zyx": [
+        5,
+        7,
+        2
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 41,
+      "shape_zyx": [
+        2,
+        6,
+        2
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 42,
+      "shape_zyx": [
+        2,
+        6,
+        4
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 43,
+      "shape_zyx": [
+        5,
+        5,
+        5
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 44,
+      "shape_zyx": [
+        3,
+        3,
+        3
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 45,
+      "shape_zyx": [
+        4,
+        6,
+        6
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 46,
+      "shape_zyx": [
+        2,
+        3,
+        5
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 47,
+      "shape_zyx": [
+        5,
+        5,
+        6
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 48,
+      "shape_zyx": [
+        1,
+        6,
+        6
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 49,
+      "shape_zyx": [
+        3,
+        5,
+        6
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 50,
+      "shape_zyx": [
+        2,
+        4,
+        5
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 51,
+      "shape_zyx": [
+        3,
+        4,
+        5
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 52,
+      "shape_zyx": [
+        2,
+        6,
+        5
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 1.7,
+      "both_directions_agree": true
+    },
+    {
+      "case": 53,
+      "shape_zyx": [
+        2,
+        4,
+        3
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.5,
+      "both_directions_agree": true
+    },
+    {
+      "case": 54,
+      "shape_zyx": [
+        1,
+        5,
+        3
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 55,
+      "shape_zyx": [
+        4,
+        4,
+        2
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 56,
+      "shape_zyx": [
+        1,
+        2,
+        6
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.12,
+      "both_directions_agree": true
+    },
+    {
+      "case": 57,
+      "shape_zyx": [
+        4,
+        2,
+        5
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    },
+    {
+      "case": 58,
+      "shape_zyx": [
+        1,
+        4,
+        2
+      ],
+      "spacing_zyx_um": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "threshold_um": 0.31,
+      "both_directions_agree": true
+    },
+    {
+      "case": 59,
+      "shape_zyx": [
+        1,
+        5,
+        4
+      ],
+      "spacing_zyx_um": [
+        1.7,
+        0.31,
+        0.12
+      ],
+      "threshold_um": 0.2,
+      "both_directions_agree": true
+    }
+  ],
+  "scope": "Sixty synthetic geometries, both directions. Numerical verification only; no acquisition registration, organelle identity, binding or population accuracy established."
+}

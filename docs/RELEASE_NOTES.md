@@ -1,14 +1,13 @@
-# OrganelleScope 1.0.1
+# OrganelleScope 1.0.2
 
-A compact interface update to the stable local research workbench:
+This update improves the interpretation and verification of image-based 3D proximity.
 
-- Smaller headers, controls, spacing and empty-image presentation, with responsive sizing.
-- Workspace dropdown on narrower windows; compact tabs on wider screens. The image preview stays mounted when workspaces change.
-- Collapsible Projects & recovery in the sidebar.
-- Minimum STRING score stays blank when cleared. Network retrieval requires a valid integer from 0 to 1000; retyping submits the entered value.
-- Fresh-profile native checks now explicitly require empty imported-image and saved-project lists. A separate account-isolation regression verifies that a fresh account starts empty while an existing account retains its own work.
-- README application limits and the manual edition now reflect the stable release. The verification guide consolidates current evidence and links historical records.
+- Separate marker-to-reference and reference-to-marker summaries report the source voxel count, count/fraction within the selected distance, minimum, median and 95th percentile. Existing forward export fields remain compatible.
+- Calibration uses separate Z/Y/X spacing. Reports expose search-domain, mask definitions and cuboid-face voxel counts; empty masks have an explicit unavailable reason.
+- Sixty synthetic geometries agree with an independent exhaustive pairwise-distance oracle in both directions. API tests check full Z signal and reference containment within the chosen cuboid.
+- A separate report-backed findings section, deterministic assistant notes and recorded quantities explain direction, existing reverse summaries and empty cropped masks. Stronger local negation and quotation-topic checks address specific overclaims.
+- New synthetic assistant questions, developer claim-level review and targeted follow-up/replay records distinguish useful answers, omissions and unsupported statements. These diagnostics are separate from a general biomedical accuracy benchmark.
 
-Download only the Apple Silicon macOS `.dmg` or Windows x64 `.exe` for installation. The installer includes the local inference runtime; Gemma weights use one automatic, resumable 6.98 GB download. New accounts start without sample images or projects; upgrades preserve the existing account’s research data and verified weights.
+The existing compact workspace layout, background subtraction, Gaussian smoothing, local Gemma setup, per-channel LUTs and native-range preview remain available. New users start with empty research storage; upgrades preserve their own data. Download the Apple Silicon Mac `.dmg` or Windows x64 `.exe` below. Gemma weights use a resumable one-time 6.98 GB download; inference then runs locally.
 
-Native startup/shutdown, artifact integrity and numerical checks run on both release platforms. macOS uses ad-hoc signing and Windows has no publisher certificate. AI drafts require review; source checks are separate from biological validation. See the [manual](../MANUAL.md), [verification scope](VALIDATION.md) and [software citation](../CITATION.cff).
+See the [manual](../MANUAL.md) and [verification scope](VALIDATION.md) for definitions, references and evidence. Voxel-centre distances describe threshold-defined image geometry, rather than molecular binding or super-resolution accuracy. AI drafts require human review.

@@ -2,7 +2,7 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 1.0.1 · 18 October 2026 · local research workbench**
+**Edition 1.0.2 · 18 October 2026 · local research workbench**
 
 This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 
@@ -304,9 +304,13 @@ A marching-cubes mesh can be overlaid in orange on the raw volume. It visualizes
 
 ### 31. Image-based proximity and conditional fractions
 
-Choose a different reference channel and its threshold. With XYZ calibration and nonempty marker/reference masks, a distance transform finds the nearest reference foreground voxel center for every marker foreground voxel within the cuboid. Reported quantities include the minimum, median and fraction within a user-selected physical distance `d`.
+Choose a different reference channel and its threshold. With XYZ calibration and nonempty marker/reference masks, a distance transform finds the nearest reference foreground voxel center for every marker foreground voxel within the cuboid. Reports show **Marker → reference** and **Reference → marker** separately, each with its own source-foreground voxel count, count within `d`, conditional fraction, minimum, median and 95th percentile distance. Marker foreground includes the applied threshold, minimum connected size, exclusions and manual edits; reference foreground uses its own strict intensity threshold without those marker-mask edits or size filters.
 
-The fraction estimates `P(D ≤ d | marker foreground)` **over the selected foreground samples**. It is a conditional empirical spatial fraction, not a posterior probability of binding, a molecular center distance or a voxel-independent significance test. Overlap gives distance zero even when labels correspond to distinct unresolved structures. Truncating the reference at cuboid edges can miss nearer reference signal outside that region. These distances do not model PSF, channel registration or fluorophore/linker offsets. [SciPy calibrated Euclidean distance transform](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html).
+The forward fraction estimates `P(D ≤ d | marker foreground)` **over the selected foreground samples**. It is a conditional empirical spatial fraction, not a posterior probability of binding, a molecular center distance or a voxel-independent significance test. Overlap gives distance zero even when labels correspond to distinct unresolved structures. Truncating the reference at cuboid edges can miss nearer reference signal outside that region. These distances do not model PSF, channel registration or fluorophore/linker offsets. [SciPy calibrated Euclidean distance transform](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html).
+
+The reverse fraction conditions on reference foreground instead. Fractions weight each source voxel equally, rather than weighting by intensity or treating each connected object as one observation. Reversing direction can change the denominator and summary, but equal values are possible. A zero nearest distance denotes coincident foreground voxel centres; it does not establish molecular contact. Empty masks yield unavailable distances/fractions rather than zero. An empty mask in a crop does not establish protein absence from the cell.
+
+Distances use separate Z, Y and X sampling in micrometres. No isotropic-pixel assumption or surface-to-surface correction is applied. The 95th percentile describes the distribution across source foreground voxels; it is not a confidence interval. Cuboid-face voxel counts report boundary contact and do not correct for omitted structures. Expand the cuboid and vary justified thresholds to assess sensitivity. Saved older reports retain their original forward summary; recalculation supplies both directions. [Dunn et al. 2011](#ref-dunn2011) explains why fluorescence distributions must be distinguished from molecular interactions. The [exhaustive numerical comparison](docs/validation/PROXIMITY_ORACLE_1.0.2.json) covers synthetic geometries and anisotropic sampling, rather than biological specificity.
 
 ### 32. Radial enrichment
 
@@ -463,6 +467,8 @@ For explicit source setup, run `backend/.venv/bin/python scripts/setup-local-ass
 #### Recorded summaries and unavailable AI drafts
 
 **Show recorded analysis summary** uses the calculation engine and application reading guide without loading Gemma. It works without a saved project and without downloaded weights. It displays current, provenance-matched quantities and notes; it is not a generated answer to arbitrary questions. When a model draft fails application checks or a generation request fails after model startup, the chat returns a clearly labelled application summary, preserves the attempted tool record and keeps the question for retry. Missing model/runtime setup remains an explicit setup error. No failed draft is silently relabelled as a supported finding.
+
+For matching 3D proximity reports, **Recorded analysis · application findings** appears separately above the generated draft. These statements are assembled from report status and scope, including unavailable empty-mask results and the fact that both directions are already calculated. They remain separate from the model's prose and its automatic claim review. Recorded quantities preserve numerical values and units; concise AI answers may omit context, even after quotation checks. The [assessment review](docs/validation/ASSISTANT_PROXIMITY_REVIEW_1.0.2.json) records examples and the scope of the follow-up.
 
 ### 48. How to read an answer
 

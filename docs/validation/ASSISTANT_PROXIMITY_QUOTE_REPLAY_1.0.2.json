@@ -1,0 +1,33 @@
+{
+  "scope": "Deterministic replay of one retained initial model-review claim against its original application notes. No additional model inference; targeted regression, not unseen accuracy.",
+  "initial_suite_sha256": "f880b1b8fca04955898278f94e0caedb3c375edb5be3e03564bc872be491f0cb",
+  "original_claim": {
+    "index": 5,
+    "sentence": "These sampling differences mean that a distance of zero in one dimension does not imply the same physical proximity in another [interpretation].",
+    "kind": "record_supported",
+    "retained": true,
+    "reason": null,
+    "source_id": "interpretation",
+    "quote": "Threshold/ROI choices and anisotropic Z/Y/X spacing affect the result."
+  },
+  "replay": {
+    "algorithm": "claim-source-audit-5",
+    "status": "Generated draft withheld; application notes remain available",
+    "retained_sentences": 0,
+    "withheld_sentences": 1,
+    "checked_answer": "I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.",
+    "claims": [
+      {
+        "index": 0,
+        "sentence": "These sampling differences mean that a distance of zero in one dimension does not imply the same physical proximity in another [interpretation].",
+        "kind": "record_supported",
+        "retained": false,
+        "reason": "The quotation does not cover a critical scientific concept in this claim.",
+        "source_id": null,
+        "quote": null
+      }
+    ],
+    "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+    "usage": {}
+  }
+}

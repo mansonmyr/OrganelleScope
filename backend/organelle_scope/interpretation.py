@@ -3,7 +3,7 @@
 
 def interpretation_snapshot(record):
     state=record.get('state',{});core=state.get('core',{});work=state.get('workspaces',{})
-    image=record.get('image');notes=[];reports={}
+    image=record.get('image');notes=[];reports={};findings=[]
     if image:
         info=image['info']
         notes.append('Stored channel labels are supplied metadata or owner annotations, not independently verified biological identities. Do not infer marker identity from a filename, dye name or LUT. Corrected identities supersede earlier marker-specific prose; a changed reference channel requires new candidate selection.')
@@ -37,6 +37,13 @@ def interpretation_snapshot(record):
             reports[kind]['objects_omitted']=max(0,len(objects)-3)
             radial=report.get('radial_enrichment')
             if radial:reports[kind]['radial_definition']=radial.get('definition')
+            proximity=report.get('proximity') or {}
+            if proximity.get('unavailable_reason'):findings.append('Proximity unavailable: '+proximity['unavailable_reason']+' This describes the selected cuboid, not protein absence from the cell; the fraction is undefined rather than zero.')
+            if proximity.get('marker_to_reference') and proximity.get('reference_to_marker'):findings.append('Both proximity directions are already calculated. Each fraction uses its own source-foreground voxel count with equal voxel weighting; read the recorded quantities below.')
+            if proximity:findings.append('Reference search is limited to the selected cuboid. Voxel-centre geometry is separate from molecular binding and optical resolution.')
+            if proximity.get('unavailable_reason'):notes.append('Proximity is unavailable in this cuboid: '+proximity['unavailable_reason']+' An empty cropped mask does not establish absence of the protein from the cell; undefined distance/fraction is not zero probability.')
+            if proximity.get('marker_to_reference') and proximity.get('reference_to_marker'):notes.append('Both proximity directions are already recorded. Read the two summaries directly; rerunning is needed only after changing image, mask or measurement settings. Equal fractions are possible in some geometries; reversing direction does not guarantee unequal results.')
+            notes.append('Proximity uses separate directed foreground denominators and reference signal inside the selected cuboid only. Outside reference signal is not searched; zero distance means coincident occupied voxel centres, not zero molecular separation. Threshold/ROI choices and anisotropic Z/Y/X spacing affect the result.')
             notes.append('Segmentation identifies threshold-defined foreground in the selected cuboid, not an automatic organelle identity. Edge-touching objects may be truncated; proximity describes occupied voxel centers, not molecular binding distances.')
         else:
             reports[kind]={k:report.get(k) for k in ('request','z','channels','pairs','voxel_count','region_volume_um3','scope','calibration_notes','results','definition') if k in report}
@@ -48,7 +55,7 @@ def interpretation_snapshot(record):
     elif experiment:notes.append('Experiment report excluded: its selected batch does not match.')
     if not reports and not analysis:notes.append('No matching measurement report is supplied. Missing documentation does not prove experiments were not performed.')
     return {'source_id':'interpretation','scope':'Application-generated reading guide from supplied reports; not independent biological validation or an LLM finding.',
-            'notes':list(dict.fromkeys(notes)),'reports':reports,
+            'notes':list(dict.fromkeys(notes)),'reports':reports,'findings':findings,
             'evidence_rules':['Separate measured findings, database associations, general advice and hypothetical knockdown scenarios.',
                               'STRING scores are association evidence, not ROI binding probabilities. KEGG membership/map presence is not measured pathway activation.',
                               'Use citations only for the record they support. Do not infer a protein identity from dye, LUT colour or a filename.']}

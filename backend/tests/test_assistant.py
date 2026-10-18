@@ -367,3 +367,22 @@ def test_session_readiness_requires_application_token(tmp_path):
   assert client.get('/api/ready',headers={'X-Session-Token':'wrong'}).status_code==401
   response=client.get('/api/ready',headers={'X-Session-Token':'test'})
   assert response.status_code==200 and response.json()['status']=='ok'
+
+
+def test_proximity_reading_notes_explain_empty_masks_and_existing_reverse_summary():
+ from organelle_scope.interpretation import interpretation_snapshot
+ from organelle_scope.assistant import recorded_quantities
+ info={'calibration':{a:{'value_um':1} for a in 'XYZ'},'channel_labels':['A','B']}
+ image={'info':info,'sha256':'source'}
+ record={'image':image,'state':{'core':{},'workspaces':{'Segmentation.report':{'source_sha256':'source','image_info':info,'proximity':{'unavailable_reason':'Reference mask is empty.'}}}}}
+ reading=interpretation_snapshot(record)
+ assert any('undefined distance/fraction is not zero probability' in n for n in reading['notes'])
+ assert any('fraction is undefined rather than zero' in f for f in reading['findings'])
+ direction={'source_voxels':2,'fraction_within_distance':.5,'median_occupied_voxel_center_um':2}
+ record['state']['workspaces']['Segmentation.report']['proximity']={'marker_to_reference':direction,'reference_to_marker':{**direction,'source_voxels':1,'fraction_within_distance':1},'distance_threshold_um':.5}
+ assert any('Both proximity directions are already recorded' in n for n in interpretation_snapshot(record)['notes'])
+ facts=recorded_quantities(record)
+ assert any(f['value']==.5 and 'Marker → reference' in f['label'] for f in facts)
+ assert any(f['value']==1 and 'Reference → marker' in f['label'] for f in facts)
+ record['image']['sha256']='changed'
+ assert not any('Cuboid proximity' in f['label'] for f in recorded_quantities(record))

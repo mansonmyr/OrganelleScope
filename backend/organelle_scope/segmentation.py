@@ -10,6 +10,7 @@ from organelle_scope.volume_analysis import CuboidRequest
 from organelle_scope.roi_analysis import AreaROI,roi_mask
 from organelle_scope.processing import process_plane,provenance
 from organelle_scope.image_io import ImageError,read_plane
+from organelle_scope.proximity import proximity_summary
 
 class SegmentationRequest(CuboidRequest):
     channel:int=Field(default=0,ge=0,le=3)
@@ -99,10 +100,11 @@ def register_segmentation(app,stored,authorized):
             c=options.reference_channel
             if c>=info.dimensions['C'] or c==options.channel:raise ImageError('Select a different available reference channel.')
             reference=np.stack([process_plane(read_plane(folder/'source.tiff',info,c,z),options.processing,c,folder.parent,z)[options.y0:options.y1+1,options.x0:options.x1+1].copy() for z in range(options.z0,options.z1+1)])>options.reference_threshold
-            if all(v is not None for v in spacing) and reference.any() and labels.any():
-                distances=ndimage.distance_transform_edt(~reference,sampling=spacing)[labels>0]
-                result['proximity']={'nearest_occupied_voxel_center_um':float(distances.min()),'median_occupied_voxel_center_um':float(np.median(distances)),'fraction_marker_voxels_within_distance':float(np.mean(distances<=options.near_distance_um)),'distance_threshold_um':options.near_distance_um,'definition':'Empirical fraction P(within threshold of reference foreground | selected marker foreground). Spatially dependent voxels; not a binding probability or a significance test. Registration and label offsets are unmeasured.'}
-            else:result['proximity']={'unavailable_reason':'Both masks must contain foreground and XYZ calibration must be known.'}
+            if all(v is not None for v in spacing):
+                result['proximity']=proximity_summary(labels>0,reference,spacing,options.near_distance_um)
+                result['proximity'].update(marker_channel=options.channel,reference_channel=c,marker_label=info.channel_labels[options.channel],reference_label=info.channel_labels[c],marker_mask='Threshold, connected-size filtering, exclusions and manual edits applied.',reference_mask='Strictly above reference threshold; no connected-size filter or marker-mask edits applied.')
+            else:result['proximity']={'unavailable_reason':'XYZ calibration must be known.'}
+
         result.update(source_sha256=record['sha256'],image_id=image_id,image_info=record['info'],request=options.model_dump(),processing=provenance(options.processing,folder.parent),scope='Threshold-defined objects in the selected cuboid; user-named compartment, not automatic biological identification. Source resolution/registration limits apply.')
         return labels,result,volume
     @app.post('/api/images/{image_id}/segmentation',dependencies=[Depends(authorized)])
