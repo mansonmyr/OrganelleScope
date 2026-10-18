@@ -1,6 +1,6 @@
 import React from 'react';
 import {afterEach,expect,it,vi} from 'vitest';
-import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {act,cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import App from '../App';
 import {json,request} from '../api';
 vi.mock('../api',()=>({json:vi.fn(),request:vi.fn()}));
@@ -67,4 +67,32 @@ it('exports the current review snapshot and allows cancelling a background ROI c
  await waitFor(()=>expect(screen.getByText(/ROI analysis · cancelled/)).toBeTruthy());
  expect(cancelled).toBe(true);expect(screen.getByRole('heading',{name:'Measured regions'})).toBeTruthy();
  vi.restoreAllMocks();
+});
+it('cancels an old job and ignores a late result after restoring a different image',async()=>{
+ const calibration=Object.fromEntries(['X','Y','Z'].map(a=>[a,{value_um:.1,source:'OME',conflict:false,candidates:{}}]));
+ const info={filename:'first.tif',axes:'CZYX',source_axes:'CZYX',series_count:1,series_index:0,shape:[2,4,6,7],dtype:'uint16',bit_depth:16,decoded_bytes:672,dimensions:{X:7,Y:6,Z:4,C:2,T:1},channel_labels:['A','B'],calibration,warnings:[],needs_axis_confirmation:false};
+ const first={id:'first',sha256:'a'.repeat(64),options:{},info},second={...first,id:'second',info:{...info,filename:'second.tif'}};
+ const roi={id:'existing',kind:'circle',z:0,points:[{x:3,y:3},{x:4,y:3}]};
+ const analysis={request:{rois:[roi],target_channel:0,threshold_mode:'zero',thresholds:[0,0],processing:{background:'none',offsets:[],radius_px:20,sigma_px:0}},scope:'native',results:[]};
+ const recovery={id:'recovery',name:'Other project',revision:1,image:second,state:{core:{areas:[],analysis:null},workspaces:{}}};let deliver:(value:any)=>void=()=>{};
+ vi.mocked(json).mockImplementation(async(path)=>{
+  if(path==='/api/images')return [first];
+  if(path==='/api/projects'||path==='/api/batch/sessions'||path==='/api/batch/runs')return [];
+  if(path==='/api/assistant/status')return {model:{name:'test',bytes:1},ready:false};
+  if(path==='/api/recovery')return recovery;
+  if(path==='/api/images/first/analysis-jobs')return {id:'late'};
+  if(path==='/api/analysis-jobs/late')return new Promise(resolve=>{deliver=resolve;});
+  if(path==='/api/analysis-jobs/late/cancel')return {};
+  return analysis;
+ });
+ vi.mocked(request).mockResolvedValue({blob:async()=>new Blob()} as Response);URL.createObjectURL=vi.fn(()=>'blob:test');URL.revokeObjectURL=vi.fn();vi.spyOn(window,'confirm').mockReturnValue(true);
+ render(<App/>);fireEvent.change(await screen.findByLabelText('Recent imports'),{target:{value:'first'}});fireEvent.click(screen.getByRole('button',{name:'ROI measurements'}));
+ await waitFor(()=>expect((screen.getByText('Calculate ROI statistics') as HTMLButtonElement).disabled).toBe(false));fireEvent.click(screen.getByText('Calculate ROI statistics'));
+ await waitFor(()=>expect(json).toHaveBeenCalledWith('/api/analysis-jobs/late'));
+ fireEvent.click(screen.getByText('Restore recovery copy'));
+ await screen.findByRole('heading',{name:'second.tif',level:2});
+ await waitFor(()=>expect(json).toHaveBeenCalledWith('/api/analysis-jobs/late/cancel',{method:'POST'}));
+ await act(async()=>{deliver({id:'late',status:'completed',progress:{completed:3,total:3,stage:'Complete'},result:{...analysis,scope:'STALE RESULT'}});});
+ await waitFor(()=>expect(screen.queryByText('STALE RESULT')).toBeNull());
+ expect(screen.queryByRole('heading',{name:'Measured regions'})).toBeNull();vi.restoreAllMocks();
 });

@@ -2,7 +2,7 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 1.0.4 · 18 October 2026 · local research workbench**
+**Edition 1.0.5 · 18 October 2026 · local research workbench**
 
 This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 
@@ -100,7 +100,7 @@ The import upload cap is 8 GiB per TIFF. Decoded size is an estimate of array st
 
 ---
 
-Interactive **Calculate ROI statistics** runs as a background job with stage/step progress and **Cancel ROI analysis**. Cancellation is checked between channel reads, processing operations and individual ROIs; it cannot interrupt a numerical kernel mid-call. Failure/cancellation preserves the preceding completed calculation. Do not interpret that previous result as a completed run of newly edited settings. Only one asynchronous ROI job runs at once. Up to five completed/failed session job records are retained in memory; saved analysis, projects and exports are separate. Jobs do not resume after quitting; reopen the image and recalculate.
+Interactive **Calculate ROI statistics** runs as a background job with stage/step progress and **Cancel ROI analysis**. Cancellation is checked between channel reads, processing operations and individual ROIs; it cannot interrupt a numerical kernel mid-call. Failure/cancellation preserves the preceding completed calculation. Do not interpret that previous result as a completed run of newly edited settings. Only one asynchronous ROI job runs at once. Up to five completed/failed session job records are retained in memory; saved analysis, projects and exports are separate. Switching images or restoring another project cancels the previous job, and late responses cannot replace the new workspace. Jobs do not resume after quitting; reopen the image and recalculate.
 
 ROI analysis reuses one open TIFF directory for all requested channels/Z planes and retains only one Z plane's channel arrays at a time. This reduces repeated directory parsing, without loading a complete stack. The [reader benchmark](docs/validation/ROI_READER_1.0.4.json) records timings, sampled memory and exact numerical parity on a synthetic stack; it is not a universal performance guarantee. Other workflows have their own documented limits and cancellation behavior.
 

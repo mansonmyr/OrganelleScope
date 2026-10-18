@@ -57,7 +57,13 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [analysisJob,setAnalysisJob]=useState<{id:string;status:string;progress:{completed:number;total:number;stage:string}}|null>(null);
   const analysisPoll=useRef<ReturnType<typeof setTimeout>>();
-  useEffect(()=>()=>{clearTimeout(analysisPoll.current);},[]);
+  const analysisEpoch=useRef(0),activeAnalysis=useRef<string>();
+  useEffect(()=>()=>{analysisEpoch.current++;clearTimeout(analysisPoll.current);if(activeAnalysis.current)void json(`/api/analysis-jobs/${activeAnalysis.current}/cancel`,{method:'POST'}).catch(()=>{});},[]);
+  function resetAnalysisJob(){
+    analysisEpoch.current++;clearTimeout(analysisPoll.current);
+    if(activeAnalysis.current)void json(`/api/analysis-jobs/${activeAnalysis.current}/cancel`,{method:'POST'}).catch(()=>{});
+    activeAnalysis.current=undefined;setAnalysisJob(null);setBusy(false);
+  }
   const [roi, setRoi] = useState<LineRoi | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(false);
@@ -82,6 +88,7 @@ export default function App() {
   useEffect(() => { json<ImageRecord[]>("/api/images").then(setRecent).catch(e => setError(String(e))); }, []);
 
   function accept(record: ImageRecord, restoring=false) {
+    resetAnalysisJob();
     skipSaved.current=restoring?record.id:undefined;
     setProject(null);setProjectName(record.info.filename.replace(/\.ome\.tiff?$|\.tiff?$/i,''));setProjectData({});setGeneration(g=>g+1);setProjectMessage('Image open. Saving a project is optional; save to retain this workspace.');
     setSnapshotDetails(undefined);setSnapshotMessage('');setWorkspace("images");setImage(record); setProcessing({...rawProcessing});setMeasurementSource("raw"); setZ(0); setAxes(record.info.axes); setSeries(record.info.series_index);
@@ -172,7 +179,7 @@ export default function App() {
     try{const saved=await json<ProjectRecord>(`/api/projects${project&&!asNew?'/'+project.id:''}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:projectName,image_id:image?.id??null,expected_image_info:image?.info??null,state:snapshot(),expected_revision:project&&!asNew?project.revision:null})});setProject(saved);setProjectMessage(`Saved revision ${saved.revision} on this computer.`);setProjects(await json<ProjectSummary[]>('/api/projects'));return saved;}
     catch(e){setError(String(e));}finally{setProjectBusy(false);}
   }
-  function restoreWorkspace(saved:ProjectRecord){const retired=hasRetiredProcessing(saved.state);const state=retired?rawProcessingCopy(saved.state):saved.state;const c=state.core??{};
+  function restoreWorkspace(saved:ProjectRecord){resetAnalysisJob();const retired=hasRetiredProcessing(saved.state);const state=retired?rawProcessingCopy(saved.state):saved.state;const c=state.core??{};
       if(saved.image){accept(saved.image,true);}else{setImage(null);}
       setProject(retired||saved.id==='recovery'?null:saved);setProjectName(saved.name+(retired?' (recalculation copy)':''));setProjectData(state.workspaces??{});setGeneration(g=>g+1);
       setZ(c.z??0);setWorkspace(c.layout_version!==2&&c.workspace==='images'&&c.mode==='volume'?'volume':c.workspace??'images');setMode(c.mode??'slice');setVolumeChannel(c.volumeChannel??-1);setRoi(c.roi??null);setAreas(c.areas??[]);setAnalysis(c.analysis??null);setThresholdMode(c.thresholdMode??'costes');setThresholds(c.thresholds??[0,0,0,0]);setTarget(c.target??0);setProcessing(c.processing??{...rawProcessing});setMeasurementSource(c.measurementSource??'raw');setTool(c.tool??'line');setLoadingSaved(false);setProjectMessage(retired?'Denoising/deconvolution removed: opened a recalculation copy with the original image, calibration and ROIs. Previous reports remain in the original project. Review thresholds and the retained background/smoothing recipe before recalculating.':`Opened revision ${saved.revision}; ${saved.image?'source SHA-256 verified.':'evidence-only project.'}`);
@@ -210,19 +217,23 @@ export default function App() {
     }catch(e){setSnapshotMessage(String(e));}finally{setSnapshotBusy(false);}
   }
   async function calculate() {
-    if(!image)return;setBusy(true);setError("");
+    if(!image)return;setBusy(true);setError("");const epoch=++analysisEpoch.current;
     try {
       const job=await json<{id:string}>(`/api/images/${image.id}/analysis-jobs`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({processing:selectedProcessing,rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})});
+      if(epoch!==analysisEpoch.current){void json(`/api/analysis-jobs/${job.id}/cancel`,{method:'POST'}).catch(()=>{});return;}
+      activeAnalysis.current=job.id;
       const poll=async()=>{try{
         const current=await json<{id:string;status:string;progress:{completed:number;total:number;stage:string};result?:AnalysisResult;error?:string}>(`/api/analysis-jobs/${job.id}`);
+        if(epoch!==analysisEpoch.current)return;
         setAnalysisJob(current);
         if(['running','cancelling'].includes(current.status)){analysisPoll.current=setTimeout(poll,500);return;}
+        activeAnalysis.current=undefined;
         if(current.result)setAnalysis(current.result);
         if(current.error)setError(current.error);
         setBusy(false);
-      }catch(e){setError(String(e));setBusy(false);}};
+      }catch(e){if(epoch===analysisEpoch.current){setError(String(e));setBusy(false);}}};
       await poll();
-    } catch(e){setError(String(e));setBusy(false);}
+    } catch(e){if(epoch===analysisEpoch.current){setError(String(e));setBusy(false);}}
   }
   return <div className="shell"><AssistantSetupBanner/>
     <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
