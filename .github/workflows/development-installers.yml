@@ -40,13 +40,18 @@ jobs:
       - run: python -m pytest backend/tests -q
       - run: python -m unittest discover -s scripts/tests -v
       - run: npm test --prefix frontend
+      - run: python scripts/setup-local-assistant.py --runtime-only --download
+      - run: python scripts/smoke-runtime.py --output release/runtime-check-${{ matrix.label }}.json
       - run: npm run build:ui
       - run: npm run build:backend
       - run: python scripts/smoke-frozen.py
+      - run: python scripts/validation/benchmark_native_stack.py --slices 16 --output release/workload-${{ matrix.label }}.json
       - run: python scripts/dependency-notices.py
       - run: npx electron-builder ${{ matrix.flags }} --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - if: runner.os == 'Windows'
+        run: python scripts/smoke-desktop.py --output release/desktop-check-windows-x64.json
       - if: runner.os == 'macOS'
         run: python scripts/verify-macos-installer.py --output release/installer-check-macos-arm64.json
       - run: python scripts/prepare-release-assets.py
