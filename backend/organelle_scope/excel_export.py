@@ -76,14 +76,14 @@ def export_batch(run):
     from organelle_scope.batch_design import summarize_design
     if sum(len(r['points'])*8 for i in run['items'] for r in i['analysis']['rois'])>1_800_000:
         raise ValueError('ROI geometry exceeds the Excel export budget. Export full JSON or split the batch.')
-    notes=[['Item','Meaning'],['Batch',run['name']],['Run ID',run['id']],['Application version',run['app_version']],['Status',run['status']],['Started UTC',run['started']],['Finished UTC',run.get('finished')],
+    notes=[['Item','Meaning'],['Batch',run['name']],['Run ID',run['id']],['Application version',run['app_version']],['Status',run['status']],['Recovery of run',run.get('retry_of_run_id')],['Started UTC',run['started']],['Finished UTC',run.get('finished')],
            ['Units','XY coordinates are pixel-center coordinates; Z planes and channel numbers are one-based here. Diameter and calibration are in micrometers.'],
            ['Missing values','Blank numeric cells mean unavailable or undefined, never zero. Inspect warnings and threshold status.'],
            ['Interpretation','Separate XY-plane ROI measurements. No pooled p-values, biological replicate inference, binding probability or super-resolution claim. Gaussian LRT is a descriptive covariance statistic.'],
            ['Review','Every image requires manual ROI and settings review before starting. Processing does not change source TIFF pixels.'],
            ['Reproducibility','Export full JSON alongside this workbook for complete engine results, image metadata and provenance. See MANUAL.md#part-vi--roi-measurements-and-channel-associations and MANUAL.md#part-ix--batch-analysis-and-excel.'],
            ['Validation','Engineering tested; independent microscopy benchmarks and biological validation remain pending.']]
-    summary=[['Image ID','Filename','Source SHA-256','Status','Error','Experiment','Cell','Condition','ROI count','Reviewed']]
+    summary=[['Image ID','Filename','Source SHA-256','Status','Error','Experiment','Cell','Condition','ROI count','Reviewed','Elapsed seconds']]
     settings=[['Image ID','Axes','Series index (zero based)','X µm/pixel','Y µm/pixel','Z µm/plane','Calibration details JSON','Channel labels JSON','Threshold mode','Manual thresholds JSON','Target channel (one based)','Processing JSON','Algorithm version']]
     geometry=[['Image ID','ROI ID','Kind','Z plane','Diameter µm','Vertex (one based)','X pixel','Y pixel']]
     pairs=[['Image ID','ROI ID','Z plane','Channel A','Channel B','Pixels','Area µm²','Pearson r','Spearman rho','MOC','M1 (>0)','M2 (>0)','Thresholded M1','Thresholded M2','Threshold A','Threshold B','Threshold status','Gaussian LRT (descriptive)','Warnings']]
@@ -91,7 +91,7 @@ def export_batch(run):
     regression=[['Image ID','ROI ID','R squared','Coefficient ratio','Betas JSON','Warnings']]
     for item in run['items']:
         ident=item['image_id'];image=item['image'];info=image['info'];a=item['analysis'];result=item.get('result',{})
-        summary.append([ident,info['filename'],image['sha256'],item['status'],item.get('error'),item['experiment'],item['cell'],item['condition'],len(a['rois']),str(item['reviewed'])])
+        summary.append([ident,info['filename'],image['sha256'],item['status'],item.get('error'),item['experiment'],item['cell'],item['condition'],len(a['rois']),str(item['reviewed']),item.get('elapsed_seconds')])
         settings.append([ident,info['axes'],info['series_index'],*[info['calibration'][d]['value_um'] for d in 'XYZ'],json.dumps(info['calibration']),json.dumps(info['channel_labels']),a['threshold_mode'],json.dumps(a['thresholds']),a['target_channel']+1,json.dumps(a['processing']),result.get('algorithm_version')])
         for roi in a['rois']:
             for j,point in enumerate(roi['points'],1):geometry.append([ident,roi['id'],roi['kind'],roi['z']+1,roi.get('diameter_um'),j,point['x'],point['y']])

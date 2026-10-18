@@ -1,0 +1,34 @@
+{
+  "scope": "Synthetic four-channel, eight-slice, 1024-square uint16 deflate TIFF (64 MiB decoded); eight XY ROIs. Separate processes, two runs per mode in alternating order. OS page-cache effects remain; timings are observations, not a universal speed guarantee. Peak RSS sampled every 10 ms. Temporary source removed after measurement.",
+  "numerical_parity": true,
+  "runs": [
+    {
+      "mode": "per-plane-open",
+      "seconds": 0.06572549999691546,
+      "peak_sampled_rss_bytes": 162742272,
+      "result_sha256": "4a7958da0790683f84d2a99425f398f1343498975e65b695a44d2fb14efa15ef",
+      "roi_count": 8
+    },
+    {
+      "mode": "shared-directory",
+      "seconds": 0.05358712503220886,
+      "peak_sampled_rss_bytes": 168165376,
+      "result_sha256": "4a7958da0790683f84d2a99425f398f1343498975e65b695a44d2fb14efa15ef",
+      "roi_count": 8
+    },
+    {
+      "mode": "shared-directory",
+      "seconds": 0.05045091698411852,
+      "peak_sampled_rss_bytes": 155287552,
+      "result_sha256": "4a7958da0790683f84d2a99425f398f1343498975e65b695a44d2fb14efa15ef",
+      "roi_count": 8
+    },
+    {
+      "mode": "per-plane-open",
+      "seconds": 0.06485520792193711,
+      "peak_sampled_rss_bytes": 167198720,
+      "result_sha256": "4a7958da0790683f84d2a99425f398f1343498975e65b695a44d2fb14efa15ef",
+      "roi_count": 8
+    }
+  ]
+}

@@ -1,0 +1,624 @@
+{
+  "scope": "Follow-up diagnostic after adding documented workflow definitions. These questions have already been seen; not a fresh held-out assessment. Same model generates and audits. No private images or online lookup.",
+  "suite_sha256": "0d3d1fcdd36778758e28909a9d87afdd4234a1b0066590b23c319e8a4129695c",
+  "frozen_cases": [
+    {
+      "id": "overlap-versus-covariation",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {
+            "analysis": {
+              "source_sha256": "synthetic-not-an-acquisition",
+              "image_info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              },
+              "processing": {
+                "settings": {
+                  "background": "none"
+                }
+              },
+              "request": {
+                "threshold_mode": "zero"
+              },
+              "results": [
+                {
+                  "roi": {
+                    "id": "synthetic-roi"
+                  },
+                  "channel_summary": [
+                    {
+                      "label": "Marker A",
+                      "sum": 100,
+                      "std": 2
+                    },
+                    {
+                      "label": "Marker B",
+                      "sum": 100,
+                      "std": 3
+                    }
+                  ],
+                  "pairs": [
+                    {
+                      "label_a": "Marker A",
+                      "label_b": "Marker B",
+                      "pcc": -0.3,
+                      "spearman": -0.2,
+                      "thresholded_m1": 0.92,
+                      "thresholded_m2": 0.95,
+                      "thresholds": {
+                        "a": 0,
+                        "b": 0
+                      },
+                      "unavailable_reasons": {}
+                    }
+                  ]
+                }
+              ],
+              "scope": "Synthetic XY fixture; not a biological acquisition"
+            }
+          },
+          "workspaces": {}
+        }
+      },
+      "question": "The overlap fractions look almost complete while both correlations are negative. Which result should I trust, and does one invalidate the other?",
+      "criteria": [
+        "Different metric definitions can coexist",
+        "Do not call either calculation invalid solely from this disagreement",
+        "Review threshold/background and regions; no binding inference"
+      ]
+    },
+    {
+      "id": "sampling-versus-resolution",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {},
+          "workspaces": {
+            "ChannelPanel.quality": {
+              "source_sha256": "synthetic-not-an-acquisition",
+              "image_info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              },
+              "z": 0,
+              "channels": [],
+              "sampling_review": {
+                "registration": "not measured",
+                "axes": [
+                  {
+                    "axis": "X",
+                    "spacing_um": 0.1,
+                    "declared_resolution_um": 0.2,
+                    "samples_per_declared_resolution": 2,
+                    "status": "at least two samples per supplied resolution"
+                  }
+                ]
+              },
+              "scope": "Selected XY plane only; nominal resolution is user supplied, not measured."
+            }
+          }
+        }
+      },
+      "question": "The acquisition panel passes the two-samples screen. Does that verify my optical resolution and registration throughout the stack? What evidence is still missing?",
+      "criteria": [
+        "User supplied nominal resolution is not measured optical resolution",
+        "Registration has not been measured",
+        "Selected plane cannot certify the full stack"
+      ]
+    },
+    {
+      "id": "choosing-best-sensitivity",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {},
+          "workspaces": {}
+        }
+      },
+      "question": "One threshold variant gives the largest colocalization. Should I report only that setting and treat the other variants as independent replicates?",
+      "criteria": [
+        "Avoid selecting settings solely to maximise favourable overlap",
+        "Sensitivity variants are not independent biological experiments",
+        "Do not invent supplied sweep results"
+      ]
+    },
+    {
+      "id": "recovery-is-not-replication",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {},
+          "workspaces": {}
+        }
+      },
+      "question": "If a failed image succeeds in a recovery batch, can I combine both attempts as additional biological experiments? How should I retain the failed attempt?",
+      "criteria": [
+        "Repeated processing of one source does not add independent experiments",
+        "Preserve provenance of original attempt",
+        "Do not invent completed attempts in this context"
+      ]
+    }
+  ],
+  "followup_after_development": true,
+  "implementation_sha256": {
+    "assistant.py": "78d3c538e5e94698a5e1d3c1c6c8944fbdc4389cc51b6c29d4ff19ff61dd146d",
+    "interpretation.py": "080fe63e8e7d581610111b2cb30120fa453248b90ef438d62e3d2e145c63d36e",
+    "claim_review.py": "089142969d171d3cebdd11750fc052f2880c7bc7bb356ccee4d4ea34834a61a8"
+  },
+  "cases": [
+    {
+      "id": "choosing-best-sensitivity",
+      "semantic_review": {
+        "reviewer": "development agent, qualitative review",
+        "assessment": "Addresses both selective reporting and invalid replication; keeps suggestions labelled methodological advice. No invented specimen measurements."
+      },
+      "answer": "Methodological advice: Do not report only the largest colocalization value or treat threshold variants as independent replicates. Methodological advice: Reporting only the highest value may overlook sensitivity differences or artifacts introduced by specific threshold levels. Methodological advice: Retain the full comparison of variants and justify the selected setting based on the acquisition quality, structural features, and relevant controls.",
+      "claim_review": {
+        "algorithm": "claim-source-audit-5",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 3,
+        "withheld_sentences": 1,
+        "checked_answer": "Methodological advice: Do not report only the largest colocalization value or treat threshold variants as independent replicates. Methodological advice: Reporting only the highest value may overlook sensitivity differences or artifacts introduced by specific threshold levels. Methodological advice: Retain the full comparison of variants and justify the selected setting based on the acquisition quality, structural features, and relevant controls.",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "Advice: Do not report only the largest colocalization value or treat threshold variants as independent replicates. [methods]",
+            "kind": "advice",
+            "retained": true,
+            "reason": null,
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "Threshold variants are descriptive settings for the same image, not independent biological replicates [methods].",
+            "kind": "advice",
+            "retained": false,
+            "reason": "Statement was not clearly framed as advice or a hypothesis.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 2,
+            "sentence": "Reporting only the highest value may overlook sensitivity differences or artifacts introduced by specific threshold levels. [methods]",
+            "kind": "advice",
+            "retained": true,
+            "reason": null,
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "Advice: Retain the full comparison of variants and justify the selected setting based on the acquisition quality, structural features, and relevant controls. [methods]",
+            "kind": "advice",
+            "retained": true,
+            "reason": null,
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 195,
+          "prompt_tokens": 906,
+          "total_tokens": 1101,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "question_coverage": {
+        "assessed": true,
+        "all_parts_addressed": true,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "One threshold variant gives the largest colocalization. Should I report only that setting and treat the other variants as independent replicates?",
+            "index": 0,
+            "status": "addressed",
+            "answer_quote": "Do not report only the largest colocalization value or treat threshold variants as independent replicates."
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "recorded_quantities": [
+        {
+          "label": "X spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Y spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Z spacing",
+          "value": 0.3,
+          "unit": "µm per Z step"
+        }
+      ],
+      "seconds": 57.98,
+      "audit": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        }
+      ]
+    },
+    {
+      "id": "recovery-is-not-replication",
+      "semantic_review": {
+        "reviewer": "development agent, qualitative review",
+        "assessment": "Directly explains that reprocessing adds no biological experiment and retains both original and recovery attempts. Uses documented workflow definitions; no invented experiment history."
+      },
+      "answer": "A recovery batch creates a new draft for failed or unfinished images, but re-processing the same image does not create a new biological experiment [methods]. Advice: retain both the original frozen run and the new attempt, reporting the processing history for both [methods]. Cells and ROIs from one culture do not establish independent biological experiments [methods].",
+      "claim_review": {
+        "algorithm": "claim-source-audit-5",
+        "status": "Automatic claim review completed; human review required",
+        "retained_sentences": 3,
+        "withheld_sentences": 0,
+        "checked_answer": "A recovery batch creates a new draft for failed or unfinished images, but re-processing the same image does not create a new biological experiment [methods]. Advice: retain both the original frozen run and the new attempt, reporting the processing history for both [methods]. Cells and ROIs from one culture do not establish independent biological experiments [methods].",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "A recovery batch creates a new draft for failed or unfinished images, but re-processing the same image does not create a new biological experiment [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "A recovery batch creates a new draft containing only failed or unfinished images. It preserves the original frozen run and records its identity on the new attempt. Reprocessing the same image does not create a new biological experiment."
+          },
+          {
+            "index": 1,
+            "sentence": "Advice: retain both the original frozen run and the new attempt, reporting the processing history for both [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Advice: retain both attempts and their source identities and report the processing history."
+          },
+          {
+            "index": 2,
+            "sentence": "Cells and ROIs from one culture do not establish independent biological experiments [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Cells and ROIs from one culture do not establish independent biological experiments."
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 168,
+          "prompt_tokens": 880,
+          "total_tokens": 1048,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "question_coverage": {
+        "assessed": true,
+        "all_parts_addressed": true,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "If a failed image succeeds in a recovery batch, can I combine both attempts as additional biological experiments?",
+            "index": 0,
+            "status": "addressed",
+            "answer_quote": "re-processing the same image does not create a new biological experiment"
+          },
+          {
+            "request": "How should I retain the failed attempt?",
+            "index": 1,
+            "status": "addressed",
+            "answer_quote": "retain both the original frozen run and the new attempt, reporting the processing history for both"
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "recorded_quantities": [
+        {
+          "label": "X spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Y spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Z spacing",
+          "value": 0.3,
+          "unit": "µm per Z step"
+        }
+      ],
+      "seconds": 39.91,
+      "audit": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        }
+      ]
+    }
+  ],
+  "model": {
+    "name": "Gemma 4 12B Instruct QAT Q4_0",
+    "filename": "gemma-4-12b-it-qat-q4_0.gguf",
+    "bytes": 6975879296,
+    "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+    "upstream": "https://huggingface.co/google/gemma-4-12B-it",
+    "quantization": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+    "revision": "29d097773436b69ff9feafd636ab4cf873786537",
+    "license": "Apache-2.0",
+    "runtime": "llama.cpp b11669",
+    "context_tokens": 8192,
+    "evidence_review": true,
+    "vision_enabled": false,
+    "thinking_enabled": false,
+    "temperature": 1.0
+  },
+  "assessment_summary": "Both repeated workflow questions were addressed in these sampled answers after adding documented definitions. These were follow-up questions already seen during development, not an unseen accuracy result. Initial partial/withheld outputs remain in WORKFLOW_ASSISTANT_1.0.4.json."
+}

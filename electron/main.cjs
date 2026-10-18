@@ -67,16 +67,18 @@ async function start() {
       await new Promise(resolve=>setTimeout(resolve,200));
     }while(Date.now()<deadline);
     if(!renderer?.root||!renderer.text.includes('Open TIFF'))throw new Error('Packaged renderer did not mount its image workflow.');
-    const initialLists=await Promise.all(['/api/images','/api/projects'].map(async route=>{
+    const initialLists=await Promise.all(['/api/images','/api/projects','/api/batch/sessions','/api/batch/runs'].map(async route=>{
       const response=await fetch(apiUrl+route,{headers:{'X-Session-Token':token}});
       if(!response.ok)throw new Error('Cannot verify initial research storage.');
       return response.json();
     }));
     if(initialLists.some(items=>!Array.isArray(items)||items.length!==0))throw new Error('Isolated installation contains imported images or saved projects.');
+    const recoveryResponse=await fetch(apiUrl+'/api/recovery',{headers:{'X-Session-Token':token}});
+    if(!recoveryResponse.ok||await recoveryResponse.json()!==null)throw new Error('Fresh profile contains a recovery workspace.');
     const picture=await mainWindow.webContents.capturePage();
     if(picture.isEmpty())throw new Error('Packaged renderer returned an empty capture.');
     fs.mkdirSync(path.dirname(target),{recursive:true});
-    fs.writeFileSync(target,JSON.stringify({version:app.getVersion(),platform:process.platform,architecture:process.arch,packaged:app.isPackaged,renderer_mounted:true,empty_initial_images:true,empty_initial_projects:true,renderer_capture_size:picture.getSize(),diagnostics_available:fs.existsSync(diagnostics.file),local_backend_ready:true,automatic_download_disabled_for_test:process.env.ORGANELLESCOPE_DISABLE_AUTO_SETUP==='1',scope:'Native application startup and initial renderer paint; not a human interaction, GPU workload, fresh full-weight download or biological validation.'},null,2));
+    fs.writeFileSync(target,JSON.stringify({version:app.getVersion(),platform:process.platform,architecture:process.arch,packaged:app.isPackaged,renderer_mounted:true,empty_initial_images:true,empty_initial_projects:true,empty_initial_batches:true,empty_initial_recovery:true,renderer_capture_size:picture.getSize(),diagnostics_available:fs.existsSync(diagnostics.file),local_backend_ready:true,automatic_download_disabled_for_test:process.env.ORGANELLESCOPE_DISABLE_AUTO_SETUP==='1',scope:'Native application startup and initial renderer paint; not a human interaction, GPU workload, fresh full-weight download or biological validation.'},null,2));
     app.quit();
   }
 }

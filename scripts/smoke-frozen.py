@@ -16,6 +16,7 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-frozen-') as folder:
         else:raise RuntimeError('Frozen backend startup timeout.')
         assert get('/api/ready')['status']=='ok'
         assert get('/api/images')==[]
+        assert get('/api/projects')==[] and get('/api/batch/sessions')==[] and get('/api/batch/runs')==[] and get('/api/recovery') is None
         try:get('/api/restoration/status')
         except urllib.error.HTTPError as error:assert error.code==404
         else:raise AssertionError('Removed restoration API is still exposed.')
@@ -27,6 +28,17 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-frozen-') as folder:
         def post(path,body,content='application/json'):
             with urllib.request.urlopen(urllib.request.Request(f'http://127.0.0.1:{port}'+path,data=body,headers={'X-Session-Token':'frozen-smoke','Content-Type':content}),timeout=120) as response:return json.load(response)
         image=post('/api/images',payload,'multipart/form-data; boundary='+boundary)
+        # New asynchronous route is exercised in both frozen platform builds.
+        job=post('/api/images/'+image['id']+'/analysis-jobs',json.dumps({'rois':[{'id':'review','kind':'circle','z':1,'points':[{'x':3,'y':3},{'x':4,'y':3}]}],'threshold_mode':'zero'}).encode())
+        for _ in range(200):
+            status=get('/api/analysis-jobs/'+job['id'])
+            if status['status'] not in ('running','cancelling'):break
+            time.sleep(.02)
+        assert status['status']=='completed' and status['progress']['completed']==status['progress']['total']
+        context={'image_id':image['id'],'expected_image_info':image['info'],'state':{'core':{'areas':status['result']['request']['rois'],'analysis':status['result']},'workspaces':{}}}
+        with urllib.request.urlopen(urllib.request.Request(f'http://127.0.0.1:{port}/api/images/'+image['id']+'/review-report',data=json.dumps(context).encode(),headers={'X-Session-Token':'frozen-smoke','Content-Type':'application/json'}),timeout=30) as response:
+            html=response.read();assert b'data:image/png;base64,' in html and b'href="#roi-0"' in html
+
         base='/api/images/'+image['id']
         renamed=post(base+'/channels',json.dumps({'labels':['Synthetic A','Synthetic B'],'expected_image_info':image['info']}).encode())
         assert renamed['sha256']==image['sha256'] and renamed['info']['channel_labels']==['Synthetic A','Synthetic B']

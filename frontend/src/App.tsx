@@ -55,6 +55,9 @@ export default function App() {
   const [preview, setPreview] = useState<string>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [analysisJob,setAnalysisJob]=useState<{id:string;status:string;progress:{completed:number;total:number;stage:string}}|null>(null);
+  const analysisPoll=useRef<ReturnType<typeof setTimeout>>();
+  useEffect(()=>()=>{clearTimeout(analysisPoll.current);},[]);
   const [roi, setRoi] = useState<LineRoi | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(false);
@@ -184,6 +187,10 @@ export default function App() {
     try{const saved=await json<ProjectRecord>('/api/projects/'+id);restoreWorkspace(saved);
     }catch(e){setError(String(e));}finally{setProjectBusy(false);}
   }
+  async function exportReview(){
+    if(!image)return;setBusy(true);setError('');
+    try{const response=await request(`/api/images/${image.id}/review-report`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_id:image.id,expected_image_info:image.info,state:snapshot()})});const href=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=href;a.download='OrganelleScope-analysis-review.html';a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);}catch(e){setError(String(e));}finally{setBusy(false);}
+  }
   async function exportInspection() {
     if(!image)return;setBusy(true);setError("");
     try {
@@ -203,9 +210,19 @@ export default function App() {
     }catch(e){setSnapshotMessage(String(e));}finally{setSnapshotBusy(false);}
   }
   async function calculate() {
-    if(!image)return;setBusy(true);setError("");setAnalysis(null);
-    try { setAnalysis(await json<AnalysisResult>(`/api/images/${image.id}/analysis`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({processing:selectedProcessing,rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})})); }
-    catch(e){setError(String(e));}finally{setBusy(false);}
+    if(!image)return;setBusy(true);setError("");
+    try {
+      const job=await json<{id:string}>(`/api/images/${image.id}/analysis-jobs`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({processing:selectedProcessing,rois:areas,target_channel:target,threshold_mode:thresholdMode,thresholds:thresholds.slice(0,image.info.dimensions.C)})});
+      const poll=async()=>{try{
+        const current=await json<{id:string;status:string;progress:{completed:number;total:number;stage:string};result?:AnalysisResult;error?:string}>(`/api/analysis-jobs/${job.id}`);
+        setAnalysisJob(current);
+        if(['running','cancelling'].includes(current.status)){analysisPoll.current=setTimeout(poll,500);return;}
+        if(current.result)setAnalysis(current.result);
+        if(current.error)setError(current.error);
+        setBusy(false);
+      }catch(e){setError(String(e));setBusy(false);}};
+      await poll();
+    } catch(e){setError(String(e));setBusy(false);}
   }
   return <div className="shell"><AssistantSetupBanner/>
     <header><div className="brand"><img className="brand-icon" src="./branding/icon.png" alt="OrganelleScope microscope and cell logo"/><div><h1>OrganelleScope</h1><p>Spatial microscopy workbench</p></div></div>
@@ -232,7 +249,7 @@ export default function App() {
         </section>
         <ChannelPanel onQuality={quality=>setProjectData(data=>({...data,'ChannelPanel.quality':quality}))} image={image!} z={z} disabled={busy||loadingSaved||projectBusy} onUpdate={updated=>{setImage(updated);setRecent(rows=>rows.map(row=>row.id===updated.id?updated:row));setAnalysis(null);setProfile(null);setSnapshotDetails(undefined);setProjectData(data=>Object.fromEntries(Object.entries(data).filter(([key])=>!['Segmentation.report','Segmentation.mesh','OrthogonalWorkspace.report','ValidationPanel.spatial','ValidationPanel.sensitivity','ChannelPanel.quality'].includes(key))));setProjectMessage('Channel names updated locally. ROIs are retained; recalculate reports with the new labels. Saved revisions remain unchanged.');}}/>
         <section><p className="eyebrow">DISPLAY COLOURS</p>{info.channel_labels.map((name,i)=><div className="channel channel-lut" key={i}><i style={{background:lutCss(displayLuts[i])}}/><label>{name}<select aria-label={`${name} display LUT`} value={displayLuts[i]} onChange={e=>changeLut(i,e.target.value)}>{Object.entries(LUTS).map(([key,lut])=><option value={key} key={key}>{lut.label}</option>)}</select></label></div>)}<p className="hint">LUTs change preview colours only. Measurements use source intensities.</p><button className="secondary" onClick={()=>setProjectData(data=>({...data,'Display.luts':undefined}))}>Reset channel LUTs</button></section>
-        <button className="secondary" disabled={busy||loadingSaved} onClick={exportInspection}>Export measurements & ROIs</button>
+        <button className="secondary" disabled={busy||loadingSaved} onClick={exportInspection}>Export measurements & ROIs</button><button className="secondary" disabled={busy||loadingSaved} onClick={exportReview}>Export analysis review</button>
       </> : <section className="muted"><p>Original 8/16-bit intensities are preserved.</p><p>Ambiguous axes and missing calibration are shown for review.</p><p>Images stay on this computer.</p></section>}
     </aside><main>
       {error && <div role="alert" className="error">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}
@@ -261,7 +278,7 @@ export default function App() {
         <div className="roi-list">{areas.map((r,i)=><div key={r.id}>ROI {i+1} · {r.kind} · Z {r.z+1} {r.kind==='circle'&&<CircleSizeEditor roi={r} sx={info!.calibration.X.value_um} sy={info!.calibration.Y.value_um} width={info!.dimensions.X} height={info!.dimensions.Y} disabled={busy||loadingSaved} onChange={updated=>{setAreas(a=>a.map(x=>x.id===r.id?updated:x));setAnalysis(null);}}/>}<button disabled={busy} onClick={()=>{setAreas(a=>a.filter(x=>x.id!==r.id));setAnalysis(null);}}>Delete ROI {i+1}</button></div>)}</div>
         <div className="roi-tools"><label>Threshold method<select disabled={busy} value={thresholdMode} onChange={e=>{setThresholdMode(e.target.value as typeof thresholdMode);setAnalysis(null);}}><option value="costes" disabled={measurementSource==='processed'}>Costes-style automatic (raw only)</option><option value="manual">Manual per channel</option><option value="zero">Zero threshold</option></select></label><label>Regression target<select disabled={busy} value={target} onChange={e=>{setTarget(Number(e.target.value));setAnalysis(null);}}>{info!.channel_labels.map((l,i)=><option key={i} value={i}>{l}</option>)}</select></label></div>
         {thresholdMode==='manual' && info!.channel_labels.map((l,i)=><label key={i}>{l} threshold<input disabled={busy} type="number" min="0" max={2**info!.bit_depth-1} value={thresholds[i]??0} onChange={e=>{setThresholds(t=>Array.from({length:info!.dimensions.C},(_,j)=>j===i?Number(e.target.value):t[j]??0));setAnalysis(null);}}/></label>)}
-        <button disabled={busy || loadingSaved || !areas.length || info!.dimensions.C<2} onClick={calculate}>{busy?'Calculating…':'Calculate ROI statistics'}</button><p className="hint">At least two channels are needed. Results and ROI coordinates are saved locally after calculation and included in the export.</p>
+        <button disabled={busy || loadingSaved || !areas.length || info!.dimensions.C<2} onClick={calculate}>{busy?'Calculating…':'Calculate ROI statistics'}</button>{analysisJob&&<div role="status">ROI analysis · {analysisJob.status} · {analysisJob.progress.stage} · {analysisJob.progress.completed} / {analysisJob.progress.total} steps {['running','cancelling'].includes(analysisJob.status)&&<button disabled={analysisJob.status==='cancelling'} onClick={async()=>{try{await json(`/api/analysis-jobs/${analysisJob.id}/cancel`,{method:'POST'});setAnalysisJob({...analysisJob,status:'cancelling'});}catch(e){setError(String(e));}}}>Cancel ROI analysis</button>}</div>}<p className="hint">At least two channels are needed. Results and ROI coordinates are saved locally after calculation and included in the export.</p>
       </section>}
       {analysis && <><RoiSummaryPanel analysis={analysis}/><button onClick={()=>setWorkspace('associations')}>View channel association results</button></>}
       </div><div hidden={workspace!=='associations'}>{analysis?<StatisticsPanel analysis={analysis}/>:<section className="panel statistics"><h2>Channel associations</h2><p>Draw regions in the shared preview, then calculate their statistics in ROI measurements.</p><button onClick={()=>setWorkspace('roi')}>Go to ROI measurements</button></section>}</div><div hidden={workspace!=='images'}>

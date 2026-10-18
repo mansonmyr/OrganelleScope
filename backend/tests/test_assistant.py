@@ -208,8 +208,8 @@ def test_questions_without_project_start_local_model_and_do_not_save(tmp_path,mo
 
 def test_workspace_context_uses_unsaved_settings_and_excludes_stale_measurements():
  from organelle_scope.assistant import WorkspaceContext,workspace_record
- image={'id':'11111111-1111-1111-1111-111111111111','sha256':'source','info':{'filename':'current.tif','calibration':{a:{'value_um':.1} for a in 'XYZ'}}}
- report={'source_sha256':'source','image_info':image['info'],'results':[]}
+ image={'id':'11111111-1111-1111-1111-111111111111','sha256':'source','info':{'filename':'current.tif','dimensions':{'C':2},'calibration':{a:{'value_um':.1} for a in 'XYZ'}}}
+ report={'source_sha256':'source','image_info':image['info'],'request':{'threshold_mode':'manual','thresholds':[42,51]},'results':[]}
  context=WorkspaceContext(image_id=image['id'],expected_image_info=image['info'],state={'core':{'thresholdMode':'manual','thresholds':[42,51],'analysis':report},'workspaces':{'EvidencePanel.offline':True,'AssistantPanel.turns':['large conversation']}})
  record=workspace_record(context,lambda _: (None,image,None))
  assert record['state']['core']['thresholds']==[42,51]

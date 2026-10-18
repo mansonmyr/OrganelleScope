@@ -23,7 +23,7 @@ def test_fresh_account_is_empty_and_existing_account_retains_work(tmp_path):
         assert response.status_code == 200
         project_id = response.json()['id']
     with TestClient(create_app(fresh, 'session')) as client:
-        for route in ['/api/images', '/api/projects']:
+        for route in ['/api/images', '/api/projects', '/api/batch/sessions', '/api/batch/runs']:
             response = client.get(route, headers=headers)
             assert response.status_code == 200 and response.json() == []
         assert client.get('/api/recovery', headers=headers).json() is None

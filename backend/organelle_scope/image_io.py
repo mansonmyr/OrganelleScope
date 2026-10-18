@@ -200,14 +200,15 @@ def inspect_tiff(path: Path, series_index: int = 0, axes_override: str | None = 
                          acquisition=acquisition, decoded_bytes=int(math.prod(series.shape) * series.dtype.itemsize))
 
 
-def read_plane(path: Path, info: ImageInfo, channel: int = 0, z: int = 0) -> np.ndarray:
+def read_plane(path: Path, info: ImageInfo, channel: int = 0, z: int = 0, *, tiff=None) -> np.ndarray:
     if info.needs_axis_confirmation:
         raise ImageError("Confirm the axis order before viewing or analyzing this TIFF.")
     if info.dimensions["T"] > 1:
         raise ImageError("Export a single time point before analysis; automatic frame selection is disabled.")
     if not 0 <= channel < info.dimensions["C"] or not 0 <= z < info.dimensions["Z"]:
         raise ImageError("Channel or Z index is outside the image.")
-    with tifffile.TiffFile(path) as tf:
+    from contextlib import nullcontext
+    with (nullcontext(tiff) if tiff is not None else tifffile.TiffFile(path)) as tf:
         series = tf.series[info.series_index]
         # TIFF pages contain the trailing dimensions; outer dimensions select a page.
         page_shape = series.pages[0].shape

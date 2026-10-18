@@ -2,7 +2,7 @@
 
 ## A practical guide to calibrated microscopy, measurements and interpretation
 
-**Edition 1.0.3 · 18 October 2026 · local research workbench**
+**Edition 1.0.4 · 18 October 2026 · local research workbench**
 
 This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 
@@ -100,6 +100,10 @@ The import upload cap is 8 GiB per TIFF. Decoded size is an estimate of array st
 
 ---
 
+Interactive **Calculate ROI statistics** runs as a background job with stage/step progress and **Cancel ROI analysis**. Cancellation is checked between channel reads, processing operations and individual ROIs; it cannot interrupt a numerical kernel mid-call. Failure/cancellation preserves the preceding completed calculation. Do not interpret that previous result as a completed run of newly edited settings. Only one asynchronous ROI job runs at once. Up to five completed/failed session job records are retained in memory; saved analysis, projects and exports are separate. Jobs do not resume after quitting; reopen the image and recalculate.
+
+ROI analysis reuses one open TIFF directory for all requested channels/Z planes and retains only one Z plane's channel arrays at a time. This reduces repeated directory parsing, without loading a complete stack. The [reader benchmark](docs/validation/ROI_READER_1.0.4.json) records timings, sampled memory and exact numerical parity on a synthetic stack; it is not a universal performance guarantee. Other workflows have their own documented limits and cancellation behavior.
+
 ## Part III — Viewing, channels and snapshots
 
 ### 9. Channel identities and LUT controls
@@ -151,6 +155,14 @@ Cutoff and opacity alter visibility, not the voxel measurements. Display Z stret
 **Export snapshot details** supplies JSON with source identity/hash, timestamp, calibration, view type, Z/channel selection, LUTs and relevant overlays/settings. Keep it beside the PNG. A PNG is an 8-bit presentation composite; it does not preserve native unsigned/float channel intensities or replace the TIFF, mask labels or engine report. Changing a LUT after a capture does not retroactively change an already exported image. Chart export buttons provide presentation outputs supported by that chart; full measurement records should be exported separately.
 
 ---
+
+### Portable analysis review
+
+**Export analysis review** in the Workspace sidebar downloads a self-contained HTML file. Open it in a browser and select a measured-region link to jump to its source Z plane and yellow ROI outline. The report includes source SHA-256, channel labels, axes, calibration, current controls, complete engine ROI values, processing provenance and matching acquisition/3D/sensitivity records. It requires no project save or external image request. Share it as research data: it embeds image previews and source metadata.
+
+For ROI results, the supplied report must exactly match the latest locally persisted calculation, source metadata and current ROI geometry. Stale or altered results are omitted with a visible message; calculate again before exporting. Additional workspace reports must match source hash and image metadata and retain their own recorded settings; they are not silently recalculated with current controls. Source TIFF checksums are verified at export. Engine values are displayed directly; this report does not ask the model to calculate or interpret them.
+
+Previews use the full native storage range and default channel colours, independently of inspection zoom or selected LUTs. Only the first ten distinct measured Z planes are embedded; remaining regions retain geometry and numerical records. Each source plane is reduced to at most 1000 pixels per side for the report, and previews are for navigation, not quantitative pixel sampling. This export covers current-image ROI results and matching workspace records, not a complete batch report. Keep full JSON/portable archives for complete research records. Print or save to PDF through your browser if needed.
 
 ## Part IV — Background correction and smoothing
 
@@ -411,6 +423,12 @@ Optional condition, experiment and cell labels support later aggregation. **Expe
 
 A later batch edit cannot rewrite an earlier frozen run. Select an earlier run to export it again. Removing a queue item does not delete the source microscopy data or saved run. Batch sessions are manual-save records; keep the saved batch/run as well as exported files. [Detailed batch methods](MANUAL.md#part-ix--batch-analysis-and-excel).
 
+#### Reviewing and recovering an interrupted batch
+
+**Next image needing review** advances to another unreviewed queue item; it does not copy ROIs or approve the image. The run shows per-image progress through checksum verification, channel reading and ROI measurement. Completed items record calculation time. Cancellation is cooperative: a TIFF decode, smoothing kernel or individual ROI calculation already executing finishes before the next checkpoint. Completed results are retained.
+
+After failure, cancellation or interruption, **Prepare recovery batch** creates a separately saved draft containing only failed/unfinished images. It preserves their ROIs, settings and labels and links the new run to the original run. Completed images are excluded. If image metadata or channel identities changed, the affected image's reviewed status is cleared. Inspect source errors, correct settings and review before starting another run. Recovery never silently rewrites or merges the original results; both attempts remain available, and repeated attempts do not add biological replication. Missing source images must be restored before a recovery draft can be prepared.
+
 ### 42. Excel workbook contents
 
 | Sheet | Contents |
@@ -463,7 +481,7 @@ The optional local interpretation model is **Gemma 4 12B Instruct, official QAT 
 
 Ask requires a nonblank question and no request already running in that panel. A missing model/runtime is a setup error, not a requirement to save a project. Ready can be reached automatically when installed runtime/model files are valid. Images/measurement data and conversations stay local in the current assistant path. Optional online evidence refresh sends identifiers only and remains subject to database academic/offline settings. No Firebase, hosted LLM service or Streamlit account is required for the desktop app.
 
-The assistant now receives an application-generated reading guide before answering: matching cuboid, segmentation, selected-plane quality and experiment summaries, plus selected cached STRING/KEGG evidence even when it does not choose an evidence tool. It still receives no microscopy pixels. Per-image reports are excluded when source hash or image metadata differ. Experiment summaries must match the selected batch and are explicitly separate from the current-image findings. Summaries may be bounded; the full exported report remains authoritative. These are supplied application reports, not an independent remeasurement by the LLM.
+The assistant now receives an application-generated reading guide before answering: matching cuboid, segmentation, selected-plane quality and experiment summaries, plus selected cached STRING/KEGG evidence even when it does not choose an evidence tool. It still receives no microscopy pixels. Per-image reports are excluded when source hash or image metadata differ. Current ROI analysis is also excluded when its ROI geometry or threshold settings differ from the live controls. Measurement tools receive the filtered auxiliary reports, including sensitivity sweeps. Experiment summaries must match the selected batch and are explicitly separate from the current-image findings. Summaries may be bounded; the full exported report remains authoritative. These are supplied application reports, not an independent remeasurement by the LLM.
 
 
 #### Model setup and operating limits
@@ -484,6 +502,8 @@ For explicit source setup, run `backend/.venv/bin/python scripts/setup-local-ass
 
 For matching 3D proximity reports, **Recorded analysis · application findings** appears separately above the generated draft. These statements are assembled from report status and scope, including unavailable empty-mask results and the fact that both directions are already calculated. They remain separate from the model's prose and its automatic claim review. Recorded quantities preserve numerical values and units; concise AI answers may omit context, even after quotation checks. The [assessment review](docs/validation/ASSISTANT_PROXIMITY_REVIEW_1.0.2.json) records examples and the scope of the follow-up.
 
+The local reference context explicitly defines sensitivity variants and recovery attempts so the assistant can explain their scope without inventing experimental outcomes. In the [initial workflow assessment](docs/validation/WORKFLOW_ASSISTANT_1.0.4.json), all four displayed answers were partial/withheld and coverage review flagged them. Adding these definitions improved the two repeated workflow questions in a [follow-up](docs/validation/WORKFLOW_ASSISTANT_FOLLOWUP_1.0.4.json). This is a bounded development diagnostic, not an unseen scientific-accuracy claim. Continue reading the displayed engine records and checking omitted question parts.
+
 ### 48. How to read an answer
 
 Current releases add an automatic claim-to-source review after generation. The reviewer receives the actual cited records and must distinguish record-supported findings, general knowledge, advice, hypotheses and unsupported statements. Factual claims require source quotations that match the supplied text. Conservative topic checks reject quotations missing critical concepts in the claim; additional scope checks reject unqualified binding/activation/causality claims. These checks can still accept irrelevant or misleadingly interpreted quotations and can withhold valid paraphrases. The UI exposes reviewed sentences, quotations and review status. Statements flagged by these checks are removed from the displayed draft; unsupported claims can still escape the checks, and valid statements can be withheld. Supported or explicitly labelled methodological statements may remain. If none survive, the application shows a fixed explanation and the deterministic report notes. Unqualified statements treating corrected channel labels as biological ground truth are withheld; an owner correction is an annotation, not independent identity verification. Duplicate advice/hypothesis prefixes are normalized for readability. Marker-specific Manders direction/magnitude statements from the model are omitted: the engine supplies the actual marker order in M1/M2 definitions and recorded-quantity labels. This avoids relying on the model to translate A/B into biological marker names. Unknown or unsupported references remain withheld. This is the same local model reviewing its own draft: correlated errors and irrelevant-but-matching quotations remain possible. Passing this check does not prove citation entailment, authenticate an edited cached record, or establish biological truth. Uncited factual explanations are withheld. Clearly labelled advice and hypotheses may remain, and must not be presented as measured findings. They still require scientific review.
@@ -501,7 +521,7 @@ Local generation can take minutes on a CPU or a busy computer. Each completion r
 
 **Question coverage · automatic** is a separate bounded review of the displayed AI draft after claim/source review. It identifies up to six request parts using question marks, lines and numbered items, then marks each as addressed, partial or unanswered. An addressed/partial item must include an exact quotation from the displayed answer. Invented quotations, malformed mappings or truncated reviewer output cannot claim completeness. Requests beyond the limit keep the overall result incomplete; compound clauses may contain requirements that the splitter/reviewer misses. Missing coverage never blocks asking a question or hides an otherwise usable draft. It adds one local model review and may increase response time.
 
-Coverage is not truth: a fluent answer can address a question incorrectly, and a correctly cited answer can omit a requested explanation. Both automatic reviews use the same model and remain fallible. Partial coverage opens its review by default for inspection. [Four controlled answer-pair diagnostics](docs/validation/COMPLETENESS_REVIEW_1.0.3.json) matched developer labels for complete versus deliberately incomplete answers. This small assessment is not general assistant accuracy, an independent biomedical benchmark or evidence that every future omission will be detected.
+Coverage is not truth: a fluent answer can address a question incorrectly, and a correctly cited answer can omit a requested explanation. Both automatic reviews use the same model and remain fallible. Partial coverage opens its review by default for inspection. [Four controlled answer-pair diagnostics](docs/validation/COMPLETENESS_REVIEW_1.0.4.json) matched developer labels for complete versus deliberately incomplete answers. This small assessment is not general assistant accuracy, an independent biomedical benchmark or evidence that every future omission will be detected.
 
 ### 49. One model, vision options and GPT-OSS
 

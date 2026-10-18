@@ -60,3 +60,20 @@ it('allows correcting batch channel identity and requires review again while ret
  expect(saved.items[0].image.info.channel_labels).toEqual(['Alpha-tubulin','GM130']);
  expect(saved.items[0].analysis.rois).toHaveLength(1);
 });
+it('opens a recovery draft with only failed images without changing the original run',async()=>{
+ const failed=image('failed');const entry={image_id:failed.id,image:failed,analysis:{rois:[],threshold_mode:'zero',thresholds:[],target_channel:0,processing:{background:'none',offsets:[],sigma_px:0,radius_px:20}},reviewed:false,experiment:'E1',cell:'C1',condition:'A'};
+ vi.mocked(json).mockImplementation(async(path)=>{
+  if(path==='/api/batch/sessions')return [];
+  if(path==='/api/batch/runs')return [{id:'old',name:'Original',status:'completed_with_errors'}];
+  if(path==='/api/batch/runs/old')return {id:'old',name:'Original',status:'completed_with_errors',items:[{...entry,status:'failed',error:'Source changed'}]};
+  if(path==='/api/batch/runs/old/retry-draft')return {id:'recovery',name:'Recovery draft',revision:1,items:[entry]};
+  return [];
+ });
+ render(<BatchPanel/>);await screen.findByText('Original · completed_with_errors · old');
+ fireEvent.change(screen.getByLabelText('Previous runs'),{target:{value:'old'}});
+ fireEvent.click(await screen.findByText('Prepare recovery batch'));
+ await screen.findByText(/Recovery draft opened with only failed or unfinished images/);
+ expect(screen.getByRole('heading',{name:'failed.tif'})).toBeTruthy();
+ expect((screen.getByText('Analyze reviewed batch') as HTMLButtonElement).disabled).toBe(true);
+ expect(screen.getByText('Original · completed_with_errors')).toBeTruthy();
+});

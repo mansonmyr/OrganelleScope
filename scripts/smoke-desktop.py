@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-desktop-check-') as dire
    if result.returncode!=0:raise RuntimeError(f'Native launch exited {result.returncode}: {result.stderr[-6000:]}')
    report=json.loads(report_path.read_text(encoding='utf-8'))
    assert report['packaged'] and report['renderer_mounted'] and report['local_backend_ready'] and report['diagnostics_available']
-   assert report['empty_initial_images'] and report['empty_initial_projects']
+   assert report['empty_initial_images'] and report['empty_initial_projects'] and report['empty_initial_batches'] and report['empty_initial_recovery']
    # On a warm launch, only inspect the most recent session in the append-only log.
    start=max(i for i,e in enumerate(events) if e['event']=='launch');events=events[start:]
    names=[event['event'] for event in events]

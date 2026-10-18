@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from threading import Event, RLock, Thread
 from uuid import UUID, uuid4
+from time import perf_counter
 
 from fastapi import Depends, HTTPException
 from fastapi.responses import Response
@@ -107,8 +108,24 @@ def register_batch(app, data_dir, stored, image_dir, authorized):
                     value['reviewed']=False
                 items.append(value)
             result={'id':ident or str(uuid4()),'name':draft.name,'revision':draft.revision+1,'updated':now(),'items':items}
+            if previous and previous.get('retry_of_run_id'):result['retry_of_run_id']=previous['retry_of_run_id']
             save('sessions',result)
             return result
+
+    @app.post('/api/batch/runs/{ident}/retry-draft', dependencies=[Depends(authorized)])
+    def retry_draft(ident:str):
+        with lock:
+            previous=read('runs',ident)
+            if previous['status'] in ('running','cancelling'):raise HTTPException(409,'Wait for this run to stop before preparing recovery.')
+            pending=[item for item in previous['items'] if item['status'] in ('failed','cancelled','interrupted')]
+            if not pending:raise HTTPException(422,'This run has no failed or unfinished images.')
+            draft=BatchDraft(name=previous['name'][:170]+' · recovery',items=[BatchItem.model_validate(item) for item in pending])
+            recovered=persist(draft)
+            recovered['retry_of_run_id']=ident
+            for item,old in zip(recovered['items'],pending):
+                item['reviewed']=old['reviewed'] and item['image']==old['image']
+            save('sessions',recovered)
+            return recovered
 
     @app.post('/api/batch/sessions', dependencies=[Depends(authorized)])
     def create(draft:BatchDraft): return persist(draft)
@@ -125,16 +142,23 @@ def register_batch(app, data_dir, stored, image_dir, authorized):
                 with lock:
                     item['status']='running';save('runs',run)
                 try:
-                    source=item['image'];folder=image_dir(item['image_id'])
+                    began=perf_counter();source=item['image'];folder=image_dir(item['image_id'])
+                    with lock:item['progress']={'stage':'Checking source checksum','completed':0,'total':(folder/'source.tiff').stat().st_size};save('runs',run)
+                    last_progress=perf_counter()
                     digest=hashlib.sha256()
                     with (folder/'source.tiff').open('rb') as stream:
                         while chunk:=stream.read(1024*1024):
                             check();digest.update(chunk)
+                            with lock:
+                                item['progress']['completed']+=len(chunk)
+                                if perf_counter()-last_progress>.25:save('runs',run);last_progress=perf_counter()
                     if digest.hexdigest()!=source['sha256']: raise ValueError('Source SHA-256 changed; analysis refused.')
                     info=ImageInfo.model_validate(source['info'])
                     if info.needs_axis_confirmation: raise ValueError('Confirm TIFF axes in Image & ROI before batch analysis.')
-                    result=compute_analysis(folder,source,info,AnalysisRequest.model_validate(item['analysis']),check)
-                    with lock: item.update(status='completed',result=result)
+                    def progress(**values):
+                        with lock:item['progress']=values;save('runs',run)
+                    result=compute_analysis(folder,source,info,AnalysisRequest.model_validate(item['analysis']),check,progress=progress)
+                    with lock: item.update(status='completed',result=result,elapsed_seconds=perf_counter()-began)
                 except Cancelled: raise
                 except Exception as exc:
                     with lock: item.update(status='failed',error=str(exc))
@@ -162,6 +186,7 @@ def register_batch(app, data_dir, stored, image_dir, authorized):
                 if record!=item['image']: raise HTTPException(409,'Image metadata or channel identities changed. Save and review this batch again.')
             run={'id':str(uuid4()),'session_id':draft['id'],'revision':draft['revision'],'name':draft['name'],
                  'app_version':__version__,'started':now(),'status':'running','items':deepcopy(draft['items'])}
+            if draft.get('retry_of_run_id'):run['retry_of_run_id']=draft['retry_of_run_id']
             for item in run['items']: item['status']='pending'
             run['design_review']=summarize_design(run['items'])
             save('runs',run);event=Event();events[run['id']]=event
@@ -183,7 +208,8 @@ def register_batch(app, data_dir, stored, image_dir, authorized):
     def cancel(ident:str):
         with lock:
             value=read('runs',ident)
-            if ident in events:events[ident].set()
+            if ident in events:
+                events[ident].set();value['status']='cancelling';save('runs',value)
             return value
 
     @app.get('/api/batch/runs/{ident}/xlsx', dependencies=[Depends(authorized)])

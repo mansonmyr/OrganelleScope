@@ -40,3 +40,31 @@ it('keeps an independent batch draft when a different single-image project is op
  fireEvent.click(screen.getByRole('button',{name:'Batch analysis'}));
  expect(screen.getByRole('heading',{name:'queued.tif'})).toBeTruthy();
 });
+it('exports the current review snapshot and allows cancelling a background ROI calculation',async()=>{
+ const calibration=Object.fromEntries(['X','Y','Z'].map(a=>[a,{value_um:.1,source:'OME',conflict:false,candidates:{}}]));
+ const image={id:'job-image',sha256:'a'.repeat(64),options:{},info:{filename:'sample.tif',axes:'CZYX',source_axes:'CZYX',series_count:1,series_index:0,shape:[2,4,6,7],dtype:'uint16',bit_depth:16,decoded_bytes:672,dimensions:{X:7,Y:6,Z:4,C:2,T:1},channel_labels:['A','B'],calibration,warnings:[],needs_axis_confirmation:false}};
+ const roi={id:'existing',kind:'circle',z:0,points:[{x:3,y:3},{x:4,y:3}]};let cancelled=false;
+ const analysis={request:{rois:[roi],target_channel:0,threshold_mode:'zero',thresholds:[0,0],processing:{background:'none',offsets:[],radius_px:20,sigma_px:0}},scope:'native',results:[]};
+ vi.mocked(json).mockImplementation(async(path,options)=>{
+  if(path==='/api/images')return [image];
+  if(path==='/api/projects'||path==='/api/batch/sessions'||path==='/api/batch/runs')return [];
+  if(path==='/api/assistant/status')return {model:{name:'test',bytes:1},ready:false};
+  if(path==='/api/recovery')return null;
+  if(path==='/api/images/job-image/analysis-jobs')return {id:'job'};
+  if(path==='/api/analysis-jobs/job/cancel'){cancelled=true;return {};}
+  if(path==='/api/analysis-jobs/job')return {id:'job',status:cancelled?'cancelled':'running',progress:{completed:1,total:3,stage:'Reading channel'}};
+  return analysis;
+ });
+ vi.mocked(request).mockResolvedValue({blob:async()=>new Blob(['<html>Review</html>'])} as Response);URL.createObjectURL=vi.fn(()=>'blob:test');URL.revokeObjectURL=vi.fn();vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});
+ render(<App/>);fireEvent.change(await screen.findByLabelText('Recent imports'),{target:{value:'job-image'}});
+ fireEvent.click(screen.getByRole('button',{name:'ROI measurements'}));
+ await waitFor(()=>expect((screen.getByText('Calculate ROI statistics') as HTMLButtonElement).disabled).toBe(false));
+ fireEvent.click(screen.getByText('Export analysis review'));
+ await waitFor(()=>expect(request).toHaveBeenCalledWith('/api/images/job-image/review-report',expect.objectContaining({method:'POST',body:expect.stringContaining('existing')})));
+ await waitFor(()=>expect((screen.getByText('Calculate ROI statistics') as HTMLButtonElement).disabled).toBe(false));
+ fireEvent.click(screen.getByText('Calculate ROI statistics'));
+ fireEvent.click(await screen.findByText('Cancel ROI analysis'));
+ await waitFor(()=>expect(screen.getByText(/ROI analysis · cancelled/)).toBeTruthy());
+ expect(cancelled).toBe(true);expect(screen.getByRole('heading',{name:'Measured regions'})).toBeTruthy();
+ vi.restoreAllMocks();
+});

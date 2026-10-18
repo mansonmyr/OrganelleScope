@@ -32,7 +32,7 @@ def item(image,reviewed=True,diameter=2,z=1):
 def wait(client,ident):
     for _ in range(200):
         value=client.get('/api/batch/runs/'+ident,headers=H).json()
-        if value['status']!='running':return value
+        if value['status'] not in ('running','cancelling'):return value
         time.sleep(.01)
     pytest.fail('batch did not complete')
 
@@ -108,8 +108,8 @@ def test_cancel_then_interrupted_job_is_preserved(tmp_path,monkeypatch):
     import organelle_scope.batch as module
     entered=Event();release=Event()
     real=module.compute_analysis
-    def slow(*args):
-        entered.set();release.wait(3);args[-1]();return real(*args)
+    def slow(*args,**kwargs):
+        entered.set();release.wait(3);args[-1]();return real(*args,**kwargs)
     monkeypatch.setattr(module,'compute_analysis',slow)
     with TestClient(create_app(tmp_path,'token')) as client:
         image=upload(client)

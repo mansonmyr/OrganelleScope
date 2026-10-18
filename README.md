@@ -5,7 +5,7 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Version 1.0.3 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
+**Version 1.0.4 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
 
 ## Main features
 
@@ -14,9 +14,10 @@ A local desktop microscopy workbench for calibrated image inspection, ROI measur
 - Circular/polygonal ROIs, physical circle diameters, line profiles, FWHM and defined Pearson/Spearman/Manders measurements.
 - Background subtraction and optional Gaussian smoothing, matched-contrast previews and processing diagnostics.
 - Full-resolution cuboids, threshold masks, bidirectional calibrated voxel-centre proximity and radial enrichment, with ROI/threshold/cuboid sensitivity sweeps.
-- Reviewed per-image batches with channel editing and design checks, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
+- Reviewed per-image batches with channel editing, design checks and failed-item recovery, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
 - Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant with separate claim support and question-coverage reviews.
-- Workspace sidebar project controls, portable archives, recovery state and source/settings/evidence provenance.
+- Cancellable ROI analysis with progress, portable analysis-review reports linking engine results to embedded ROI previews, and source/settings/evidence provenance.
+- Workspace sidebar project controls, portable archives and recovery state.
 
 ## Start here
 
@@ -42,7 +43,7 @@ Open a TIFF, confirm channels/axes/calibration, inspect the image and draw ROIs.
 
 ## Install and upgrade
 
-Download Windows x64 or Apple Silicon macOS installers from **[Releases](https://github.com/mansonmyr/OrganelleScope/releases)**. Only the `.dmg` (Apple Silicon Mac) or `.exe` (Windows x64) is needed for installation. Other assets provide checksums, licence notices and verification records. A new account starts with no imported images or projects; upgrades and reinstalls preserve that account’s existing local work. Each release includes checksums and platform verification records. Stable tags are published only when both platform qualification gates pass. Save/export projects before upgrading; replacing the application preserves its separate local research data and verified model storage. Previous releases remain available for rollback. The installed application includes its local inference runtime and sets up Gemma automatically with a one-time 6.98 GB download. Setup can be paused/resumed; image analysis remains available. After setup the assistant runs offline. macOS is ad-hoc signed and not notarized; Windows has no publisher certificate.
+Download Windows x64 or Apple Silicon macOS installers from **[Releases](https://github.com/mansonmyr/OrganelleScope/releases)**. Only the `.dmg` (Apple Silicon Mac) or `.exe` (Windows x64) is needed for installation. Other assets provide checksums, licence notices and verification records. A new account starts with no imported images, projects, batch history or recovery workspace; upgrades and reinstalls preserve that account’s existing local work. Each release includes checksums and platform verification records. Stable tags are published only when both platform qualification gates pass. Save/export projects before upgrading; replacing the application preserves its separate local research data and verified model storage. Previous releases remain available for rollback. The installed application includes its local inference runtime and sets up Gemma automatically with a one-time 6.98 GB download. Setup can be paused/resumed; image analysis remains available. After setup the assistant runs offline. macOS is ad-hoc signed and not notarized; Windows has no publisher certificate.
 
 Use the [manual](MANUAL.md) for source setup, diagnostics and reporting. The optional local AI assistant generates drafts with source checks; it does not verify biological truth. Recorded analysis summaries remain available without the model or when a draft is withheld. Cite the exact release using [CITATION.cff](CITATION.cff), alongside original methods. Confirm stored-channel marker identities before biological interpretation; filenames and dye names are not ground truth.
 

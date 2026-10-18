@@ -1,0 +1,1005 @@
+{
+  "scope": "Developer-authored synthetic questions frozen before first inference. One sampled answer per case, same model generation and review. Descriptive semantic assessment, not independent biological validation or a general accuracy estimate. No private images, online refresh or new model download.",
+  "suite_sha256": "0d3d1fcdd36778758e28909a9d87afdd4234a1b0066590b23c319e8a4129695c",
+  "frozen_cases": [
+    {
+      "id": "overlap-versus-covariation",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {
+            "analysis": {
+              "source_sha256": "synthetic-not-an-acquisition",
+              "image_info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              },
+              "processing": {
+                "settings": {
+                  "background": "none"
+                }
+              },
+              "request": {
+                "threshold_mode": "zero"
+              },
+              "results": [
+                {
+                  "roi": {
+                    "id": "synthetic-roi"
+                  },
+                  "channel_summary": [
+                    {
+                      "label": "Marker A",
+                      "sum": 100,
+                      "std": 2
+                    },
+                    {
+                      "label": "Marker B",
+                      "sum": 100,
+                      "std": 3
+                    }
+                  ],
+                  "pairs": [
+                    {
+                      "label_a": "Marker A",
+                      "label_b": "Marker B",
+                      "pcc": -0.3,
+                      "spearman": -0.2,
+                      "thresholded_m1": 0.92,
+                      "thresholded_m2": 0.95,
+                      "thresholds": {
+                        "a": 0,
+                        "b": 0
+                      },
+                      "unavailable_reasons": {}
+                    }
+                  ]
+                }
+              ],
+              "scope": "Synthetic XY fixture; not a biological acquisition"
+            }
+          },
+          "workspaces": {}
+        }
+      },
+      "question": "The overlap fractions look almost complete while both correlations are negative. Which result should I trust, and does one invalidate the other?",
+      "criteria": [
+        "Different metric definitions can coexist",
+        "Do not call either calculation invalid solely from this disagreement",
+        "Review threshold/background and regions; no binding inference"
+      ]
+    },
+    {
+      "id": "sampling-versus-resolution",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {},
+          "workspaces": {
+            "ChannelPanel.quality": {
+              "source_sha256": "synthetic-not-an-acquisition",
+              "image_info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              },
+              "z": 0,
+              "channels": [],
+              "sampling_review": {
+                "registration": "not measured",
+                "axes": [
+                  {
+                    "axis": "X",
+                    "spacing_um": 0.1,
+                    "declared_resolution_um": 0.2,
+                    "samples_per_declared_resolution": 2,
+                    "status": "at least two samples per supplied resolution"
+                  }
+                ]
+              },
+              "scope": "Selected XY plane only; nominal resolution is user supplied, not measured."
+            }
+          }
+        }
+      },
+      "question": "The acquisition panel passes the two-samples screen. Does that verify my optical resolution and registration throughout the stack? What evidence is still missing?",
+      "criteria": [
+        "User supplied nominal resolution is not measured optical resolution",
+        "Registration has not been measured",
+        "Selected plane cannot certify the full stack"
+      ]
+    },
+    {
+      "id": "choosing-best-sensitivity",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {},
+          "workspaces": {}
+        }
+      },
+      "question": "One threshold variant gives the largest colocalization. Should I report only that setting and treat the other variants as independent replicates?",
+      "criteria": [
+        "Avoid selecting settings solely to maximise favourable overlap",
+        "Sensitivity variants are not independent biological experiments",
+        "Do not invent supplied sweep results"
+      ]
+    },
+    {
+      "id": "recovery-is-not-replication",
+      "record": {
+        "id": null,
+        "revision": null,
+        "name": "Synthetic interpretation assessment",
+        "context_kind": "workspace",
+        "image": {
+          "sha256": "synthetic-not-an-acquisition",
+          "info": {
+            "filename": "synthetic-interpretation.tif",
+            "dimensions": {
+              "X": 8,
+              "Y": 8,
+              "Z": 3,
+              "C": 2,
+              "T": 1
+            },
+            "channel_labels": [
+              "Marker A",
+              "Marker B"
+            ],
+            "calibration": {
+              "X": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Y": {
+                "value_um": 0.1,
+                "conflict": false
+              },
+              "Z": {
+                "value_um": 0.3,
+                "conflict": false
+              }
+            }
+          }
+        },
+        "state": {
+          "core": {},
+          "workspaces": {}
+        }
+      },
+      "question": "If a failed image succeeds in a recovery batch, can I combine both attempts as additional biological experiments? How should I retain the failed attempt?",
+      "criteria": [
+        "Repeated processing of one source does not add independent experiments",
+        "Preserve provenance of original attempt",
+        "Do not invent completed attempts in this context"
+      ]
+    }
+  ],
+  "implementation_sha256": {
+    "assistant.py": "358e4c998d1919199ec123178c3ad80afc2682239bc7b5104584aad0031ccf4c",
+    "interpretation.py": "080fe63e8e7d581610111b2cb30120fa453248b90ef438d62e3d2e145c63d36e",
+    "claim_review.py": "089142969d171d3cebdd11750fc052f2880c7bc7bb356ccee4d4ea34834a61a8"
+  },
+  "cases": [
+    {
+      "id": "overlap-versus-covariation",
+      "semantic_review": {
+        "reviewer": "development agent, qualitative review",
+        "assessment": "Partial. Distinguishes overlapping occupancy from negative covariance, but does not directly answer which measure to trust or advise settings review. No invented numerical value. Coverage reviewer marked partial."
+      },
+      "answer": "High thresholded Manders fractions describe the occupancy of intensity above a specific threshold [methods]. These findings can coexist when the markers occupy the same general regions but exhibit inversely related signal fluctuations or patterns [interpretation].",
+      "claim_review": {
+        "algorithm": "claim-source-audit-5",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 2,
+        "withheld_sentences": 3,
+        "checked_answer": "High thresholded Manders fractions describe the occupancy of intensity above a specific threshold [methods]. These findings can coexist when the markers occupy the same general regions but exhibit inversely related signal fluctuations or patterns [interpretation].",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "The results do not invalidate each other because they measure different spatial properties [measurements].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "No matching verbatim quotation in the cited source.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "High thresholded Manders fractions describe the occupancy of intensity above a specific threshold [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Manders measures directional intensity fractions above the other channel threshold, not shared volume or binding probability."
+          },
+          {
+            "index": 2,
+            "sentence": "A negative Pearson or Spearman correlation indicates that the intensities of the two markers vary in opposite directions across the pixels in the selected ROI [methods].",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "The quotation does not cover a critical scientific concept in this claim.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "These findings can coexist when the markers occupy the same general regions but exhibit inversely related signal fluctuations or patterns [interpretation].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "High threshold-overlap fractions coexist with negative Pearson in a recorded ROI."
+          },
+          {
+            "index": 4,
+            "sentence": "Neither result is inherently more trustworthy; they provide complementary information about spatial distribution versus intensity covariation [interpretation].",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 212,
+          "prompt_tokens": 1481,
+          "total_tokens": 1693,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "question_coverage": {
+        "assessed": true,
+        "all_parts_addressed": false,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "The overlap fractions look almost complete while both correlations are negative. Which result should I trust, and does one invalidate the other?",
+            "index": 0,
+            "status": "partial",
+            "answer_quote": "These findings can coexist when the markers occupy the same general regions but exhibit inversely related signal fluctuations or patterns"
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "recorded_quantities": [
+        {
+          "label": "X spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Y spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Z spacing",
+          "value": 0.3,
+          "unit": "µm per Z step"
+        },
+        {
+          "label": "ROI 1 · Marker A / Marker B · pcc",
+          "value": -0.3,
+          "unit": ""
+        },
+        {
+          "label": "ROI 1 · Marker A / Marker B · spearman",
+          "value": -0.2,
+          "unit": ""
+        },
+        {
+          "label": "ROI 1 · Marker A / Marker B · M1 · Marker A intensity where Marker B exceeds its threshold",
+          "value": 0.92,
+          "unit": ""
+        },
+        {
+          "label": "ROI 1 · Marker A / Marker B · M2 · Marker B intensity where Marker A exceeds its threshold",
+          "value": 0.95,
+          "unit": ""
+        }
+      ],
+      "seconds": 71.56,
+      "audit": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        },
+        {
+          "tool": "read_measurements",
+          "trigger": "application summary context",
+          "result": {
+            "source_id": "measurements",
+            "interpretation_context": {
+              "available": true,
+              "calculation_completed": true,
+              "processing": {
+                "background": "none"
+              },
+              "threshold_mode": "zero",
+              "null_semantics": "This report contains completed calculations. A null metric is mathematically undefined/unavailable, NOT evidence that the calculation was not performed. Threshold failure affects thresholded Manders, not the definition of Pearson.",
+              "constant_channels": [],
+              "channel_summaries": [
+                {
+                  "roi_id": "synthetic-roi",
+                  "channels": [
+                    {
+                      "label": "Marker A",
+                      "sum": 100,
+                      "std": 2
+                    },
+                    {
+                      "label": "Marker B",
+                      "sum": 100,
+                      "std": 3
+                    }
+                  ]
+                }
+              ],
+              "scope": "Synthetic XY fixture; not a biological acquisition",
+              "validation": null,
+              "pairs": [
+                {
+                  "roi_id": "synthetic-roi",
+                  "direction_definitions": {
+                    "m1": "Marker A intensity where Marker B exceeds its threshold, divided by total Marker A intensity.",
+                    "m2": "Marker B intensity where Marker A exceeds its threshold, divided by total Marker B intensity."
+                  },
+                  "label_a": "Marker A",
+                  "label_b": "Marker B",
+                  "thresholds": {
+                    "a": 0,
+                    "b": 0
+                  },
+                  "pcc": -0.3,
+                  "spearman": -0.2,
+                  "thresholded_m1": 0.92,
+                  "thresholded_m2": 0.95,
+                  "gaussian_lrt_note": null,
+                  "warnings": null,
+                  "unavailable_reasons": {}
+                }
+              ],
+              "controls_note": "Biological controls and independent experimental replicates are not established by this report. Absence from this record is not proof they were not performed."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "sampling-versus-resolution",
+      "semantic_review": {
+        "reviewer": "development agent, qualitative review",
+        "assessment": "Partial. Correctly rejects optical-resolution and registration certification; missing reference-measurement and whole-stack checks. Coverage reviewer identifies unanswered follow-up."
+      },
+      "answer": "This does not verify optical resolution, as that value is provided by the user and is not a measured property of the acquisition. [interpretation] [methods] Furthermore, registration is not measured by this screen. [interpretation] [methods]",
+      "claim_review": {
+        "algorithm": "claim-source-audit-5",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 2,
+        "withheld_sentences": 2,
+        "checked_answer": "This does not verify optical resolution, as that value is provided by the user and is not a measured property of the acquisition. [interpretation] [methods] Furthermore, registration is not measured by this screen. [interpretation] [methods]",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "The two-samples screen only confirms that the X-axis sampling meets the user-supplied declared resolution. [interpretation] [methods]",
+            "kind": "record_supported",
+            "retained": false,
+            "reason": "No matching verbatim quotation in the cited source.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "This does not verify optical resolution, as that value is provided by the user and is not a measured property of the acquisition. [interpretation] [methods]",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "\"Selected XY plane only; nominal resolution is user supplied, not measured.\""
+          },
+          {
+            "index": 2,
+            "sentence": "Furthermore, registration is not measured by this screen. [interpretation] [methods]",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "interpretation",
+            "quote": "\"registration\": \"not measured\""
+          },
+          {
+            "index": 3,
+            "sentence": "To verify the stack, you would need to assess Z-axis sampling status and perform a registration analysis, as these are currently undocumented. [interpretation] [methods]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 193,
+          "prompt_tokens": 1086,
+          "total_tokens": 1279,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "question_coverage": {
+        "assessed": true,
+        "all_parts_addressed": false,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "The acquisition panel passes the two-samples screen. Does that verify my optical resolution and registration throughout the stack?",
+            "index": 0,
+            "status": "addressed",
+            "answer_quote": "This does not verify optical resolution, as that value is provided by the user and is not a measured property of the acquisition."
+          },
+          {
+            "request": "What evidence is still missing?",
+            "index": 1,
+            "status": "unanswered",
+            "answer_quote": ""
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "recorded_quantities": [
+        {
+          "label": "X spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Y spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Z spacing",
+          "value": 0.3,
+          "unit": "µm per Z step"
+        },
+        {
+          "label": "X user-declared nominal resolution",
+          "value": 0.2,
+          "unit": "µm"
+        }
+      ],
+      "seconds": 82.14,
+      "audit": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        }
+      ]
+    },
+    {
+      "id": "choosing-best-sensitivity",
+      "semantic_review": {
+        "reviewer": "development agent, qualitative review",
+        "assessment": "No substantive answer retained after claim review. Coverage reviewer marks unanswered. Not counted as scientifically correct simply because unsupported prose was withheld."
+      },
+      "answer": "I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.",
+      "claim_review": {
+        "algorithm": "claim-source-audit-5",
+        "status": "Generated draft withheld; application notes remain available",
+        "retained_sentences": 0,
+        "withheld_sentences": 4,
+        "checked_answer": "I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "Reporting only the highest colocalization value from different threshold variants is not standard practice and may introduce selection bias. [methods]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "These variants are not independent replicates because they originate from the same image data rather than independent biological samples. [methods]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 2,
+            "sentence": "It is advised to evaluate the colocalization signal across all tested thresholds to assess its robustness and sensitivity. [methods]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "You should consider reporting a range of values or a summary statistic to characterize the behavior of the data across the different settings. [methods]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 114,
+          "prompt_tokens": 766,
+          "total_tokens": 880,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "question_coverage": {
+        "assessed": true,
+        "all_parts_addressed": false,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "One threshold variant gives the largest colocalization. Should I report only that setting and treat the other variants as independent replicates?",
+            "index": 0,
+            "status": "unanswered",
+            "answer_quote": ""
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "recorded_quantities": [
+        {
+          "label": "X spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Y spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Z spacing",
+          "value": 0.3,
+          "unit": "µm per Z step"
+        }
+      ],
+      "seconds": 85.24,
+      "audit": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        }
+      ]
+    },
+    {
+      "id": "recovery-is-not-replication",
+      "semantic_review": {
+        "reviewer": "development agent, qualitative review",
+        "assessment": "Partial and indirect. Mentions biological independence but does not explain repeated processing or retaining original attempts. Coverage reviewer marks both parts unanswered."
+      },
+      "answer": "Cells and ROIs from one culture do not establish independent biological experiments [methods].",
+      "claim_review": {
+        "algorithm": "claim-source-audit-5",
+        "status": "Partial draft: unsupported statements withheld",
+        "retained_sentences": 1,
+        "withheld_sentences": 3,
+        "checked_answer": "Cells and ROIs from one culture do not establish independent biological experiments [methods].",
+        "claims": [
+          {
+            "index": 0,
+            "sentence": "Combining a failed image and its successful recovery as independent biological experiments is not supported by standard methodological definitions [methods].",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 1,
+            "sentence": "Cells and ROIs from one culture do not establish independent biological experiments [methods].",
+            "kind": "record_supported",
+            "retained": true,
+            "reason": null,
+            "source_id": "methods",
+            "quote": "Cells and ROIs from one culture do not establish independent biological experiments."
+          },
+          {
+            "index": 2,
+            "sentence": "The failed attempt should be retained as a quality control record to document the limitations of the initial acquisition and the necessity of the recovery process. [methods]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          },
+          {
+            "index": 3,
+            "sentence": "This helps provide context for the successful results and clarifies why the original attempt was excluded from the primary analysis. [methods]",
+            "kind": "unsupported",
+            "retained": false,
+            "reason": "Automatic reviewer could not substantiate this statement.",
+            "source_id": null,
+            "quote": null
+          }
+        ],
+        "limitations": "Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.",
+        "usage": {
+          "completion_tokens": 127,
+          "prompt_tokens": 761,
+          "total_tokens": 888,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        }
+      },
+      "question_coverage": {
+        "assessed": true,
+        "all_parts_addressed": false,
+        "request_limit_reached": false,
+        "parts": [
+          {
+            "request": "If a failed image succeeds in a recovery batch, can I combine both attempts as additional biological experiments?",
+            "index": 0,
+            "status": "unanswered",
+            "answer_quote": ""
+          },
+          {
+            "request": "How should I retain the failed attempt?",
+            "index": 1,
+            "status": "unanswered",
+            "answer_quote": ""
+          }
+        ],
+        "limitations": "Same-model coverage review can miss omissions and does not establish truth or citation entailment. Request splitting is heuristic; compound questions may contain additional requirements."
+      },
+      "recorded_quantities": [
+        {
+          "label": "X spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Y spacing",
+          "value": 0.1,
+          "unit": "µm per pixel"
+        },
+        {
+          "label": "Z spacing",
+          "value": 0.3,
+          "unit": "µm per Z step"
+        }
+      ],
+      "seconds": 47.07,
+      "audit": [
+        {
+          "tool": "inspect_project",
+          "trigger": "application context",
+          "result": {
+            "source_id": "project",
+            "revision": null,
+            "image": {
+              "sha256": "synthetic-not-an-acquisition",
+              "info": {
+                "filename": "synthetic-interpretation.tif",
+                "dimensions": {
+                  "X": 8,
+                  "Y": 8,
+                  "Z": 3,
+                  "C": 2,
+                  "T": 1
+                },
+                "channel_labels": [
+                  "Marker A",
+                  "Marker B"
+                ],
+                "calibration": {
+                  "X": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Y": {
+                    "value_um": 0.1,
+                    "conflict": false
+                  },
+                  "Z": {
+                    "value_um": 0.3,
+                    "conflict": false
+                  }
+                }
+              }
+            },
+            "settings": {},
+            "note": "Saved state only. Current unsaved UI edits are not included."
+          }
+        }
+      ]
+    }
+  ],
+  "model": {
+    "name": "Gemma 4 12B Instruct QAT Q4_0",
+    "filename": "gemma-4-12b-it-qat-q4_0.gguf",
+    "bytes": 6975879296,
+    "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b",
+    "upstream": "https://huggingface.co/google/gemma-4-12B-it",
+    "quantization": "https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf",
+    "revision": "29d097773436b69ff9feafd636ab4cf873786537",
+    "license": "Apache-2.0",
+    "runtime": "llama.cpp b11669",
+    "context_tokens": 8192,
+    "evidence_review": true,
+    "vision_enabled": false,
+    "thinking_enabled": false,
+    "temperature": 1.0
+  },
+  "assessment_summary": "All four displayed answers were partial or withheld. Coverage review flagged incompleteness for all four. This is a diagnostic finding, not a general model-accuracy estimate."
+}
