@@ -12,6 +12,7 @@ from PIL import Image,ImageDraw
 from fastapi.testclient import TestClient
 from organelle_scope.image_io import inspect_tiff,read_plane
 from organelle_scope.main import create_app
+from control_review import render_review
 
 parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('directory',type=Path);parser.add_argument('--annotations',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
 args.output.mkdir(parents=True,exist_ok=True);annotations=json.loads(args.annotations.read_text(encoding='utf-8'))['files'];report={'protocol':'Reference-channel-only local maxima after one-pixel Gaussian smoothing for candidate selection; raw intensities for measurements. Up to five candidates, at least 2 µm apart (or 20 pixels if physical spacing unconfirmed). Predefined circle diameters 1, 2, 3 µm; 30 pixels if uncalibrated. Native single-plane ROIs; no projection-based correlation. Zero and whole-volume Otsu threshold sensitivity, no selection of a favourable setting.','scope':'Owner-supplied, non-blinded sample-control consistency analysis. Candidate regions require visual review. No pooled biological significance, independent-replicate claim, universal specificity estimate or direct-binding conclusion. Raw sources unchanged.','files':[]}
@@ -70,7 +71,9 @@ with tempfile.TemporaryDirectory(prefix='OrganelleScope-control-') as temporary,
   for c,panel in zip(pair,panels):canvas.paste(panel,(offset,45));draw.text((offset+5,5),labels[c],fill='black');offset+=panel.width
   draw.text((5,25),'Z maximum projection; contrast stretched for review only. Yellow = proposed ROI locations, not reviewed cells.',fill='black')
   image_name=f'control-review-{len(report["files"])+1}.png';canvas.save(args.output/image_name)
-  report['files'].append({'filename':filename,'source_sha256':digest,'channel_labels':labels,'reference_channel_1based':reference+1,'primary_pair_1based':[c+1 for c in pair],'expected_context':annotation.get('intended_comparison'),'dimensions':d,'calibrated_roi_sizes':calibrated,'thresholds':thresholds,'proposed_candidates':len(selected),'roi_review_status':'pending visual review','review_image':image_name,'results':entries,'independent_coefficient_checks':'All defined Pearson/Spearman values agree with independent SciPy functions on the same sampled source pixels.'})
+  report['files'].append({'filename':filename,'source_sha256':digest,'channel_labels':labels,'reference_channel_1based':reference+1,'primary_pair_1based':[c+1 for c in pair],'expected_context':annotation.get('intended_comparison'),'annotation_correction':annotation.get('annotation_correction'),'dimensions':d,'calibrated_roi_sizes':calibrated,'thresholds':thresholds,'proposed_candidates':len(selected),'roi_review_status':'pending visual review','review_image':image_name,'results':entries,'independent_coefficient_checks':'All defined Pearson/Spearman values agree with independent SciPy functions on the same sampled source pixels.'})
   with path.open('rb') as stream:assert hashlib.file_digest(stream,'sha256').hexdigest()==digest
   print(filename,':',len(selected),'proposed ROIs;',len(entries),'setting/size results',flush=True)
 (args.output/'control-validation.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+
+render_review(report,args.output)

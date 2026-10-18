@@ -10,7 +10,7 @@ The root GNU GPLv3 licence does not itself relicense predecessor or third-party 
 
 ## Build-specific runtime notices
 
-Each native build generates Python and frontend dependency notices plus a version inventory from its frozen module graph/runtime requirements and installed frontend production dependencies. These files are bundled in the installer's `resources/notices` directory (`Contents/Resources/notices` on macOS) and included in build artifacts. Electron supplies its own licence and Chromium notices. See [build instructions](../docs/DEVELOPMENT.md#dependency-notices).
+Each native build generates Python and frontend dependency notices plus a version inventory from its frozen module graph/runtime requirements and installed frontend production dependencies. These files are bundled in the installer's `resources/notices` directory (`Contents/Resources/notices` on macOS) and included in build artifacts. Electron supplies its own licence and Chromium notices. See [build instructions](../MANUAL.md#58-installers-github-actions-and-licensing).
 
 CAREamics, PyTorch, torchvision and Lightning are excluded from the current runtime. Retired Qwen, Ministral and Liquid models are not distributed; historical assessments and licence provenance remain in Git history and the [model decision record](../README_MODEL_DECISIONS.md).
 

@@ -61,7 +61,7 @@ class LocalModel:
  def start(self):
   with self.lock:
    if self.process is not None and self.process.poll() is None:return self.status()
-   if not self.binary.is_file():raise ValueError('The assistant runtime is missing. Reinstall OrganelleScope or see docs/LOCAL_ASSISTANT.md for source setup.')
+   if not self.binary.is_file():raise ValueError('The assistant runtime is missing. Reinstall OrganelleScope or see MANUAL.md (Local assistant) for source setup.')
    if not self.model.is_file():raise ValueError('Gemma setup is not complete. Resume the download in the setup banner; image analysis remains available.')
    stamp=(self.model.stat().st_size,self.model.stat().st_mtime_ns)
    if stamp!=self.verified:

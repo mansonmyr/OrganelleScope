@@ -43,7 +43,7 @@ A source identifier being valid does not establish that the attached claim is su
 - [Gemma evaluation: answers, observed failures, corrections and persistence check](README_MODEL_DECISIONS.md#preserved-assessment-gemma-evaluation).
 - [Paired Liquid/Gemma comparison: exact questions, answers, profiles, timings and manual review](README_MODEL_DECISIONS.md#preserved-assessment-liquid-comparison).
 - [Evaluation history, including Qwen and Ministral](README_MODEL_DECISIONS.md#preserved-assessment-assistant-evaluation).
-- [Current model manifest, setup, privacy and safeguards](docs/LOCAL_ASSISTANT.md).
+- [Current model manifest, setup, privacy and safeguards](MANUAL.md#47-what-the-assistant-can-do).
 - Historical Qwen manifest: Git revision `c9f28c0`; historical Ministral manifest: `c63e4d6`; frozen paired-comparison implementation: `25644e0`; subsequent numeric-format fix: `d30e451`.
 
 Gemma uses Apache-2.0. The assessed Liquid profile uses LFM Open License v1.0; its historical licence remains in Git history. This record does not override model licences or the repository/component licences. Model weights are not committed to Git or bundled in the current installer.
@@ -79,7 +79,7 @@ If one model must be shipped, retain Gemma until a challenger passes the same ap
 
 Google's current [Gemma 4 12B model card](https://huggingface.co/google/gemma-4-12B-it) describes an encoder-free unified architecture accepting multimodal inputs. **The upstream model is not inherently text-only.** OrganelleScope currently sends metadata, native engine reports and evidence records as text; it does not send microscopy pixels, image patches or a rendered volume to the model. The pinned GGUF/runtime vision path has not been qualified here. Enabling images requires checking conversion contents, runtime support, image preprocessing, prompt formatting and actual local inference. Earlier documentation that says “text-only use” describes the application configuration, not the model family's theoretical capability.
 
-The active file is `gemma-4-12b-it-qat-q4_0.gguf`, 6,975,879,296 bytes (6.98 decimal GB; about 6.50 GiB), SHA-256 `93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b`. This file size is not peak unified memory. The application caps context at 8,192 tokens and runs a bounded read-only tool loop. See [local assistant configuration](docs/LOCAL_ASSISTANT.md).
+The active file is `gemma-4-12b-it-qat-q4_0.gguf`, 6,975,879,296 bytes (6.98 decimal GB; about 6.50 GiB), SHA-256 `93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b`. This file size is not peak unified memory. The application caps context at 8,192 tokens and runs a bounded read-only tool loop. See [local assistant configuration](MANUAL.md#47-what-the-assistant-can-do).
 
 ## Gemma versus OpenAI GPT-OSS
 
@@ -216,7 +216,7 @@ Use a curated, versioned corpus with expected tool actions and source-supported 
 
 # Gemma 4 12B development evaluation — 17 October 2026
 
-Source milestone 0.1.9. These are developer-reviewed smoke tests, not an independent biomedical benchmark or publication certification. Apple M3 / 24 GB; official Google QAT Q4_0 GGUF; pinned manifest in [LOCAL_ASSISTANT.md](docs/LOCAL_ASSISTANT.md); llama.cpp b11669, Metal, four CPU threads, context 8,192, temperature 1.0, top-p 0.95, top-k 64, thinking disabled, text only. Downloaded bytes passed the official SHA-256 check. No raw image or cloud LLM was used. Online evidence access was disabled; KEGG data came from the existing cache.
+Source milestone 0.1.9. These are developer-reviewed smoke tests, not an independent biomedical benchmark or publication certification. Apple M3 / 24 GB; official Google QAT Q4_0 GGUF; pinned manifest in [manual model manifest](MANUAL.md#47-what-the-assistant-can-do); llama.cpp b11669, Metal, four CPU threads, context 8,192, temperature 1.0, top-p 0.95, top-k 64, thinking disabled, text only. Downloaded bytes passed the official SHA-256 check. No raw image or cloud LLM was used. Online evidence access was disabled; KEGG data came from the existing cache.
 
 The integration also increases answer budgets and adds compact threshold/background context, so improvements cannot be attributed to the model alone. Sampling is not deterministic; one run per case does not estimate an accuracy rate. All outputs below passed the then-current application format checks; their semantic reviews show why that is insufficient.
 
@@ -639,3 +639,12 @@ Four developer-authored, synthetic questions were fixed before an initial run. A
 [Later targeted diagnostics](docs/validation/ASSISTANT_GROUNDED_FOLLOWUP_0.2.6.json) and [cached-review replay](docs/validation/ASSISTANT_SCOPE_REPLAY_0.2.6.json) preserve the distinction between new inference and deterministic rechecking of earlier reviewer output. Returned-draft counts are not accuracy scores. Exact quotations and topic checks still cannot establish semantic entailment or scientific truth. The retained model remains a supervised interpreter of supplied records; calculations remain in the deterministic engine. No new Gemma-versus-Liquid/Qwen ranking is implied.
 
 An additional private owner-control diagnostic exposed reversal of the biological marker order in a Manders interpretation; the same-model reviewer accepted it despite a matching source quote. The private image, labels and measured results remain local. The application now supplies engine-defined M1/M2 marker directions and quantity labels, and omits generated marker-specific Manders direction/magnitude prose. Generic synthetic regression tests cover that policy, including typographic separators. This is an application safeguard, not evidence that Gemma independently learned or reliably validates the metric definitions.
+
+
+### Preserved integration checks — 17 October 2026
+
+Before documentation consolidation, the assistant guide recorded a no-image/no-save/offline-refresh Pearson question (29.31 seconds) and a repeated current-ROI question correctly identifying a constant channel and undefined correlations (57.65 seconds). These were targeted context-delivery checks, not controlled timings or an accuracy benchmark. Earlier integration failures included exact channel labels triggering a numeric-prose guard and undefined metrics being described as absent measurements; those checks were corrected. Historical evaluations retain their original prompts and must not be relabelled as tests of the current context.
+
+### Owner annotation correction — 18 October 2026
+
+The owner corrected biological channel identities in two private samples after reviewing the projections. Earlier marker-specific specimen interpretations are superseded; they are not ground-truth model evaluation. The observed A/B direction reversal remains a valid integration failure under the supplied records, but the former biological labels cannot support a Gamma-tubulin-specific conclusion. Corrected local reports rerun measurement and reference-channel candidate selection where applicable. Private images, mapping and resulting values remain outside Git.

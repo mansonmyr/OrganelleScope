@@ -5,7 +5,7 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Research development source 0.2.6.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; native platform qualification remains incomplete. Installed builds can lag this source.
+**Research development source 0.2.6.** Numerical tests do not establish biological validity or publication readiness. Windows 11 x64 and Apple Silicon macOS are the deployment targets; automated native startup and synthetic stack checks accompany release candidates; human acceptance testing remains incomplete. Installed builds can lag this source.
 
 ## Main features
 
@@ -37,7 +37,7 @@ Open a TIFF, confirm channels/axes/calibration, inspect the image and draw ROIs.
 
 Download Windows x64 or Apple Silicon macOS installers from **[Releases](https://github.com/mansonmyr/OrganelleScope/releases)**. Each release candidate includes checksums and platform verification records. The installed application includes its local inference runtime and sets up Gemma automatically with a one-time 6.98 GB download. Setup can be paused/resumed; image analysis remains available. After setup the assistant runs offline. macOS is ad-hoc signed and not notarized; Windows has no publisher certificate.
 
-See [source setup and publishing](docs/DEVELOPMENT.md). Native installation checks and biological validation remain incomplete; see [verification status](docs/VALIDATION.md).
+See [source setup and publishing](MANUAL.md#57-development-setup) and [verification status](docs/VALIDATION.md). Confirm stored-channel marker identities before biological interpretation; filenames and dye names are not ground truth.
 
 ## Licensing
 
