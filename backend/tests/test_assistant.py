@@ -378,9 +378,11 @@ def test_proximity_reading_notes_explain_empty_masks_and_existing_reverse_summar
  reading=interpretation_snapshot(record)
  assert any('undefined distance/fraction is not zero probability' in n for n in reading['notes'])
  assert any('fraction is undefined rather than zero' in f for f in reading['findings'])
+ assert any('change the measurement region and recalculate' in f for f in reading['findings'])
  direction={'source_voxels':2,'fraction_within_distance':.5,'median_occupied_voxel_center_um':2}
  record['state']['workspaces']['Segmentation.report']['proximity']={'marker_to_reference':direction,'reference_to_marker':{**direction,'source_voxels':1,'fraction_within_distance':1},'distance_threshold_um':.5}
  assert any('Both proximity directions are already recorded' in n for n in interpretation_snapshot(record)['notes'])
+ assert not any('change the measurement region and recalculate' in f for f in interpretation_snapshot(record)['findings'])
  facts=recorded_quantities(record)
  assert any(f['value']==.5 and 'Marker → reference' in f['label'] for f in facts)
  assert any(f['value']==1 and 'Reference → marker' in f['label'] for f in facts)
