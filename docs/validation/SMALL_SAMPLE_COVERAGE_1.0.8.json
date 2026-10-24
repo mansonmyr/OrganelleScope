@@ -1,0 +1,159 @@
+{
+  "application_algorithm": "experiment-inference-3",
+  "data_seed": 20261025,
+  "analysis_seed": "10000 + simulation index",
+  "bootstrap_draws": 999,
+  "true_difference": 0,
+  "cells_per_experiment": 4,
+  "experiment_sd": 1,
+  "condition_specific_experiment_sd": 0.5,
+  "cell_residual_sd": 0.5,
+  "paired_model": "The SD-1 experiment effect is shared across paired conditions.",
+  "cases": [
+    {
+      "design": "independent_experiments",
+      "experiments_per_condition_or_pairs": 3,
+      "simulations": 100,
+      "interval_coverage": 0.8,
+      "coverage_monte_carlo_ci95": [
+        0.7081573109113719,
+        0.8733444478980441
+      ],
+      "false_positive_fraction": 0.0,
+      "false_positive_monte_carlo_ci95": [
+        0.0,
+        0.03621669264519054
+      ],
+      "permutation_assignments": 20,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.1
+    },
+    {
+      "design": "independent_experiments",
+      "experiments_per_condition_or_pairs": 4,
+      "simulations": 100,
+      "interval_coverage": 0.92,
+      "coverage_monte_carlo_ci95": [
+        0.848442364135579,
+        0.9648284374821919
+      ],
+      "false_positive_fraction": 0.02,
+      "false_positive_monte_carlo_ci95": [
+        0.002431336823924792,
+        0.07038393247107005
+      ],
+      "permutation_assignments": 70,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.02857142857142857
+    },
+    {
+      "design": "independent_experiments",
+      "experiments_per_condition_or_pairs": 5,
+      "simulations": 100,
+      "interval_coverage": 0.88,
+      "coverage_monte_carlo_ci95": [
+        0.7997643163799613,
+        0.9364310974389741
+      ],
+      "false_positive_fraction": 0.03,
+      "false_positive_monte_carlo_ci95": [
+        0.006229971538306226,
+        0.08517605297428028
+      ],
+      "permutation_assignments": 252,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.007936507936507936
+    },
+    {
+      "design": "independent_experiments",
+      "experiments_per_condition_or_pairs": 6,
+      "simulations": 100,
+      "interval_coverage": 0.88,
+      "coverage_monte_carlo_ci95": [
+        0.7997643163799613,
+        0.9364310974389741
+      ],
+      "false_positive_fraction": 0.04,
+      "false_positive_monte_carlo_ci95": [
+        0.011004493986188201,
+        0.09925715671265992
+      ],
+      "permutation_assignments": 924,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.0021645021645021645
+    },
+    {
+      "design": "paired_experiments",
+      "experiments_per_condition_or_pairs": 3,
+      "simulations": 100,
+      "interval_coverage": 0.85,
+      "coverage_monte_carlo_ci95": [
+        0.764692499851379,
+        0.9135456143583515
+      ],
+      "false_positive_fraction": 0.0,
+      "false_positive_monte_carlo_ci95": [
+        0.0,
+        0.03621669264519054
+      ],
+      "permutation_assignments": 8,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.25
+    },
+    {
+      "design": "paired_experiments",
+      "experiments_per_condition_or_pairs": 4,
+      "simulations": 100,
+      "interval_coverage": 0.93,
+      "coverage_monte_carlo_ci95": [
+        0.8610802715441336,
+        0.9713947110925815
+      ],
+      "false_positive_fraction": 0.0,
+      "false_positive_monte_carlo_ci95": [
+        0.0,
+        0.03621669264519054
+      ],
+      "permutation_assignments": 16,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.125
+    },
+    {
+      "design": "paired_experiments",
+      "experiments_per_condition_or_pairs": 5,
+      "simulations": 100,
+      "interval_coverage": 0.89,
+      "coverage_monte_carlo_ci95": [
+        0.8116988678035574,
+        0.9437929797145126
+      ],
+      "false_positive_fraction": 0.0,
+      "false_positive_monte_carlo_ci95": [
+        0.0,
+        0.03621669264519054
+      ],
+      "permutation_assignments": 32,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.0625
+    },
+    {
+      "design": "paired_experiments",
+      "experiments_per_condition_or_pairs": 6,
+      "simulations": 100,
+      "interval_coverage": 0.9,
+      "coverage_monte_carlo_ci95": [
+        0.8237774022598247,
+        0.9509953107785141
+      ],
+      "false_positive_fraction": 0.01,
+      "false_positive_monte_carlo_ci95": [
+        0.00025314603268189283,
+        0.054459385392080666
+      ],
+      "permutation_assignments": 64,
+      "permutation_exact": true,
+      "exact_two_sided_floor": 0.03125
+    }
+  ],
+  "scope": "One Gaussian hierarchical null family. Percentile coverage can fall below nominal 95%; Monte Carlo intervals quantify simulation precision, not biological uncertainty. No power, heavy-tail, missingness or posterior calibration claim. Exploratory intervals were explicitly enabled; they are off by default in the application. Estimation-only contrasts retain numeric permutation values in exports but are not interpreted as attainable significance tests."
+}

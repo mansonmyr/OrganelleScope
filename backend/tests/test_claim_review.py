@@ -136,3 +136,26 @@ def test_curated_method_tail_is_available_to_review_without_exceeding_budget():
    return super().completion(messages,*args,**kwargs)
  r=review_claims(CapturingReviewer([claim(quote=quote)]),quote+' [methods]',{'methods':METHOD_REFERENCE})
  assert r['retained_sentences']==1
+
+
+def test_dangling_advice_is_withheld_after_antecedent_was_removed():
+    r=review_claims(Reviewer([claim(kind='unsupported'),claim(kind='advice',index=1,source='',quote='')]),'An unsupported procedure. These steps should distinguish true co-localization.',{})
+    assert r['retained_sentences']==0
+    assert 'standalone' in r['claims'][1]['reason'] or 'true biological' in r['claims'][1]['reason']
+
+
+def test_all_positive_occupancy_cannot_be_blames_on_missing_background_correction():
+    text='The Manders fractions are high because background correction is absent.'
+    payload={'measurements':{'threshold_occupancy':{'all_above_a':True,'all_above_b':True}},'methods':text}
+    r=review_claims(Reviewer([claim(quote=text)]),text+' [methods]',payload)
+    assert r['withheld_sentences']==1 and 'causation is not established' in r['claims'][0]['reason']
+
+
+def test_standalone_control_advice_remains_available():
+    r=review_claims(Reviewer([claim(kind='advice',source='',quote='')]),'Consider acquiring a nonsaturated image and checking threshold sensitivity.',{})
+    assert r['retained_sentences']==1
+
+
+def test_pronoun_dependency_is_removed_when_antecedent_was_withheld():
+    r=review_claims(Reviewer([claim(kind='unsupported'),claim(kind='advice',index=1,source='',quote='')]),'A procedure not supported by the record. It should resolve the issue.',{})
+    assert r['retained_sentences']==0 and 'preceding statement was removed' in r['claims'][1]['reason']

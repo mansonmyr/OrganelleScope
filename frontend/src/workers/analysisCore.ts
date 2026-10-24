@@ -164,9 +164,13 @@ export function analyzeStoredImage(
     color: trace.color,
     rawValues: trace.rawValues,
     smoothedValues: trace.smoothedValues,
-    normalizedValues: trace.normalizedValues
+    normalizedValues: trace.normalizedValues,
+    rawCeilingSampleCount: trace.rawCeilingSampleCount, intensityCeiling: trace.intensityCeiling
   }));
-  const metrics = traces.map((trace) => buildChannelMetrics(trace, distancesPx, distancesPhysical, calibration.unit));
+  const metrics = traces.map((trace,i) => {
+    const raw=sampleTrace(stored.rawChannels[i],stored.image.width,stored.image.height,roi,trace.label,trace.color);
+    return buildChannelMetrics({...trace,rawCeilingSampleCount:raw.rawCeilingSampleCount,intensityCeiling:raw.intensityCeiling},distancesPx,distancesPhysical,calibration.unit);
+  });
 
   return {
     profile: {
@@ -349,7 +353,14 @@ export function sampleTrace(
     distancesPx,
     rawValues,
     smoothedValues,
-    normalizedValues
+    normalizedValues,
+    intensityCeiling: channel instanceof Uint8Array ? 255 : channel instanceof Uint16Array ? 65535 : undefined,
+    rawCeilingSampleCount: channel instanceof Uint8Array || channel instanceof Uint16Array ? distancesPx.filter(distance => {
+      const point=pointAlongLine(roi.start,roi.end,distance),ceiling=channel instanceof Uint8Array?255:65535;
+      // Inspect contributing raw neighbours: interpolation can hide a ceiling pixel.
+      const x0=clamp(Math.floor(point.x),0,width-1),x1=clamp(Math.ceil(point.x),0,width-1),y0=clamp(Math.floor(point.y),0,height-1),y1=clamp(Math.ceil(point.y),0,height-1);
+      return [channel[y0*width+x0],channel[y0*width+x1],channel[y1*width+x0],channel[y1*width+x1]].some(v=>v>=ceiling);
+    }).length : undefined
   };
 }
 
@@ -681,6 +692,10 @@ export function buildChannelMetrics(
   distancesPhysical: number[],
   unit: DistanceUnit
 ): ChannelMetrics {
+  const ceilingCount=trace.rawCeilingSampleCount ?? null;
+  const fwhmWithheld=(ceilingCount??0)>0;
+  const quality={algorithm:'line-quality-1',rawCeilingSampleCount:ceilingCount,sampleCount:trace.rawValues.length,intensityCeiling:trace.intensityCeiling??null,fwhmWithheld,
+    reason:fwhmWithheld?'FWHM withheld: raw pixels contributing to this line reach the storage ceiling. Filtering cannot recover a clipped peak.':null};
   const baseline = percentile(trace.smoothedValues, 5);
   const peakCandidates = detectMeaningfulPeaks(trace.smoothedValues);
   const sortedByProminence = [...peakCandidates].sort((left, right) => right.prominence - left.prominence);
@@ -713,8 +728,8 @@ export function buildChannelMetrics(
       rightCrossPx: right,
       leftCrossPhysical: left != null ? left * physicalPerPixel : null,
       rightCrossPhysical: right != null ? right * physicalPerPixel : null,
-      fwhmPx: width,
-      fwhmPhysical: width != null ? width * physicalPerPixel : null
+      fwhmPx: fwhmWithheld ? null : width,
+      fwhmPhysical: !fwhmWithheld && width != null ? width * physicalPerPixel : null
     };
   });
 
@@ -735,7 +750,11 @@ export function buildChannelMetrics(
     unit
   );
 
+  if(fwhmWithheld && (quickMetric.metricType==='main_peak_fwhm'||quickMetric.metricType==='envelope_fwhm')){
+    quickMetric.valuePx=null;quickMetric.valuePhysical=null;quickMetric.valueRaw=null;quickMetric.displayLabel='Width unavailable: raw storage-ceiling samples';
+  }
   return {
+    quality,
     peakIntensity,
     peakDistancePx: distancesPx[peakIndex] ?? 0,
     peakDistancePhysical: distancesPhysical[peakIndex] ?? 0,

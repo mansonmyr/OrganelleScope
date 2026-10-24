@@ -202,6 +202,22 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             result['metadata_notice']='Import quality notes updated; source hash, axes, calibration and numerical metadata are unchanged. Original report metadata is retained in original_image_info.'
         return result
 
+    @app.get("/api/images/{image_id}/analysis-history", dependencies=[Depends(authorized)])
+    def analysis_history(image_id: str):
+        folder,_,_=stored(image_id);history=folder/'analysis-history'
+        rows=[]
+        for path in sorted(history.glob('*.json')) if history.exists() else []:
+            value=json.loads(path.read_text());rows.append({'sha256':path.stem,'report_id':value.get('report_id'),'algorithm_version':value.get('algorithm_version'),'created_utc':value.get('created_utc')})
+        return rows
+
+    @app.get("/api/images/{image_id}/analysis-history/{digest}", dependencies=[Depends(authorized)])
+    def historical_analysis(image_id: str,digest: str):
+        import re
+        if not re.fullmatch(r'[0-9a-f]{64}',digest):raise HTTPException(404,'Report not found.')
+        folder,_,_=stored(image_id);path=folder/'analysis-history'/(digest+'.json')
+        if not path.is_file():raise HTTPException(404,'Report not found.')
+        return json.loads(path.read_text())
+
     @app.post("/api/images/{image_id}/analysis", dependencies=[Depends(authorized)])
     def measure(image_id: str, options: AnalysisRequest) -> dict:
         with lock:
@@ -209,9 +225,8 @@ def create_app(data_dir: Path, token: str) -> FastAPI:
             from organelle_scope.analysis_service import compute_analysis
             try:result=compute_analysis(folder,record,info,options)
             except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc
-            temp = folder / "analysis.tmp"
-            temp.write_text(json.dumps(result, indent=2, allow_nan=False))
-            temp.replace(folder / "analysis.json")
+            from organelle_scope.analysis_service import save_analysis
+            save_analysis(folder,result)
             return result
 
     @app.get("/api/images/{image_id}/plane", dependencies=[Depends(authorized)])

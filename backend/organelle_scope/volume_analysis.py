@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from organelle_scope.processing import ProcessingConfig
 from organelle_scope.roi_analysis import pair_metrics
 from organelle_scope.image_io import ImageError
+from organelle_scope.measurement_quality import ceiling_quality
 
 
 class CuboidRequest(BaseModel):
@@ -27,12 +28,12 @@ class CuboidRequest(BaseModel):
         return count
 
 
-def summarize_cuboid(values, labels, thresholds, spacing):
+def summarize_cuboid(values, labels, thresholds, spacing, raw_values=None, intensity_ceiling=None):
     count=len(values[0])
     volume=count*float(np.prod(spacing)) if all(v is not None for v in spacing) else None
     return {'voxel_count':count,'region_volume_um3':volume,
             'channels':[{'channel':i,'label':labels[i],'mean':float(a.mean()),'sum':float(a.sum(dtype=np.float64)),
-            'std':float(a.std(dtype=np.float64)), 'above_threshold_voxels':int(np.count_nonzero(a>thresholds[i]))} for i,a in enumerate(values)],
+            'std':float(a.std(dtype=np.float64)), 'raw_quality':ceiling_quality((raw_values if raw_values is not None else values)[i],intensity_ceiling),'above_threshold_voxels':int(np.count_nonzero(a>thresholds[i]))} for i,a in enumerate(values)],
             'pairs':[{'channel_a':i,'channel_b':j,'label_a':labels[i],'label_b':labels[j],
             **pair_metrics(values[i],values[j],'manual',thresholds[i],thresholds[j])} for i,j in combinations(range(len(values)),2)],
             'scope':'Full-resolution inclusive cuboid, not a segmented organelle volume. No voxel-independent significance or interaction inference.'}

@@ -17,6 +17,7 @@ from scipy.stats import rankdata
 
 from organelle_scope.image_io import ImageError
 from organelle_scope.processing import ProcessingConfig
+from organelle_scope.measurement_quality import ceiling_quality, background_quality
 
 
 class Point(BaseModel):
@@ -121,10 +122,14 @@ def automatic_thresholds(a: np.ndarray, b: np.ndarray) -> dict:
     The secondary threshold is continuous (no Fiji-specific integer rounding).
     """
     a = a.astype(np.float64); b = b.astype(np.float64)
+    descriptor={"algorithm":"orthogonal-integer-union-1","regression":"orthogonal (total least squares)",
+                "background_predicate":"A <= threshold A OR B <= threshold B",
+                "search":"highest admissible integer working threshold; continuous paired threshold",
+                "reference_equivalence":"Not interchangeable with Coloc 2 integer rounding or stepper termination."}
     x = a-a.mean(); y = b-b.mean()
     va, vb, cov = float(np.dot(x,x)), float(np.dot(y,y)), float(np.dot(x,y))
     if va == 0 or vb == 0 or cov <= 0:
-        return {"status": "not_applicable", "a": None, "b": None, "background_pcc": None}
+        return {**descriptor,"status": "not_applicable", "a": None, "b": None, "background_pcc": None,"background_samples":0,"reason":"Positive covariance and variation in both channels are required."}
     slope = (vb-va+math.sqrt((vb-va)**2+4*cov*cov))/(2*cov)
     intercept = float(b.mean()-slope*a.mean())
     swapped = slope > 1
@@ -144,10 +149,10 @@ def automatic_thresholds(a: np.ndarray, b: np.ndarray) -> dict:
     r[valid] = (suv[valid]-su[valid]*sv[valid]/n[valid])/np.sqrt(v1[valid]*v2[valid])
     indices = np.flatnonzero(valid & (r <= 0) & (m*np.arange(size)+offset >= 0))
     if not len(indices):
-        return {"status": "not_found", "a": None, "b": None, "background_pcc": None}
+        return {**descriptor,"status": "not_found", "a": None, "b": None, "background_pcc": None,"background_samples":0,"reason":"No admissible pair with a nonnegative paired threshold, at least three varying background samples and nonpositive background correlation. This does not establish absent localization."}
     threshold = int(indices[-1])
     t1, t2 = float(threshold), float(m*threshold+offset)
-    return {"status": "found", "a": t2 if swapped else t1, "b": t1 if swapped else t2,
+    return {**descriptor,"status": "found", "background_samples":int(n[threshold]),"reason":None,"a": t2 if swapped else t1, "b": t1 if swapped else t2,
             "background_pcc": float(r[threshold])}
 
 
@@ -182,6 +187,14 @@ def pair_metrics(a: np.ndarray, b: np.ndarray, mode: str, ta: float = 0, tb: flo
         warnings.append("Correlation is undefined because at least one channel is constant in the selected region.")
     if threshold["a"] is None:
         warnings.append("Automatic thresholds were not obtained. Thresholded Manders is unavailable; no fallback threshold was substituted.")
+    occupancy=None
+    if threshold['a'] is not None:
+        occupancy={'samples':len(a),'above_a':int(np.count_nonzero(a>threshold['a'])),
+                   'above_b':int(np.count_nonzero(b>threshold['b']))}
+        occupancy['all_above_a']=occupancy['above_a']==len(a)
+        occupancy['all_above_b']=occupancy['above_b']==len(b)
+        if occupancy['all_above_a'] or occupancy['all_above_b']:
+            warnings.append("A selected threshold is below every sample in its channel. The corresponding Manders fraction is uninformative for spatial discrimination; do not interpret a fraction of one as complete biological colocalization.")
     gaussian_lrt = None
     if pcc is not None and abs(pcc) < 1-1e-12:
         gaussian_lrt = float(-len(a)*math.log1p(-pcc*pcc))
@@ -189,7 +202,7 @@ def pair_metrics(a: np.ndarray, b: np.ndarray, mode: str, ta: float = 0, tb: flo
         reasons['gaussian_lrt_statistic']='The Gaussian covariance statistic is unavailable for constant channels or a singular, perfectly correlated covariance model.'
     return {"unavailable_reasons":reasons,"pcc":pcc, "spearman":spearman, "moc":float(np.dot(a,b)/norm) if norm else None,
             "m1":raw_m1, "m2":raw_m2, "thresholded_m1":m1, "thresholded_m2":m2,
-            "thresholds":threshold, "gaussian_lrt_statistic":gaussian_lrt,
+            "thresholds":threshold,"threshold_occupancy":occupancy, "gaussian_lrt_statistic":gaussian_lrt,
             "gaussian_lrt_note":"Descriptive Gaussian likelihood ratio only; no calibrated p-value or probability of interaction. Spatial dependence is not modeled.",
             "warnings":warnings}
 
@@ -224,10 +237,16 @@ def regression(channels: list[np.ndarray], target: int, labels: list[str]) -> di
 
 
 def analyze_roi(channels: list[np.ndarray], roi: AreaROI, labels: list[str], target: int,
-                mode: str, thresholds: list[float], spacing: tuple[float | None, float | None]) -> dict:
+                mode: str, thresholds: list[float], spacing: tuple[float | None, float | None],
+                raw_channels=None, backgrounds=None, intensity_ceiling=None) -> dict:
     mask, warnings = roi_mask(roi, channels[0].shape, spacing)
     values = [c[mask].astype(np.float64) for c in channels]
     count = int(mask.sum())
+    raw_values=[c[mask] for c in (raw_channels if raw_channels is not None else channels)]
+    quality=[ceiling_quality(v,intensity_ceiling) for v in raw_values]
+    for i,q in enumerate(quality):
+        if q['ceiling_samples']:
+            warnings.append(f"{labels[i]}: {q['ceiling_samples']}/{count} raw ROI samples are at the storage ceiling. Correlations and peak shape may be affected; processing cannot recover clipped signal.")
     sx, sy = spacing
     pairs = []
     for i,j in combinations(range(len(channels)),2):
@@ -235,5 +254,5 @@ def analyze_roi(channels: list[np.ndarray], roi: AreaROI, labels: list[str], tar
                       **pair_metrics(values[i],values[j],mode,thresholds[i],thresholds[j])})
     return {"roi":roi.model_dump(), "pixel_count":count,
             "area_um2":count*sx*sy if sx is not None and sy is not None else None,
-            "channel_summary":[{"channel":i,"label":labels[i],"mean":float(v.mean()),"sum":float(v.sum()),"std":float(v.std())} for i,v in enumerate(values)],
+            "channel_summary":[{"channel":i,"label":labels[i],"mean":float(v.mean()),"sum":float(v.sum()),"std":float(v.std()),"raw_quality":quality[i],"estimated_background":background_quality(backgrounds[i][mask]) if backgrounds is not None else None} for i,v in enumerate(values)],
             "pairs":pairs, "regression":regression(values,target,labels), "warnings":warnings}

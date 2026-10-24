@@ -87,7 +87,7 @@ def export_batch(run):
     settings=[['Image ID','Axes','Series index (zero based)','X µm/pixel','Y µm/pixel','Z µm/plane','Calibration details JSON','Channel labels JSON','Threshold mode','Manual thresholds JSON','Target channel (one based)','Processing JSON','Algorithm version']]
     geometry=[['Image ID','ROI ID','Kind','Z plane','Diameter µm','Vertex (one based)','X pixel','Y pixel']]
     pairs=[['Image ID','ROI ID','Z plane','Channel A','Channel B','Pixels','Area µm²','Pearson r','Spearman rho','MOC','M1 (>0)','M2 (>0)','Thresholded M1','Thresholded M2','Threshold A','Threshold B','Threshold status','Gaussian LRT (descriptive)','Warnings']]
-    channels=[['Image ID','ROI ID','Channel','Mean','SD','Sum']]
+    channels=[['Image ID','ROI ID','Channel','Mean','SD','Sum','Raw ROI samples','Raw storage ceiling','Raw ceiling samples','Raw ceiling fraction','ROI background min','ROI background max','ROI background SD']]
     regression=[['Image ID','ROI ID','R squared','Coefficient ratio','Betas JSON','Warnings']]
     for item in run['items']:
         ident=item['image_id'];image=item['image'];info=image['info'];a=item['analysis'];result=item.get('result',{})
@@ -99,7 +99,9 @@ def export_batch(run):
             rid=roi['roi']['id']
             for p in roi['pairs']:
                 pairs.append([ident,rid,roi['roi']['z']+1,p['label_a'],p['label_b'],roi['pixel_count'],roi['area_um2'],*[p[k] for k in ('pcc','spearman','moc','m1','m2','thresholded_m1','thresholded_m2')],p['thresholds']['a'],p['thresholds']['b'],p['thresholds']['status'],p['gaussian_lrt_statistic'],'; '.join(roi['warnings']+p['warnings']+[p['gaussian_lrt_note']])])
-            for c in roi['channel_summary']:channels.append([ident,rid,c['label'],c['mean'],c['std'],c['sum']])
+            for c in roi['channel_summary']:
+                q=c.get('raw_quality') or {};bg=c.get('estimated_background') or {}
+                channels.append([ident,rid,c['label'],c['mean'],c['std'],c['sum'],q.get('sample_count'),q.get('storage_ceiling'),q.get('ceiling_samples'),q.get('ceiling_fraction'),bg.get('min'),bg.get('max'),bg.get('std')])
             reg=roi['regression'];regression.append([ident,rid,reg['r_squared'],reg['coefficient_ratio'],json.dumps(reg['betas']),'; '.join(reg['warnings'])])
     design=summarize_design(run['items'])
     design_rows=[['Condition','Images','Labelled experiments','Labelled cells','Images missing design labels']]

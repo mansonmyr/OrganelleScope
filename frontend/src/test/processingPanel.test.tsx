@@ -32,7 +32,7 @@ describe('processing recipe workflow',()=>{
 it('exposes rolling-ball radius and native intensity height and validates the CPU limit',()=>{
  const onChange=vi.fn();render(<ProcessingPanel imageId="test" z={0} labels={['A']} bitDepth={16} value={rawProcessing} disabled={false} onChange={onChange}/>);
  fireEvent.change(screen.getByLabelText('Background method'),{target:{value:'rolling_ball'}});
- fireEvent.change(screen.getByLabelText('Ball height (native intensity units)'),{target:{value:'1500'}});
+ fireEvent.change(screen.getByLabelText('Kernel height (native intensity units)'),{target:{value:'1500'}});
  fireEvent.change(screen.getByLabelText('Background radius (XY pixels)'),{target:{value:'30'}});
  fireEvent.click(screen.getByText('Apply recipe'));
  expect(onChange).toHaveBeenLastCalledWith({...rawProcessing,background:'rolling_ball',offsets:[0],radius_px:30,rolling_height:1500});
@@ -42,7 +42,7 @@ it('exposes rolling-ball radius and native intensity height and validates the CP
 it('keeps cleared radius, ball height and smoothing fields blank until valid numbers are entered',async()=>{
  const onChange=vi.fn();render(<ProcessingPanel imageId="test" z={0} labels={['A']} bitDepth={16} value={rawProcessing} disabled={false} onChange={onChange}/>);
  fireEvent.change(screen.getByLabelText('Background method'),{target:{value:'rolling_ball'}});
- const fields=['Background radius (XY pixels)','Ball height (native intensity units)','Gaussian smoothing σ (XY pixels)'].map(name=>screen.getByLabelText(name) as HTMLInputElement);
+ const fields=['Background radius (XY pixels)','Kernel height (native intensity units)','Gaussian smoothing σ (XY pixels)'].map(name=>screen.getByLabelText(name) as HTMLInputElement);
  for(const field of fields){fireEvent.change(field,{target:{value:''}});fireEvent.blur(field);expect(field.value).toBe('');}
  fireEvent.click(screen.getByText('Apply recipe'));expect(onChange).not.toHaveBeenCalled();
  expect((screen.getByText('Apply recipe') as HTMLButtonElement).disabled).toBe(true);

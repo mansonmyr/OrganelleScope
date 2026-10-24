@@ -64,6 +64,16 @@ def review_claims(model,answer,payloads,general=False):
  def normalized_label(text):
   value=unicodedata.normalize('NFKC',text).translate(str.maketrans({'α':'alpha','β':'beta','γ':'gamma'})).casefold()
   return re.sub(r'[\W_]+',' ',value).strip()
+ all_above=False
+ def inspect_diagnostics(value):
+  nonlocal all_above
+  if isinstance(value,dict):
+   occupancy=value.get('threshold_occupancy')
+   if isinstance(occupancy,dict) and (occupancy.get('all_above_a') or occupancy.get('all_above_b')):all_above=True
+   for child in value.values():inspect_diagnostics(child)
+  elif isinstance(value,list):
+   for child in value:inspect_diagnostics(child)
+ for payload in payloads.values():inspect_diagnostics(payload)
  seen=set();checked=[];retained=[]
  for item in claims:
   index=item.get('index')
@@ -97,6 +107,13 @@ def review_claims(model,answer,payloads,general=False):
     if not locally_negated(text,match.start()):reason='Image proximity and database association scores are not molecular binding probabilities.'
   directional=re.search(r'\b(Manders|M1|M2|fraction|overlap)\b',text,re.I) and re.search(r'contain|within|intensity|signal|mostly|largely|majority|predominant',text,re.I)
   if directional and any(len(a)>=3 and len(b)>=3 and re.search(r'\b'+re.escape(normalized_label(a))+r'\b',normalized_label(text)) and re.search(r'\b'+re.escape(normalized_label(b))+r'\b',normalized_label(text)) for a,b in marker_pairs):reason='Marker-specific Manders direction/magnitude is explained by engine-defined notes and recorded quantities; generated interpretation omitted.'
+  # Displayed sentences must survive removal of any preceding model prose.
+  if re.match(r'^(?:(?:methodological advice|advice|hypothesis)\s*:\s*)?(?:these|those|such|the above|aforementioned)\s+(?:steps|results|findings|measures|recommendations|controls|procedures|approaches)\b',text,re.I):
+   reason='Context-dependent reference: rewrite this as a standalone sentence before display.'
+  for match in re.finditer(r'\b(?:true|genuine|confirmed)\s+co[- ]?locali[sz]ation\b',text,re.I):
+   if not locally_negated(text,match.start()):reason='The supplied measurements do not certify true biological colocalization.'
+  if all_above and re.search(r'Manders|M1|M2|overlap fractions?',text,re.I) and re.search(r'because|due to|caused by|driven by|owing to',text,re.I) and re.search(r'background|correction',text,re.I):
+   reason='Recorded threshold occupancy is all-positive. Background causation is not established; use the engine threshold-occupancy explanation.'
   accepted=reason is None
   if accepted:
    if kind=='record_supported':retained.append((index,text))
@@ -107,8 +124,13 @@ def review_claims(model,answer,payloads,general=False):
     label={'advice':'Methodological advice','hypothesis':'Hypothesis','general_knowledge':'General explanation'}[kind]
     retained.append((index,label+': '+plain))
   checked.append({'index':index,'sentence':text,'kind':kind,'retained':accepted,'reason':reason,'source_id':key if accepted and kind=='record_supported' else None,'quote':quote if accepted and kind=='record_supported' else None})
+ # A retained dependent sentence must not point at a removed antecedent.
+ for item in sorted(checked,key=lambda c:c['index']):
+  if item['retained'] and re.match(r'^(?:this|that|it|they|their)\b',units[item['index']],re.I) and any(not c['retained'] and c['index']<item['index'] for c in checked):
+   item.update(retained=False,reason='Dependent sentence withheld after a preceding statement was removed.',source_id=None,quote=None)
+ retained=[(index,text) for index,text in retained if next(c for c in checked if c['index']==index)['retained']]
  kept=len(retained);withheld=len(units)-kept
  fallback='I could not substantiate a generated interpretation from the supplied records. Review the application measurement notes and selected sources before drawing a conclusion.'
- return {'algorithm':'claim-source-audit-6','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
+ return {'algorithm':'claim-source-audit-7','status':('Generated draft withheld; application notes remain available' if not kept else 'Partial draft: unsupported statements withheld' if withheld else 'Automatic claim review completed; human review required'),
          'retained_sentences':kept,'withheld_sentences':withheld,'checked_answer':' '.join(text for _,text in sorted(retained)) if retained else fallback,
          'claims':sorted(checked,key=lambda c:c['index']),'limitations':'Same-model review can repeat the original error. Verbatim quotation and scope checks do not establish citation entailment, record authenticity or biological validity. General explanations are model knowledge, not verified specimen findings.','usage':response.get('usage',{})}

@@ -5,19 +5,19 @@
 
 A local desktop microscopy workbench for calibrated image inspection, ROI measurements, colocalization, 3D analysis and traceable biological interpretation. It brings together the Probabilistic Colocalization Estimator and Quick IF Line Profiler.
 
-**Version 1.0.7 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
+**Source version 1.0.8 — local research workbench.** Supports Apple Silicon macOS and Windows 11 x64. Published installer versions and qualification records are listed separately on Releases. Release gates cover numerical tests, frozen analysis workflows, repeated native cold/warm startup, shutdown, large-stack/batch workloads and exact installer checksums. Scientific scope and comparison records are documented in the [manual](MANUAL.md) and [verification status](docs/VALIDATION.md).
 
 ## Main features
 
 - TIFF / OME-TIFF / ImageJ TIFF, native 8/16-bit data, static images/Z stacks and up to four channels, with metadata review, physical calibration and acquisition sampling/ceiling checks.
 - Persistent native-range XY/3D preview, optional automatic contrast, editable channel names, signal checks, per-channel LUTs, trackpad zoom/panning, linked sections and PNG snapshots with display provenance.
-- Circular/polygonal ROIs, physical circle diameters, line profiles, FWHM and defined Pearson/Spearman/Manders measurements.
-- Background subtraction and optional Gaussian smoothing, matched-contrast previews and processing diagnostics.
+- Circular/polygonal ROIs, physical circle diameters, line profiles and Pearson/Spearman/Manders measurements, with per-ROI raw ceiling counts, threshold-occupancy diagnostics and withholding of widths affected by raw clipping.
+- Background subtraction, optional Gaussian smoothing, matched-contrast previews and ROI background variation. The curved-kernel lower envelope is identified separately from morphological opening.
 - Full-resolution cuboids, threshold masks, bidirectional calibrated voxel-centre proximity and radial enrichment, with ROI/threshold/cuboid sensitivity sweeps.
 - Reviewed per-image batches with channel editing, design checks and failed-item recovery, Excel/JSON export and experiment-level resampling with optional explicit Gaussian MLE/Bayesian models.
 - Optional human STRING/academic KEGG lookups and pathway diagrams; a supervised local Gemma assistant with separate claim support and question-coverage reviews.
 - Source-plane memory release during reduced 3D preview generation, cancellable ROI analysis with progress, portable analysis-review reports linking engine results to embedded ROI previews, and source/settings/evidence provenance.
-- Workspace sidebar project controls, portable archives and recovery state.
+- Workspace sidebar project controls, portable archives, recovery state and preserved ROI-report history with original algorithm/settings metadata.
 
 ## Start here
 
@@ -31,6 +31,8 @@ Open a TIFF, confirm channels/axes/calibration, inspect the image and draw ROIs.
 - Calibration, channel identities, ROI selection, thresholds and independent experimental units must be checked for each study. Owner-reviewed sample regions and numerical comparisons support specific workflows; they do not establish population-level biological accuracy.
 - Gemma provides optional drafts for human review. Source checks can miss unsupported claims; recorded measurements remain the quantitative record.
 - TIFF images/static stacks up to four channels are supported. Time-lapse, Noise2Void and deconvolution are outside the current feature set. Large-stack capacity depends on available memory.
+
+Small-sample comparisons show an estimation-only mode when an exact two-sided permutation test cannot attain 0.05. Sample SD and optional Gaussian MLE SD are distinguished. Exploratory percentile intervals are off by default because nominal coverage is not established. See the [manual](MANUAL.md) for assumptions and the [synthetic assessment](docs/validation/SMALL_SAMPLE_COVERAGE_1.0.8.json) for the tested model.
 
 ## Documentation
 

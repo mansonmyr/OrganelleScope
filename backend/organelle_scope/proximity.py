@@ -13,7 +13,20 @@ def proximity_summary(marker, reference, spacing_zyx, threshold_um):
     if not np.isfinite(threshold_um) or threshold_um <= 0:
         raise ValueError('Choose a finite positive proximity threshold.')
     marker_count, reference_count = int(marker.sum()), int(reference.sum())
+    warnings=[]
+    if marker.shape[0]>1 and threshold_um<spacing[0]:warnings.append('The near-distance cutoff is smaller than the Z step. Adjacent-plane voxel centres cannot fall within it; this is not an optical resolution claim.')
+    if marker.shape[0]<5:warnings.append('This cuboid contains fewer than five Z planes. Coarse axial sampling limits structural interpretation.')
+    boundary=np.zeros(marker.shape,dtype=bool)
+    for axis in range(3):
+        for index in (0,-1):
+            selection=[slice(None)]*3;selection[axis]=index;boundary[tuple(selection)]=True
+    marker_edge=int(np.count_nonzero(marker & boundary));reference_edge=int(np.count_nonzero(reference & boundary))
+    if marker_edge or reference_edge:warnings.append('Foreground touches a cuboid face. Objects and the available reference search may be truncated.')
     shared = {
+        'algorithm_version':'directed-centres-2-quality',
+        'mask_occupancy':{'cuboid_voxels':int(marker.size),'marker_fraction':marker_count/marker.size if marker.size else 0,'reference_fraction':reference_count/marker.size if marker.size else 0},
+        'sampling_review':{'z_step_um':float(spacing[0]),'z_planes':marker.shape[0],'cutoff_smaller_than_z_step':bool(marker.shape[0]>1 and threshold_um<spacing[0]),'marker_boundary_voxels':marker_edge,'reference_boundary_voxels':reference_edge},
+        'quality_warnings':warnings,
         'marker_foreground_voxels': marker_count,
         'reference_foreground_voxels': reference_count,
         'overlapping_foreground_voxels': int(np.count_nonzero(marker & reference)),
@@ -43,6 +56,7 @@ def proximity_summary(marker, reference, spacing_zyx, threshold_um):
             'source_voxels_on_cuboid_boundary': int(np.count_nonzero(source & boundary)),
         }
     forward, reverse = directed(marker, reference), directed(reference, marker)
+    if forward['fraction_within_distance']==1:warnings.append('Every marker voxel is near the reference mask. Containment and mask occupancy can produce a fraction of one without demonstrating biological association; no spatial null is evaluated here.')
     return {**shared, 'marker_to_reference': forward, 'reference_to_marker': reverse,
             # Retain existing export keys, with their original forward direction.
             'nearest_occupied_voxel_center_um': forward['nearest_occupied_voxel_center_um'],

@@ -73,3 +73,33 @@ An identity/rating-withheld randomized packet is available locally for independe
 The [matched volume-memory comparison](validation/VOLUME_MEMORY_COMPARISON_1.0.7.json) records approximately 1,055 MiB versus 564 MiB sampled peak service RSS before/after releasing source-plane views, for the same decoded synthetic geometry and workload options. Both pass the independent ROI oracle. This single-run comparison does not include Gemma and makes no universal memory/speed claim.
 
 The [three-question follow-up](validation/ASSISTANT_TARGETED_FOLLOWUP_1.0.7.json) uses the original frozen questions and records implementation hashes separately. The annotation answer clearly rejects instruction-derived activation; two displayed drafts remain partial (missing direction detail and actionable region-change advice), although automatic coverage marks all addressed. The corrected direction sentence and region-change advice appeared in the draft but were withheld by conservative source review. These outcomes are preserved, not counted as three successes. After the run, deterministic application findings were extended with explicit change-region/recalculate advice for unavailable proximity; regression checks cover its presence for unavailable reports and absence from valid directed summaries. This guidance is independent of the model, not a new model evaluation.
+
+
+## Source 1.0.8: measurement-quality safeguards
+
+This source update adds selected-region raw ceiling counts, threshold occupancy,
+ROI background variation, clipped-line width withholding, finite-cuboid sampling
+warnings and preserved ROI-report history. Numerical coefficients retain their
+existing definitions; report and method identifiers distinguish the new diagnostics.
+Regression tests cover both raw and processed inputs, legacy-report preservation,
+malformed history responses, all-positive thresholds, small-sample output and
+accepted-by-reviewer assistant counterexamples.
+
+Experiment contrasts whose exact two-sided probability floor exceeds 0.05 are
+labelled estimation only. Sample SD and optional Gaussian MLE sigma are separate.
+Percentile intervals require an explicit exploratory opt-in. The reproducible
+[small-sample assessment](validation/SMALL_SAMPLE_COVERAGE_1.0.8.json) runs the
+actual inference routine on one Gaussian null family: 100 realizations per size
+and design, three through six experiments, four cells per experiment and 999
+bootstrap draws. Its 0.80–0.93 coverage range motivates the default change; it is
+not nominal-coverage certification. Reproduce with:
+
+```sh
+python scripts/validation/benchmark_small_sample.py --output /path/to/coverage.json
+```
+
+The backend suite, interface tests, type check and production UI build assess this
+source revision. Installer and native-platform qualification records apply to the
+specific installer commit/version named in those records, rather than automatically
+to a later source push. Assistant filters address identified failure patterns;
+source quotation and same-model review still do not guarantee scientific correctness.

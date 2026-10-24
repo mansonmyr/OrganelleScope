@@ -17,10 +17,18 @@ def interpretation_snapshot(record):
         for row in analysis.get('results',[])[:10]:
             for pair in row.get('pairs',[])[:6]:
                 a,b=pair.get('label_a'),pair.get('label_b')
+                occupancy=pair.get('threshold_occupancy') or {}
+                if occupancy.get('all_above_a') or occupancy.get('all_above_b'):
+                    findings.append('A recorded threshold is below every measured sample in its channel. The corresponding Manders fraction cannot discriminate spatial occupancy in this ROI. This is a threshold-occupancy finding, not evidence that missing background correction caused the result.')
+                threshold=pair.get('thresholds') or {}
+                if threshold.get('algorithm'):notes.append('Automatic threshold method: '+threshold['algorithm']+'. Integer working thresholds and a continuous paired threshold are not interchangeable with Coloc 2 rounding/stopping conventions.')
                 if pair.get('pcc') is not None and pair['pcc']<0 and all(pair.get(k) is not None and pair[k]>.8 for k in ('thresholded_m1','thresholded_m2')):
                     findings.append('High threshold-overlap fractions coexist with negative Pearson in a recorded ROI. Overlap occupancy and centred intensity covariation describe different properties; this does not establish strong molecular interaction.')
                 if a and b:notes.append(f'Engine-defined marker order: M1 is the fraction of {a} intensity at pixels where {b} exceeds its threshold; M2 is the fraction of {b} intensity where {a} exceeds its threshold. Read the recorded values in that order. These are intensity fractions, not shared volume or binding probabilities.')
             for channel in row.get('channel_summary',[]):
+                quality=channel.get('raw_quality') or {}
+                if quality.get('ceiling_samples'):
+                    findings.append(str(channel.get('label','A channel'))+' reaches the raw storage ceiling in this ROI. Clipping can affect intensity coefficients and peak shape; processing cannot recover missing intensities. This is not a detector calibration.')
                 if channel.get('std')==0:notes.append(str(channel.get('label','A channel'))+(' is all zero in a selected ROI. High-intensity saturation is not an explanation for this recorded zero range.' if channel.get('sum')==0 else ' has constant intensity in a selected ROI.')+' Correlation is undefined; this does not establish biological absence. Changing a threshold cannot restore intensity variation.')
         notes.append('ROI coefficients describe selected image regions; they do not establish binding or independent biological replication.')
     keys={'cuboid':'OrthogonalWorkspace.report','segmentation':'Segmentation.report','spatial':'ValidationPanel.spatial','sensitivity':'ValidationPanel.sensitivity','acquisition':'ChannelPanel.quality','parameter_sweep':'ValidationPanel.parameterSweep','segmentation_sensitivity':'Segmentation.sensitivity'}

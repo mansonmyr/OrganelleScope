@@ -4,7 +4,6 @@ title: OrganelleScope
 type: software
 authors:
   - name: OrganelleScope contributors
-version: 1.0.7
+version: 1.0.8
 repository-code: https://github.com/mansonmyr/OrganelleScope
-url: https://github.com/mansonmyr/OrganelleScope/releases/tag/v1.0.7
-date-released: '2026-10-18'
+url: https://github.com/mansonmyr/OrganelleScope

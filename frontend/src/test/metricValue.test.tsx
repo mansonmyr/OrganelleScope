@@ -12,7 +12,7 @@ it('explains an unavailable value and preserves a real zero as numeric zero',()=
 });
 it('opens source-linked background guidance and distinguishes square opening from rolling ball',()=>{
  render(<ProcessingHelp/>);fireEvent.click(screen.getByRole('button',{name:'About background correction and defaults'}));
- expect(screen.getByRole('dialog').textContent).toContain('Available as Rolling-ball background');
+ expect(screen.getByRole('dialog').textContent).toContain('Curved-kernel lower envelope');
  expect(screen.getByRole('link',{name:'ImageJ: rolling-ball radius guidance'}).getAttribute('href')).toBe('https://imagej.net/plugins/rolling-ball-background-subtraction');
 });
 

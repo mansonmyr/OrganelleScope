@@ -69,7 +69,7 @@ def test_batch_review_snapshot_excel_failure_and_independent_rois(tmp_path):
         for source,out in zip(saved['items'],run['items'][:2]):
             assert out['analysis']==source['analysis']
             expected=client.post(f"/api/images/{out['image_id']}/analysis",headers=H,json=out['analysis']).json()
-            assert out['result']==expected
+            assert {k:v for k,v in out['result'].items() if k not in ('report_id','created_utc')}=={k:v for k,v in expected.items() if k not in ('report_id','created_utc')}
         assert run['items'][0]['result']['results'][0]['pixel_count']!=run['items'][1]['result']['results'][0]['pixel_count']
         xlsx=client.get(f"/api/batch/runs/{run['id']}/xlsx",headers=H);assert xlsx.status_code==200,xlsx.text
         with ZipFile(io.BytesIO(xlsx.content)) as z:

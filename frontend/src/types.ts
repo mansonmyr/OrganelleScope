@@ -46,6 +46,8 @@ export interface ChannelTrace {
   rawValues: number[];
   smoothedValues: number[];
   normalizedValues: number[];
+  rawCeilingSampleCount?: number;
+  intensityCeiling?: number;
 }
 
 export interface DetectedPeak {
@@ -73,6 +75,7 @@ export interface AdaptiveQuickMetric {
 }
 
 export interface ChannelMetrics {
+  quality?: {algorithm:string;rawCeilingSampleCount:number|null;sampleCount:number;intensityCeiling:number|null;fwhmWithheld:boolean;reason:string|null};
   peakIntensity: number;
   peakDistancePx: number;
   peakDistancePhysical: number;

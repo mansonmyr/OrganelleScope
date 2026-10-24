@@ -24,7 +24,7 @@ def test_roi_job_matches_sync_and_reports_steps(tmp_path):
         start=client.post('/api/images/'+image['id']+'/analysis-jobs',headers=H,json=options)
         assert start.status_code==200,start.text
         job=wait_job(client,start.json()['id'])
-        assert job['status']=='completed' and job['result']==expected
+        assert job['status']=='completed' and {k:v for k,v in job['result'].items() if k not in ('report_id','created_utc')}=={k:v for k,v in expected.items() if k not in ('report_id','created_utc')}
         assert job['progress']['total']==3 and job['progress']['completed']==3
         assert client.get('/api/analysis-jobs/'+job['id']).status_code==401
 

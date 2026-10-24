@@ -4,7 +4,7 @@
 
 **Edition 1.0.7 · 18 October 2026 · local research workbench**
 
-This manual documents version 1.0, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
+This manual documents source version 1.0.8, including channel identities, signal checks, native-range previews, recorded measurements and evidence-assisted interpretation. Use the matching release notes and platform verification assets for the installed version. See the [verification record](docs/VALIDATION.md) for the scope of numerical and native installation checks.
 
 OrganelleScope combines workflows from the Probabilistic Colocalization Estimator and Quick IF Line Profiler. It keeps microscopy images local, connects explicit measurement choices to saved results, and offers optional database context and a supervised local assistant. It does not convert conventional fluorescence images into validated super-resolution acquisitions, identify molecular binding from overlap, or certify publication readiness. The supplied owner-reviewed microscopy regions support scoped workflow checks. Independent population-level biological accuracy and general assistant accuracy are outside the established evidence. Numerical verification and biological validation answer different questions.
 
@@ -187,12 +187,12 @@ Processing is performed per channel, per full XY plane; it does not mix channels
 | No subtraction | Retain recorded signal | Default baseline; does not prove negligible background |
 | Constant offset | Subtract one supplied value per channel | Appropriate only when a spatially uniform background estimate is justified; zero is not an estimated background |
 | Square opening | Subtract grayscale morphological opening using a `(2r + 1) × (2r + 1)` square | Models a slowly varying background with a flat spatial footprint; differs from a curved rolling ball |
-| Rolling-ball background | Curved lower-envelope estimate with disk support | Assumes bright structures on darker background; large structures can be interpreted as background |
-| Radius, XY pixels | Spatial footprint size | Opening: 1–512; rolling ball: 1–100. These are operational bounds, not biological recommendations |
-| Ball height | Curvature scale in native intensity units | Positive, up to 65,535; if absent it follows radius numerically, without equating intensity units to physical distance |
+| Curved-kernel lower envelope | Nonflat grayscale erosion with curved disk support, without dilation | Assumes bright structures on darker background; large structures can be interpreted as background |
+| Radius, XY pixels | Spatial footprint size | Opening: 1–512; curved lower envelope: 1–100. These are operational bounds, not biological recommendations |
+| Kernel height | Curvature scale in native intensity units | Positive, up to 65,535; if absent it follows radius numerically, without equating intensity units to physical distance |
 | Gaussian sigma | Standard deviation in XY pixels | 0 disables; supported range 0–5. A larger sigma smooths more strongly and can alter correlations and widths |
 
-Rolling ball is implemented as a nonflat SciPy grayscale erosion: for a disk-supported curved kernel `K(q) = h sqrt(1 − ||q||²/r²)`, the background at `p` is `min_q[I(p+q) + h − K(q)]`. Outside-image samples are excluded. This is the implemented convention; byte-for-byte ImageJ rolling-ball equivalence is not claimed. Square opening and Gaussian filtering use reflected boundaries; Gaussian truncation is four standard deviations. See [current implementation](backend/organelle_scope/processing.py), [SciPy grayscale erosion](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.grey_erosion.html) and [Gaussian filter](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter.html).
+The curved-kernel lower envelope (saved API setting `rolling_ball`) is implemented as a nonflat SciPy grayscale erosion: for a disk-supported curved kernel `K(q) = h sqrt(1 − ||q||²/r²)`, the background at `p` is `min_q[I(p+q) + h − K(q)]`. Outside-image samples are excluded. This is the implemented convention; this estimator is neither a morphological opening nor interchangeable with ImageJ rolling-ball subtraction. A small intensity height makes it close to a flat disk minimum filter; a matched-kernel reference test establishes implementation consistency, not biological suitability. Square opening and Gaussian filtering use reflected boundaries; Gaussian truncation is four standard deviations. See [current implementation](backend/organelle_scope/processing.py), [SciPy grayscale erosion](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.grey_erosion.html) and [Gaussian filter](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter.html).
 
 No universal background radius or height is inferred reliably from microscope metadata. A default inactive radius of 20 pixels is an editable starting entry, not a validated value. Choose settings against expected structure sizes, independent background regions and controls. Empty numeric preparation fields remain empty while editing and block Apply when required; deleting a value must not silently assert zero.
 
@@ -235,6 +235,8 @@ The profile samples native or explicitly processed per-channel planes along the 
 
 The plotted traces retain sampled intensities. The width estimator uses an approximately three-pixel smoothing operation for peak finding; this is separate from optional image-wide Gaussian preparation. The interface exposes a single-peak FWHM only when a suitable single peak and two half-height crossings are identified. Multiple peaks, missing crossings or insufficient contrast can make width unavailable. The baseline uses a low percentile of the smoothed trace, and crossing positions are interpolated. Algorithm details remain in [profile implementation](frontend/src/workers/analysisCore.ts).
 
+A raw ceiling check examines the source pixels contributing to each bilinear line sample before smoothing or background processing can hide a clipped value. If any contributing raw pixel reaches the 8/16-bit storage ceiling, widths are withheld for that line and the contributing-sample count is displayed. These are line-sample counts, not counts of unique source pixels. Storage-ceiling occupancy does not identify the detector's true saturation level, and clipping below that ceiling can go undetected. Displayed available widths use two significant figures; this is formatting, not an uncertainty estimate.
+
 ### 20. FWHM interpretation
 
 **Full width at half maximum** is the distance between the left/right crossings at half the peak height above its estimated baseline. It is an apparent signal-profile width. It is not automatically a fluorophore size, organelle diameter, PSF measurement or two-protein separation. The line's orientation, background, smoothing, finite sampling and unresolved adjacent structures can all affect it. An unavailable FWHM is preferable to inventing a width for a truncated or multiplet peak. The UI does not expose every legacy metric helper retained in the source; only visible tools/results are current user features.
@@ -247,9 +249,11 @@ The plotted traces retain sampled intensities. The width estimator uses an appro
 
 In **ROI measurements**, review the regions, choose intensity source and threshold mode, select the regression target and calculate. **Channel associations** presents pairwise metrics for each ROI. Four channels produce six unordered pairs, with A/B direction preserved for Manders fractions. No pixels from different ROIs or Z planes are pooled into one biological sample automatically.
 
-Thresholds are native intensities, not display brightness, LUT positions or probabilities. Options are zero, manual per channel, or an automatic Costes-style search. Comparisons use strict `>`: a value equal to the threshold is excluded from the other channel's above-threshold condition. Zero threshold includes every positive value, including positive background. Background preparation and thresholds therefore matter greatly for overlap fractions.
+Thresholds are native intensities, not display brightness, LUT positions or probabilities. Options are zero, manual per channel, or **Orthogonal integer-union automatic** on raw data. The saved `costes` request key is retained for compatibility. Comparisons use strict `>`: a value equal to the threshold is excluded from the other channel's above-threshold condition. Zero threshold includes every positive value, including positive background. Background preparation and thresholds therefore matter greatly for overlap fractions.
 
-The automatic method uses positive total-least-squares regression and searches downward for a valid below-threshold nonpositive correlation. It can be unavailable for nonpositive covariance, constant channels or an unsuccessful search. The secondary threshold is continuous; there is no fallback to the mean. It is **Costes-style**, not a claim of exact Fiji integer-threshold parity. It is currently restricted to raw intensities; processed floating data require zero/manual thresholds. [Exact conventions](MANUAL.md#part-vi--roi-measurements-and-channel-associations).
+The automatic method uses positive total-least-squares regression and searches downward for a valid below-threshold nonpositive correlation. It can be unavailable for nonpositive covariance, constant channels or an unsuccessful search. The secondary threshold is continuous; there is no fallback to the mean. Its algorithm ID is `orthogonal-integer-union-1`: orthogonal regression, the union `A <= tA OR B <= tB`, highest eligible integer working threshold and continuous paired threshold. Status, reason, background sample count and background correlation accompany the output. Coloc 2 rounding and stepper termination differ; results are not interchangeable. It is currently restricted to raw intensities; processed floating data require zero/manual thresholds. [Exact conventions](MANUAL.md#part-vi--roi-measurements-and-channel-associations).
+
+Above-own-threshold counts are returned for each pair. If a threshold lies below every selected sample in its channel, the corresponding Manders fraction cannot discriminate occupancy within that ROI. The interface flags this rather than treating a fraction of one as evidence of complete biological colocalization. Choose thresholds from justified controls/settings; do not tune them to force a desired result.
 
 ### 22. Per-channel quantities
 
@@ -261,6 +265,10 @@ The automatic method uses positive total-least-squares regression and searches d
 | Sum / integrated intensity | Sum of selected values | Larger regions can have greater sums without greater concentration |
 | SD | Population standard deviation of selected intensities | Descriptive heterogeneity, not an uncertainty interval for a biological mean |
 | Above-threshold count/fraction | Selected samples meeting the recorded threshold convention | Depends on threshold and recipe; does not identify positive cells automatically |
+
+The intensity table also reports raw source ceiling samples and the **selected ROI denominator**, even when measurements use processed intensities. Estimated-background minimum, maximum and population SD are calculated inside that same ROI. Constant subtraction and an opening that is locally constant can preserve Pearson when no values are clipped; identical coefficients do not imply that the processing had no effect. Plane-wide processing diagnostics remain separately labelled.
+
+New ROI calculations use `roi-4-quality` and processing provenance `xy-processing-4`. Each completed report receives a report ID and creation time. Before the current-view report is replaced, the exact old JSON and the new JSON are retained in content-addressed `analysis-history` storage. **Preserved ROI reports** in the ROI workspace exports them with their original metadata. Older reports may lack quality fields: the UI says these were not recorded instead of inventing zero counts. History is research data, not disposable cache. Export history JSON separately when it is needed alongside a portable project.
 
 ### 23. Pairwise metric definitions
 
@@ -285,6 +293,8 @@ Method provenance: directional intensity fractions originate in [Manders et al. 
 ### 24. Undefined values
 
 Correlation requires nonzero variance in both channels. A constant channel, including a channel that is entirely zero in the ROI, makes Pearson/Spearman undefined. MOC needs a nonzero intensity norm. Directional Manders needs a nonzero sum of its numerator channel. Thus A/B can have M1 = 0 while M2 is unavailable when B is all zero and A is not. A missing value is not a correlation or overlap of zero. Hover/read the supplied reason and inspect channel summaries, source mapping and the selected region.
+
+Mask-based proximity displays marker/reference occupancy within the finite cuboid, Z step and plane count. It flags foreground on cuboid faces, cutoffs smaller than the Z step, and an all-near marker population. A fraction of one can follow from mask containment or density. No spatial-null significance is computed by that display. Counts and distances retain the occupied-voxel-centre definition; separate sampling does not establish optical resolution.
 
 ### 25. Regression, MLE and the coefficient ratio
 
@@ -386,7 +396,7 @@ Use **paired experiments** when conditions belong to matched experimental units 
 
 ### 38. Bootstrap, permutation and multiple comparisons
 
-The hierarchical percentile bootstrap resamples experiments and then cells; paired resampling retains experiment pairing. The reported B-minus-A interval is nominally 95%, on the chosen analysis scale. Percentile intervals can under-cover with few experiments. A local synthetic nested Gaussian study observed coverage below 95%; it is not a universal calibration result. [Simulation record](docs/validation/HIERARCHICAL_SYNTHETIC_BENCHMARK.json).
+When explicitly enabled, the hierarchical percentile bootstrap resamples experiments and then cells; paired resampling retains experiment pairing. The reported B-minus-A interval is nominally 95%, on the chosen analysis scale. Percentile intervals can under-cover with few experiments. A local synthetic nested Gaussian study observed coverage below 95%; it is not a universal calibration result. [Simulation record](docs/validation/HIERARCHICAL_SYNTHETIC_BENCHMARK.json).
 
 The two-sided permutation test exchanges independent experiment assignments or swaps matched condition labels according to the chosen design. The result records exact versus randomized enumeration, possible assignments, seed and attainable p-value resolution. With few experiments, p ≤ 0.05 can be impossible even for a strongly separated result. Additional ROIs cannot improve that assignment resolution.
 
@@ -450,6 +460,16 @@ After failure, cancellation or interruption, **Prepare recovery batch** creates 
 | Regression | Target, coefficients, fit summaries and warnings |
 
 Values are numeric where defined; unavailable measurements are blank, not zero. User strings are literal, including strings starting with `=`. The workbook has no formulas or external links and requires no Excel/cloud API to generate. Excel uses one-based plane/channel presentation where documented; JSON preserves native zero-based indices and nested provenance. Limits include two million cells, Excel's row limit and 32,767 characters per cell. Errors replace silent truncation; split a large export or preserve full JSON. Excel/Numbers rendering and native desktop download behaviour require platform qualification beyond valid OOXML generation.
+
+---
+
+### Small-sample output and exploratory intervals (1.0.8)
+
+`experiment-inference-3` reports the exact assignment count, exact two-sided probability floor and an analysis mode at level 0.05. Contrasts whose exact floor exceeds 0.05 are **estimation only** in the interface: numerical permutation results remain in the JSON for transparent replay, but are not presented as achievable significance tests. Three experiments per independent group have 20 assignments and floor 0.10; three, four and five pairs have floors 0.25, 0.125 and 0.0625. Reaching a smaller floor does not establish adequate power or biological independence.
+
+Percentile bootstrap intervals are **off by default**. Explicitly selecting exploratory intervals sends `exploratory_intervals: true`; exports otherwise contain a null interval plus an explanation. Simulations with 100 realizations per design/size showed coverage between 0.80 and 0.93 for nominal 95% intervals at three through six experiments. The model, seeds, Monte Carlo intervals and reproduction command are recorded in [the assessment](docs/validation/SMALL_SAMPLE_COVERAGE_1.0.8.json); this does not certify other populations or the optional posterior.
+
+Condition summaries always include sample SD (`n−1` divisor). The optional Gaussian model separately labels its divisor-`n` MLE sigma, which is downward biased with small samples. The `n−1` adjustment concerns variance estimation; it does not make sample SD an exactly unbiased estimator. Gaussian prior scale still has squared analysis units and requires sensitivity assessment.
 
 ---
 
@@ -536,6 +556,8 @@ Each new answer includes expandable **Measurement context · application checks*
 For example, a threshold mask's high conditional proximity fraction can support an image-scale spatial description. It cannot establish molecular binding. A constant-channel correlation is undefined despite a completed calculation; changing a threshold does not restore missing variation. KEGG membership can motivate a hypothesis for knockdown studies, but does not establish that a pathway was active or predict a causal direction in the imaged cells. Review measurement interpretation against [Dunn et al.](#ref-dunn2011), acquisition limitations against [Jost & Waters](#ref-jost2019), and replicate claims against [Lazic et al.](#ref-lazic2018).
 
 Local generation can take minutes on a CPU or a busy computer. Each completion request has a five-minute timeout; a timeout is an operational failure and is not evidence for an answer. The synthetic assessment records both accepted drafts and timeouts. See [current interpretation/QC verification](docs/VALIDATION.md) and [qualitative model review](README_MODEL_DECISIONS.md#preserved-assessment-assistant-interpretation-review).
+
+Claim audit `claim-source-audit-7` also checks standalone sentence context: dependent advice is withheld when its antecedent was removed. Affirmative “true biological colocalization” wording and background-causation explanations contradicted by all-positive threshold occupancy are withheld. Application reading notes report the measured threshold occupancy and raw clipping directly. These deterministic filters address known failure patterns; same-model review can still miss unsupported explanations.
 
 **Question coverage · automatic** is a separate bounded review of the displayed AI draft after claim/source review. It identifies up to six request parts using question marks, lines and numbered items, then marks each as addressed, partial or unanswered. An addressed/partial item must include an exact quotation from the displayed answer. Invented quotations, malformed mappings or truncated reviewer output cannot claim completeness. Requests beyond the limit keep the overall result incomplete; compound clauses may contain requirements that the splitter/reviewer misses. Missing coverage never blocks asking a question or hides an otherwise usable draft. It adds one local model review and may increase response time.
 
@@ -800,7 +822,7 @@ The application uses established scientific viewing conventions; references to o
 | RLIMIT_AS | Linux/Unix resource limit used here to cap one worker's virtual address space |
 | Technical repeat | Repeated processing/import of the same source; measures reproducibility or throughput, not biological replication |
 | ROI | Region of interest, here a per-plane circle/polygon or a separately defined line |
-| Rolling ball | Curved lower-envelope background estimator with defined spatial/intensity scales |
+| Curved-kernel lower envelope | Disk-supported nonflat erosion without dilation; saved setting `rolling_ball` preserves existing recipes |
 | Saturation | Values capped by acquisition or display; these have different consequences |
 | SD / sigma | Standard deviation; population descriptive SD differs from inferred uncertainty |
 | Seed | Recorded initialization for reproducible random/resampling operations |

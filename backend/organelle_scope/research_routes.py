@@ -47,7 +47,7 @@ def register_research(app, stored, authorized):
                 for roi in options.rois:
                     if roi.z!=z:continue
                     args=(roi,info.channel_labels,options.target_channel,options.threshold_mode,thresholds,(info.calibration['X'].value_um,info.calibration['Y'].value_um))
-                    before=analyze_roi(raw,*args);after=analyze_roi(processed,*args)
+                    before=analyze_roi(raw,*args);after=analyze_roi(processed,*args,raw_channels=raw,intensity_ceiling=2**info.bit_depth-1)
                     changes=[]
                     for a,b in zip(before['pairs'],after['pairs']):
                         changes.append({'label_a':a['label_a'],'label_b':a['label_b'],**{key:None if a[key] is None or b[key] is None else b[key]-a[key] for key in ('pcc','spearman','moc','thresholded_m1','thresholded_m2')}})
@@ -136,14 +136,15 @@ def register_research(app, stored, authorized):
             thresholds=options.thresholds or [0.]*info.dimensions['C']
             if len(thresholds)!=info.dimensions['C'] or any(not math.isfinite(t) or t<0 or t>2**info.bit_depth-1 for t in thresholds):
                 raise ImageError('Provide one finite threshold per channel within the source intensity range.')
-            values=[]
+            values=[];raw_values=[]
             for c in range(info.dimensions['C']):
-                pieces=[]
+                pieces=[];raw_pieces=[]
                 for z in range(options.z0,options.z1+1):
                     plane=read_plane(folder/'source.tiff',info,c,z)
+                    raw_pieces.append(plane[options.y0:options.y1+1,options.x0:options.x1+1].ravel().copy())
                     if options.processing.active:plane=process_plane(plane,options.processing,c,folder.parent,z)
                     pieces.append(plane[options.y0:options.y1+1,options.x0:options.x1+1].ravel().copy())
-                values.append(np.concatenate(pieces).astype(np.float64))
-            return {**stamp(record),'algorithm_version':'cuboid-1','request':options.model_dump(),'processing':provenance(options.processing,folder.parent),
-                    **summarize_cuboid(values,info.channel_labels,thresholds,[info.calibration[a].value_um for a in 'XYZ'])}
+                values.append(np.concatenate(pieces).astype(np.float64));raw_values.append(np.concatenate(raw_pieces))
+            return {**stamp(record),'algorithm_version':'cuboid-2-quality','request':options.model_dump(),'processing':provenance(options.processing,folder.parent),
+                    **summarize_cuboid(values,info.channel_labels,thresholds,[info.calibration[a].value_um for a in 'XYZ'],raw_values=raw_values,intensity_ceiling=2**info.bit_depth-1)}
         except (ImageError,ValueError) as exc:raise HTTPException(422,str(exc)) from exc

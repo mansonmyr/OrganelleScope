@@ -5,7 +5,7 @@ from time import perf_counter
 from uuid import uuid4
 
 from fastapi import Depends, HTTPException
-from organelle_scope.analysis_service import compute_analysis
+from organelle_scope.analysis_service import compute_analysis,save_analysis
 from organelle_scope.image_io import ImageError
 from organelle_scope.roi_analysis import AnalysisRequest
 
@@ -43,8 +43,7 @@ def register_analysis_jobs(app, stored, authorized):
                         check()
                         if stored(image_id)[1]!=record:raise ImageError('Image settings changed; result was not saved. Recalculate using current settings.')
                         # Save only a finished, uncancelled result; the prior result survives failure/cancellation.
-                        import json
-                        tmp=folder/('analysis-'+ident+'.tmp');tmp.write_text(json.dumps(result,allow_nan=False));tmp.replace(folder/'analysis.json')
+                        save_analysis(folder,result)
                         job.update(status='completed',result=result)
                 except AnalysisCancelled:
                     with lock:job.update(status='cancelled')
