@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Kai Hong Ooi
+# SPDX-License-Identifier: GPL-3.0-only
 """TIFF inspection without guessing that a short dimension is a channel axis.
 
 Inspection reads headers only. Viewing decodes one TIFF page at a time where

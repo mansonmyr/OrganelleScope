@@ -2,11 +2,11 @@
 
 Required Notice: Copyright 2026 Kai Hong Ooi All rights reserved.
 
-Derived components from [Quick IF Line Profiler](https://github.com/mansonmyr/Quick-IF-Line-Profiler) include profile helpers, types, SignalChart, TIFF chart export and selected tests. Changes include corrected fractional-index distance conversion and sampling-aware smoothing. Original terms remain in [Quick-IF-Line-Profiler.LICENSE](Quick-IF-Line-Profiler.LICENSE).
+Derived components from [Quick IF Line Profiler](https://github.com/mansonmyr/Quick-IF-Line-Profiler) include profile helpers, types, SignalChart, TIFF chart export and selected tests. Changes include corrected fractional-index distance conversion and sampling-aware smoothing. Historical terms are retained in [Quick-IF-Line-Profiler.LICENSE](Quick-IF-Line-Profiler.LICENSE).
 
-[Probabilistic Colocalization Estimator](https://github.com/mansonmyr/Probabilistic_Colocalization_Estimator) is a predecessor and migration source; its original terms remain in [Probabilistic_Colocalization_Estimator.LICENSE](Probabilistic_Colocalization_Estimator.LICENSE).
+[Probabilistic Colocalization Estimator](https://github.com/mansonmyr/Probabilistic_Colocalization_Estimator) is a predecessor and migration source; its historical terms are retained in [Probabilistic_Colocalization_Estimator.LICENSE](Probabilistic_Colocalization_Estimator.LICENSE).
 
-The root GNU GPLv3 licence does not itself relicense predecessor or third-party components. Retain all applicable notices. certifi includes Mozilla Public License terms, retained in [certifi-LICENSE.txt](certifi-LICENSE.txt).
+Kai Hong Ooi is the sole rights holder of the predecessor portions incorporated into OrganelleScope and explicitly authorizes their distribution here under GNU GPLv3. The historical PolyForm texts document predecessor provenance; they impose no additional restriction on those relicensed portions. This authorization does not change the licences of unrelated third-party dependencies or the separate upstream project distributions. Retain their applicable notices. certifi includes Mozilla Public License terms, retained in [certifi-LICENSE.txt](certifi-LICENSE.txt).
 
 ## Build-specific runtime notices
 

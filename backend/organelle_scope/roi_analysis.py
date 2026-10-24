@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Kai Hong Ooi
+# SPDX-License-Identifier: GPL-3.0-only
 """Per-plane ROI measurements on native intensities, with explicit undefined cases.
 
 No pixel-i.i.d. significance or biological interaction probability is inferred.
@@ -57,6 +59,7 @@ def _intersects(a, b, c, d):
     return _cross(a,b,c)*_cross(a,b,d) <= 0 and _cross(c,d,a)*_cross(c,d,b) <= 0
 
 
+# Manuscript Sections 3.1 and 3.4: pixel-centre region inclusion.
 def roi_mask(roi: AreaROI, shape: tuple[int, int], spacing=(None,None)) -> tuple[np.ndarray, list[str]]:
     h, w = shape
     points = roi.points
@@ -114,6 +117,7 @@ def pearson(a: np.ndarray, b: np.ndarray) -> float | None:
     return float(np.clip(np.dot(x,y)/denom, -1, 1)) if denom > 0 else None
 
 
+# Manuscript Section 3.5: integer histogram automatic-search steps.
 def automatic_thresholds(a: np.ndarray, b: np.ndarray) -> dict:
     """Native-integer Costes-style search, no mean-threshold fallback.
 
@@ -156,6 +160,7 @@ def automatic_thresholds(a: np.ndarray, b: np.ndarray) -> dict:
             "background_pcc": float(r[threshold])}
 
 
+# Manuscript Sections 3.2-3.3: paired correlation, overlap and strict fractions.
 def pair_metrics(a: np.ndarray, b: np.ndarray, mode: str, ta: float = 0, tb: float = 0) -> dict:
     a = a.astype(np.float64); b = b.astype(np.float64)
     pcc = pearson(a,b)

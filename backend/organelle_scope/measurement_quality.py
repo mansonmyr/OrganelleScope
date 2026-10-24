@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Kai Hong Ooi
+# SPDX-License-Identifier: GPL-3.0-only
 """Quality diagnostics describe supplied raw values, not detector certification."""
 import numpy as np
 

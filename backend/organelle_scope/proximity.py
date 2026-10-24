@@ -1,8 +1,11 @@
+# Copyright (c) 2026 Kai Hong Ooi
+# SPDX-License-Identifier: GPL-3.0-only
 """Directed distances between foreground voxel centres in one calibrated cuboid."""
 import numpy as np
 from scipy.ndimage import distance_transform_edt
 
 
+# Manuscript Section 5: both directed physical voxel-centre summaries.
 def proximity_summary(marker, reference, spacing_zyx, threshold_um):
     marker, reference = np.asarray(marker, dtype=bool), np.asarray(reference, dtype=bool)
     if marker.ndim != 3 or marker.shape != reference.shape:

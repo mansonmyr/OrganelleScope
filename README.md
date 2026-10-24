@@ -49,6 +49,32 @@ Download Windows x64 or Apple Silicon macOS installers from **[Releases](https:/
 
 Use the [manual](MANUAL.md) for source setup, diagnostics and reporting. The optional local AI assistant generates drafts with source checks; it does not verify biological truth. Recorded analysis summaries remain available without the model or when a draft is withheld. Cite the exact release using [CITATION.cff](CITATION.cff), alongside original methods. Confirm stored-channel marker identities before biological interpretation; filenames and dye names are not ground truth.
 
+## Python-only numerical replay
+
+No Node.js, Electron, model or graphical session is required:
+
+```sh
+python -m venv .venv
+# Activate the environment using your platform's normal command.
+python -m pip install ./backend
+python -m organelle_scope.cli demo --output replay/demo.json
+```
+
+The demo reproduces a closed-form reference table: perfect/negative correlation,
+average ranks with ties, directional intensity fractions, and anisotropic two-point
+distances. To replay a shared microscopy window from the manuscript supplement:
+
+```sh
+python -m organelle_scope.cli roi --data sample-feature-results/data --sample P5 --mode costes --output replay/P5.json
+```
+
+That command checks the TIFF hash and uses explicit ZCYX geometry and spacing from
+`manifest.json`; it does not infer channel identity or acquisition calibration.
+The `proximity` subcommand accepts matching binary ZYX TIFF masks; see `--help`.
+The paper's supplement contains microscopy windows and additional assessment
+scripts. A release of the desktop app is not a substitute for the exact submitted
+manuscript, data manifest and reproduction archive.
+
 ## Licensing
 
-The repository includes the user-provided [GNU GPLv3 license](LICENSE). Retained predecessor PolyForm Noncommercial notices and [third-party terms](third_party/NOTICE.md) must also be considered; adding a repository license does not itself relicense other rights holders' components. Model/database terms are separate; KEGG access is academic-only in this application. Public source visibility is not an additional license grant. No experimental images, credentials or model weights belong in Git.
+Author-owned OrganelleScope code, including the incorporated portions of Quick IF Line Profiler and Probabilistic Colocalization Estimator, is distributed under [GNU GPLv3](LICENSE). Kai Hong Ooi, sole rights holder of those incorporated portions, authorizes this distribution under GPLv3. Historical predecessor licence texts are retained for attribution and provenance; they do not add a noncommercial restriction to these relicensed portions. Third-party dependencies retain their own licences; see [component notices](third_party/NOTICE.md). Model/database terms are separate. KEGG access is academic-only in this application. Research images, credentials and model weights are not included in the repository.

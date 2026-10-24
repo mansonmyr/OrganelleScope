@@ -103,3 +103,15 @@ source revision. Installer and native-platform qualification records apply to th
 specific installer commit/version named in those records, rather than automatically
 to a later source push. Assistant filters address identified failure patterns;
 source quotation and same-model review still do not guarantee scientific correctness.
+
+## Python-only replay and expanded interval assessment
+
+The public `python -m organelle_scope.cli demo --output replay/demo.json` command checks closed-form positive/negative correlation, average ranks with ties, strict directional fractions and an anisotropic two-point distance. The `roi` command checks the image digest and replays explicit manifest geometry without Electron, Node.js, a saved project, model or database. See the [README instructions](../README.md#python-only-numerical-replay).
+
+The [expanded assessment](validation/SMALL_SAMPLE_COVERAGE_2000.json) executes the actual opt-in inference routine 2,000 times for each of eight design/size combinations (16,000 analyses), using the same Gaussian nested null family and 999 bootstrap draws. Observed percentile coverage is 0.814–0.9215. Experiment-mean Welch/paired t baselines cover 0.9435–0.966. Binomial intervals describe simulation precision; no general coverage, power or robustness certificate is inferred. Designs unable to attain 0.05 are explicitly marked. This supports keeping percentile intervals exploratory and disabled by default. Reproduce with:
+
+```sh
+python scripts/validation/benchmark_small_sample.py --repetitions 2000 --output /path/to/coverage.json
+```
+
+Manuscript-specific image results and acquisition metadata belong to the separately shared, hash-identified submission dataset; they are not bundled in installers or silently added to the public repository.

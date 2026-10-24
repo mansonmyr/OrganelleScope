@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Kai Hong Ooi
+# SPDX-License-Identifier: GPL-3.0-only
 """Deterministic, per-channel XY processing; source pixels are never modified."""
 from typing import Annotated, Literal
 from pathlib import Path
@@ -37,6 +39,7 @@ class ProcessingConfig(BaseModel):
             raise ImageError("Provide one finite background offset per channel within the source intensity range.")
 
 
+# Manuscript Section 4: exact per-plane background estimators.
 def estimate_background(source: np.ndarray, config: ProcessingConfig, channel: int) -> np.ndarray:
     data = source.astype(np.float32, copy=True)
     if config.background == "constant":
@@ -62,6 +65,7 @@ def prepared_plane(source,config,channel,artifacts=None,z=None):
     return source
 
 
+# Manuscript Section 4: clipping followed by optional XY Gaussian smoothing.
 def process_plane(source: np.ndarray, config: ProcessingConfig, channel: int, artifacts: Path | None = None, z: int | None = None) -> np.ndarray:
     return process_plane_with_background(source,config,channel,artifacts,z)[0]
 
