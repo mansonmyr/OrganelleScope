@@ -1,8 +1,16 @@
-# OrganelleScope 1.0.7
+# OrganelleScope 1.0.8
 
-- Reduced 3D preview slices release full source-plane buffers immediately; regression checks retain exact pixels and enforce bounded plane lifetime.
-- Expanded source-service qualification covers four local real TIFFs, a 2 GiB decoded synthetic stack and a 30-item technical-repeat batch, with independent numerical checks, source integrity, readiness latency and memory telemetry.
-- Linux CI adds an enforced 1.5 GiB virtual-address-space worker; Mac performance measurements use a separately supervised service RSS budget. These are process tests, not whole low-RAM-computer claims.
-- Twelve assistant questions retain their pre-inference manifest, outputs and developer review. Clearer threshold/cuboid definitions and targeted claim guards address observed answer failures. A separate packet supports independent human review; that review remains pending.
+Download **OrganelleScope-1.0.8-macos-arm64.dmg** for Apple Silicon Macs, or **OrganelleScope-1.0.8-windows-x64.exe** for Windows. Only the installer for your platform is needed. The other assets provide checksums, dependency notices and build verification records.
 
-See the [manual](../MANUAL.md) and [verification records](VALIDATION.md) for methods, limits and measured outcomes. First installations retain empty research storage; upgrades preserve local work.
+- Added raw ROI clipping counts and warnings. Line-profile widths are withheld when contributing raw samples reach the storage ceiling.
+- Added threshold occupancy, automatic-threshold method diagnostics and per-ROI background variation. The curved-kernel lower-envelope estimator is named explicitly, with separate spatial radius and intensity-height guidance.
+- Added 3D mask occupancy, boundary and axial-sampling diagnostics alongside directed proximity measurements.
+- Small-sample comparisons report estimation-only status when their exact permutation design cannot attain 0.05. Sample standard deviation is separate from Gaussian MLE; exploratory bootstrap intervals require opt-in.
+- Strengthened assistant checks for unsupported background explanations, context-dependent claims and claims of true colocalization. Generated interpretations still require scientific review.
+- Preserved earlier ROI reports as individually exportable versions. Updated the manual and recorded an 800-simulation small-sample assessment.
+
+Fresh installations start with empty research storage; upgrades preserve your existing images, projects and reports. Personal research data is not included in either installer.
+
+The local inference runtime is included. **Gemma weights download automatically during first-use setup** with pinned size and SHA-256 verification; the approximately 7 GB weights are not inside the installers. An internet connection is required for that initial download, after which inference runs locally.
+
+The macOS installer is ad-hoc signed and not notarized; the Windows installer is unsigned. See the [manual](../MANUAL.md) and [verification records](VALIDATION.md) for installation, methods and interpretation limits.
