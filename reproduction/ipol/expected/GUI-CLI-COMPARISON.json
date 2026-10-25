@@ -1,0 +1,129 @@
+{
+  "status": "passed",
+  "scope": "One P5 ROI calculated through the actual frozen frontend and backend, then downloaded by Export measurements & ROIs; compare the exported selected pair with the frozen Python CLI result. Not a general GUI acceptance test.",
+  "source_commit": "91abbdc54920c0f54f4b7d1392a556d7a6efba4e",
+  "source_sha256": "5113ac03696d05066c7e8f3767117333317ee56e354387417c8526eb3a51d7e7",
+  "selected_z": 1,
+  "selected_pixels": 185,
+  "processing": "raw; no subtraction or smoothing",
+  "threshold_mode": "costes",
+  "report_id": "7c430a69-e795-4100-9943-162ebbc55c45",
+  "export_sha256": "e92a9d88a1a3299a46eff77da002fef481cc0ca062bdb85255a8a1d7caae0e0c",
+  "shared_pair_fields_compared": 13,
+  "checks": [
+    {
+      "field": "unavailable_reasons",
+      "equal": true,
+      "gui": {},
+      "cli": {}
+    },
+    {
+      "field": "pcc",
+      "equal": true,
+      "gui": 0.8565728705818413,
+      "cli": 0.8565728705818413
+    },
+    {
+      "field": "spearman",
+      "equal": true,
+      "gui": 0.8563701148553884,
+      "cli": 0.8563701148553884
+    },
+    {
+      "field": "moc",
+      "equal": true,
+      "gui": 0.989629358742218,
+      "cli": 0.989629358742218
+    },
+    {
+      "field": "m1",
+      "equal": true,
+      "gui": 1,
+      "cli": 1.0
+    },
+    {
+      "field": "m2",
+      "equal": true,
+      "gui": 1,
+      "cli": 1.0
+    },
+    {
+      "field": "thresholded_m1",
+      "equal": true,
+      "gui": 0.9415648327219188,
+      "cli": 0.9415648327219188
+    },
+    {
+      "field": "thresholded_m2",
+      "equal": true,
+      "gui": 0.943940142185923,
+      "cli": 0.943940142185923
+    },
+    {
+      "field": "thresholds",
+      "equal": true,
+      "gui": {
+        "algorithm": "orthogonal-integer-union-1",
+        "regression": "orthogonal (total least squares)",
+        "background_predicate": "A <= threshold A OR B <= threshold B",
+        "search": "highest admissible integer working threshold; continuous paired threshold",
+        "reference_equivalence": "Not interchangeable with Coloc 2 integer rounding or stepper termination.",
+        "status": "found",
+        "background_samples": 23,
+        "reason": null,
+        "a": 14896.464626294766,
+        "b": 25216,
+        "background_pcc": -0.016856609378659165
+      },
+      "cli": {
+        "algorithm": "orthogonal-integer-union-1",
+        "regression": "orthogonal (total least squares)",
+        "background_predicate": "A <= threshold A OR B <= threshold B",
+        "search": "highest admissible integer working threshold; continuous paired threshold",
+        "reference_equivalence": "Not interchangeable with Coloc 2 integer rounding or stepper termination.",
+        "status": "found",
+        "background_samples": 23,
+        "reason": null,
+        "a": 14896.464626294766,
+        "b": 25216.0,
+        "background_pcc": -0.016856609378659165
+      }
+    },
+    {
+      "field": "threshold_occupancy",
+      "equal": true,
+      "gui": {
+        "samples": 185,
+        "above_a": 167,
+        "above_b": 167,
+        "all_above_a": false,
+        "all_above_b": false
+      },
+      "cli": {
+        "samples": 185,
+        "above_a": 167,
+        "above_b": 167,
+        "all_above_a": false,
+        "all_above_b": false
+      }
+    },
+    {
+      "field": "gaussian_lrt_statistic",
+      "equal": true,
+      "gui": 244.79124820373482,
+      "cli": 244.79124820373482
+    },
+    {
+      "field": "gaussian_lrt_note",
+      "equal": true,
+      "gui": "Descriptive Gaussian likelihood ratio only; no calibrated p-value or probability of interaction. Spatial dependence is not modeled.",
+      "cli": "Descriptive Gaussian likelihood ratio only; no calibrated p-value or probability of interaction. Spatial dependence is not modeled."
+    },
+    {
+      "field": "warnings",
+      "equal": true,
+      "gui": [],
+      "cli": []
+    }
+  ]
+}

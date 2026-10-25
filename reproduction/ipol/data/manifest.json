@@ -1,0 +1,57 @@
+[
+  {
+    "id": "P5",
+    "filename": "P5.ome.tif",
+    "sha256": "5113ac03696d05066c7e8f3767117333317ee56e354387417c8526eb3a51d7e7",
+    "axes": "ZCYX",
+    "shape": [
+      4,
+      3,
+      192,
+      192
+    ],
+    "channel_labels": [
+      "Gamma-tubulin",
+      "Pericentrin",
+      "Hoechst 33258"
+    ],
+    "spacing_um": {
+      "X": 0.06500000162500004,
+      "Y": 0.06500000162500004,
+      "Z": 0.39999999999999997
+    },
+    "roi": {
+      "id": "P5",
+      "kind": "circle",
+      "z": 1,
+      "points": [
+        {
+          "x": 96,
+          "y": 96
+        },
+        {
+          "x": 103.69230749999997,
+          "y": 96
+        }
+      ]
+    },
+    "thresholds": [
+      8143.0,
+      6317.0,
+      0.0
+    ],
+    "pair_zero_based": [
+      0,
+      1
+    ],
+    "owner_accepted_center": true,
+    "source_z": 1,
+    "crop_offset_yx": [
+      1165,
+      726
+    ],
+    "scope": "Owner-accepted centre, native pixel crop; not independent biological replication",
+    "source_pixels_exact": true,
+    "sample_role": "Gamma-tubulin/pericentrin positive control for the target/pericentrin example"
+  }
+]

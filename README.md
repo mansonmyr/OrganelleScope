@@ -51,30 +51,25 @@ Use the [manual](MANUAL.md) for source setup, diagnostics and reporting. The opt
 
 ## Python-only numerical replay
 
-No Node.js, Electron, model or graphical session is required:
+The [P5 replay guide](reproduction/ipol/README.md) provides a minimal numerical
+route with licensed source-only fixtures, expected ROI/proximity values and the
+recorded GUI-export comparison. From the repository root, in an activated Python
+virtual environment:
 
 ```sh
-python -m venv .venv
-# Activate the environment using your platform's normal command.
-python -m pip install ./backend
-python -m organelle_scope.cli demo --output replay/demo.json
+python -m pip install -r reproduction/ipol/requirements.txt
+python reproduction/ipol/verify_python.py --output replay/P5
 ```
 
-The demo reproduces a closed-form reference table: perfect/negative correlation,
-average ranks with ties, directional intensity fractions, and anisotropic two-point
-distances. To replay a shared microscopy window from the manuscript supplement:
-
-```sh
-python -m organelle_scope.cli roi --data sample-feature-results/data --sample P5 --mode costes --output replay/P5.json
-```
-
-That command checks the TIFF hash and uses explicit ZCYX geometry and spacing from
-`manifest.json`; it does not infer channel identity or acquisition calibration.
-The `proximity` subcommand accepts matching binary ZYX TIFF masks; see `--help`.
-The paper's supplement contains microscopy windows and additional assessment
-scripts. A release of the desktop app is not a substitute for the exact submitted
-manuscript, data manifest and reproduction archive.
+This runs the existing backend numerical modules directly without installing the
+full backend or needing Node.js, Electron, Gemma, Fiji, a JDK or TeX. Dependency
+installation requires an index or local wheelhouse; replay itself is offline.
+The guide includes direct ROI/proximity CLI commands and precise expected values.
+It covers one P5 example, not all manuscript tables or live GUI acceptance tests.
+The full manuscript replay archive is supplied separately; no public online demo
+is provided. Sample fixtures are excluded from installer resources and are never
+preloaded into a user's workspace.
 
 ## Licensing
 
-Author-owned OrganelleScope code, including the incorporated portions of Quick IF Line Profiler and Probabilistic Colocalization Estimator, is distributed under [GNU GPLv3](LICENSE). Kai Hong Ooi, sole rights holder of those incorporated portions, authorizes this distribution under GPLv3. Historical predecessor licence texts are retained for attribution and provenance; they do not add a noncommercial restriction to these relicensed portions. Third-party dependencies retain their own licences; see [component notices](third_party/NOTICE.md). Model/database terms are separate. KEGG access is academic-only in this application. Research images, credentials and model weights are not included in the repository.
+Author-owned OrganelleScope code, including the incorporated portions of Quick IF Line Profiler and Probabilistic Colocalization Estimator, is distributed under [GNU GPLv3](LICENSE). Kai Hong Ooi, sole rights holder of those incorporated portions, authorizes this distribution under GPLv3. Historical predecessor licence texts are retained for attribution and provenance; they do not add a noncommercial restriction to these relicensed portions. Third-party dependencies retain their own licences; see [component notices](third_party/NOTICE.md). Model/database terms are separate. KEGG access is academic-only in this application. Private research images, credentials and model weights are not included in the repository. The explicitly licensed P5 source-only publication fixtures are identified in the replay guide.

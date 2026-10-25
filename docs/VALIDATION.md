@@ -115,3 +115,17 @@ python scripts/validation/benchmark_small_sample.py --repetitions 2000 --output 
 ```
 
 Manuscript-specific image results and acquisition metadata belong to the separately shared, hash-identified submission dataset; they are not bundled in installers or silently added to the public repository.
+
+## Manuscript P5 replay (2026-10-25)
+
+The [source-only replay](../reproduction/ipol/README.md) checks licensed P5 pixels,
+185 selected ROI pixels, frozen automatic-threshold results and the same frozen
+binary masks at 0.25/0.42 µm. The 0.25 µm reverse fraction is
+826/839 = 0.9845053635280095; this discriminates against constant-one output.
+The original one-case browser calculation/export matched all 13 shared pair fields
+exactly with the CLI. The included projection permits comparison with a fresh
+core calculation; running the script does not rerun the live GUI. This is a
+calculation bridge check, separate from screenshots and native installer gates.
+All six imported numerical module files hash-match the reviewed commit listed
+in its source manifest. No numerical method or installer has changed here.
+The focused replay is not the full manuscript archive or a new Coloc 2 run.

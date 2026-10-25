@@ -39,3 +39,8 @@ restoration-data/
 # Local maintenance instructions and retired documentation
 AGENTS.md
 local-archive/
+
+# Licensed, explicit source-only manuscript fixtures (never installer resources).
+!reproduction/ipol/data/*.tif
+.venv-replay/
+replay/

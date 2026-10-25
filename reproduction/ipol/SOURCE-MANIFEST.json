@@ -1,0 +1,24 @@
+{
+  "reviewed_commit": "91abbdc54920c0f54f4b7d1392a556d7a6efba4e",
+  "recorded_date": "2026-10-25",
+  "module_sha256": {
+    "__init__.py": "61b0b238afd14e9d19611b3f9478a8aae747ee29985628875a2daf0a0c2d58c4",
+    "cli.py": "e51582028f0c7a55b3e44dc94eb02b92557f3a534cf1d094b8111e81a41cf046",
+    "roi_analysis.py": "cbcbe912112f135d83b4290bdd251766ce44f0079b1f683e6ae041ebf247e9a3",
+    "processing.py": "b823be0fcc454c234154213a16da6f675a69d264a1e5eb9d03faa2de5367c1f8",
+    "image_io.py": "4634c2dbac2d60ab72b1eb072c1086f582f00d60dbc79dd32639bd666397ec07",
+    "proximity.py": "0d254e8a53a9d2e442c20b655ddd1230347a7fef7e3c6f3e6a2a68672e1bc997"
+  },
+  "inputs_and_expected_sha256": {
+    "data/LICENSE.txt": "35124bc51887d29354b4ab21f3fd5008ec69ff6888aabe7ce1d0a69e459ca866",
+    "data/P5-marker.tif": "ff4bdf1e7ccee8d5d0533511a2eb98a5b1befb90c2e69fde77067fdf0a4541d6",
+    "data/P5-reference.tif": "43374a7ab9a8279d6c1855d7ac5952839f149122f79299cc3adbf3e4e44419ed",
+    "data/P5.ome.tif": "5113ac03696d05066c7e8f3767117333317ee56e354387417c8526eb3a51d7e7",
+    "data/manifest.json": "291c2811f69b6e59befa46d0f7d380c040906733b1bfecdac782fd9764c4c013",
+    "expected/GUI-CLI-COMPARISON.json": "e14699e30b86f8c5019e80aa502671a7d77757d402557e9774562dc322830408",
+    "expected/P5-gui-pair.json": "193e4dbd9d27b1722292981e073b2fdb574fe52fe519f95b2d0b3e95aed557d8",
+    "expected/P5-proximity.json": "fc6736ffddf2aad24946d820689ec704e0d7ae664b3c156cea8e15665dae7b0f",
+    "expected/P5-roi.json": "9ec402fa844661ffdcb7beaf698767a89a77735d40bf108069e65d8c455d01c4"
+  },
+  "scope": "Focused P5 replay supporting the document-revision9 manuscript. Not the full submission archive or every manuscript table. Uses repository backend source; no second numerical implementation."
+}

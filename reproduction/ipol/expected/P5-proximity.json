@@ -1,0 +1,107 @@
+[
+  {
+    "algorithm_version": "directed-centres-2-quality",
+    "mask_occupancy": {
+      "cuboid_voxels": 9216,
+      "marker_fraction": 0.0625,
+      "reference_fraction": 0.0910373263888889
+    },
+    "sampling_review": {
+      "z_step_um": 0.39999999999999997,
+      "z_planes": 4,
+      "cutoff_smaller_than_z_step": true,
+      "marker_boundary_voxels": 224,
+      "reference_boundary_voxels": 303
+    },
+    "quality_warnings": [
+      "The near-distance cutoff is smaller than the Z step. Adjacent-plane voxel centres cannot fall within it; this is not an optical resolution claim.",
+      "This cuboid contains fewer than five Z planes. Coarse axial sampling limits structural interpretation.",
+      "Foreground touches a cuboid face. Objects and the available reference search may be truncated.",
+      "Every marker voxel is near the reference mask. Containment and mask occupancy can produce a fraction of one without demonstrating biological association; no spatial null is evaluated here."
+    ],
+    "marker_foreground_voxels": 576,
+    "reference_foreground_voxels": 839,
+    "overlapping_foreground_voxels": 562,
+    "spacing_zyx_um": [
+      0.39999999999999997,
+      0.06500000162500004,
+      0.06500000162500004
+    ],
+    "distance_threshold_um": 0.25,
+    "reference_search_domain": "Selected inclusive cuboid only; outside reference signal is not searched.",
+    "definition": "Directed nearest occupied voxel-centre Euclidean distances using Z/Y/X sampling. The fraction is P(distance <= threshold | source foreground voxel), with equal voxel weighting. It is not a molecule-to-molecule distance, intensity fraction, binding probability or significance test. Direction reversal changes the denominator. Registration, label offsets and optical resolution remain acquisition limitations.",
+    "marker_to_reference": {
+      "source_voxels": 576,
+      "nearest_occupied_voxel_center_um": 0.0,
+      "median_occupied_voxel_center_um": 0.0,
+      "p95_occupied_voxel_center_um": 0.0,
+      "within_distance_voxels": 576,
+      "fraction_within_distance": 1.0,
+      "source_voxels_on_cuboid_boundary": 224
+    },
+    "reference_to_marker": {
+      "source_voxels": 839,
+      "nearest_occupied_voxel_center_um": 0.0,
+      "median_occupied_voxel_center_um": 0.0,
+      "p95_occupied_voxel_center_um": 0.19500000487500013,
+      "within_distance_voxels": 826,
+      "fraction_within_distance": 0.9845053635280095,
+      "source_voxels_on_cuboid_boundary": 303
+    },
+    "nearest_occupied_voxel_center_um": 0.0,
+    "median_occupied_voxel_center_um": 0.0,
+    "fraction_marker_voxels_within_distance": 1.0
+  },
+  {
+    "algorithm_version": "directed-centres-2-quality",
+    "mask_occupancy": {
+      "cuboid_voxels": 9216,
+      "marker_fraction": 0.0625,
+      "reference_fraction": 0.0910373263888889
+    },
+    "sampling_review": {
+      "z_step_um": 0.39999999999999997,
+      "z_planes": 4,
+      "cutoff_smaller_than_z_step": false,
+      "marker_boundary_voxels": 224,
+      "reference_boundary_voxels": 303
+    },
+    "quality_warnings": [
+      "This cuboid contains fewer than five Z planes. Coarse axial sampling limits structural interpretation.",
+      "Foreground touches a cuboid face. Objects and the available reference search may be truncated.",
+      "Every marker voxel is near the reference mask. Containment and mask occupancy can produce a fraction of one without demonstrating biological association; no spatial null is evaluated here."
+    ],
+    "marker_foreground_voxels": 576,
+    "reference_foreground_voxels": 839,
+    "overlapping_foreground_voxels": 562,
+    "spacing_zyx_um": [
+      0.39999999999999997,
+      0.06500000162500004,
+      0.06500000162500004
+    ],
+    "distance_threshold_um": 0.42,
+    "reference_search_domain": "Selected inclusive cuboid only; outside reference signal is not searched.",
+    "definition": "Directed nearest occupied voxel-centre Euclidean distances using Z/Y/X sampling. The fraction is P(distance <= threshold | source foreground voxel), with equal voxel weighting. It is not a molecule-to-molecule distance, intensity fraction, binding probability or significance test. Direction reversal changes the denominator. Registration, label offsets and optical resolution remain acquisition limitations.",
+    "marker_to_reference": {
+      "source_voxels": 576,
+      "nearest_occupied_voxel_center_um": 0.0,
+      "median_occupied_voxel_center_um": 0.0,
+      "p95_occupied_voxel_center_um": 0.0,
+      "within_distance_voxels": 576,
+      "fraction_within_distance": 1.0,
+      "source_voxels_on_cuboid_boundary": 224
+    },
+    "reference_to_marker": {
+      "source_voxels": 839,
+      "nearest_occupied_voxel_center_um": 0.0,
+      "median_occupied_voxel_center_um": 0.0,
+      "p95_occupied_voxel_center_um": 0.19500000487500013,
+      "within_distance_voxels": 839,
+      "fraction_within_distance": 1.0,
+      "source_voxels_on_cuboid_boundary": 303
+    },
+    "nearest_occupied_voxel_center_um": 0.0,
+    "median_occupied_voxel_center_um": 0.0,
+    "fraction_marker_voxels_within_distance": 1.0
+  }
+]

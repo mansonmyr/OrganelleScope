@@ -1,0 +1,5 @@
+# Numerical replay only; install needs an index or a prepared local wheelhouse.
+numpy==2.4.6
+scipy==1.17.1
+pydantic==2.13.5
+tifffile==2026.3.3

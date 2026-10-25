@@ -1,0 +1,49 @@
+{
+  "source_sha256": "5113ac03696d05066c7e8f3767117333317ee56e354387417c8526eb3a51d7e7",
+  "selected_z": 1,
+  "selected_pixels": 185,
+  "roi_points": [
+    {
+      "x": 96,
+      "y": 96
+    },
+    {
+      "x": 103.69230749999997,
+      "y": 96
+    }
+  ],
+  "measurement_source": "raw",
+  "pair": {
+    "unavailable_reasons": {},
+    "pcc": 0.8565728705818413,
+    "spearman": 0.8563701148553884,
+    "moc": 0.989629358742218,
+    "m1": 1,
+    "m2": 1,
+    "thresholded_m1": 0.9415648327219188,
+    "thresholded_m2": 0.943940142185923,
+    "thresholds": {
+      "algorithm": "orthogonal-integer-union-1",
+      "regression": "orthogonal (total least squares)",
+      "background_predicate": "A <= threshold A OR B <= threshold B",
+      "search": "highest admissible integer working threshold; continuous paired threshold",
+      "reference_equivalence": "Not interchangeable with Coloc 2 integer rounding or stepper termination.",
+      "status": "found",
+      "background_samples": 23,
+      "reason": null,
+      "a": 14896.464626294766,
+      "b": 25216,
+      "background_pcc": -0.016856609378659165
+    },
+    "threshold_occupancy": {
+      "samples": 185,
+      "above_a": 167,
+      "above_b": 167,
+      "all_above_a": false,
+      "all_above_b": false
+    },
+    "gaussian_lrt_statistic": 244.79124820373482,
+    "gaussian_lrt_note": "Descriptive Gaussian likelihood ratio only; no calibrated p-value or probability of interaction. Spatial dependence is not modeled.",
+    "warnings": []
+  }
+}

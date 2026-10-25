@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "reviewed_commit": "91abbdc54920c0f54f4b7d1392a556d7a6efba4e",
+  "closed_form_demo": true,
+  "recorded_gui_pair_fields": 13,
+  "reverse_fraction_at_025": 0.9845053635280095,
+  "environment": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "python": "3.13.9",
+    "dependencies": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "pydantic": "2.13.5",
+      "tifffile": "2026.3.3"
+    }
+  },
+  "scope": "Recalculates one P5 case and compares a previously captured GUI export. Does not launch the GUI, qualify installers, rerun Coloc 2 or reproduce all manuscript tables.",
+  "verification_date": "2026-10-25",
+  "checks": {
+    "targeted_pytest_tests_passed": 11,
+    "installer_audit_tests_passed": 1,
+    "numerical_source_changed": false,
+    "installer_resource_lists_changed": false
+  }
+}
