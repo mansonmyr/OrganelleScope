@@ -1,0 +1,9 @@
+
+# Preserve exact reviewed bytes across Windows and POSIX checkouts.
+backend/organelle_scope/*.py text eol=lf
+reproduction/ipol/*.py text eol=lf
+reproduction/ipol/*.json text eol=lf
+reproduction/ipol/expected/*.json text eol=lf
+reproduction/ipol/data/*.json text eol=lf
+reproduction/ipol/data/*.txt text eol=lf
+reproduction/ipol/data/*.tif -text

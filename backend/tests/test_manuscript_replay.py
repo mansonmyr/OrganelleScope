@@ -29,3 +29,30 @@ def test_replay_rejects_changed_recorded_gui_value():
     changed = dict(original, pcc=0.0)
     with pytest.raises(ValueError, match="numerical mismatch"):
         runner().compare(changed, original, "Recorded GUI pair versus fresh CLI")
+
+
+def test_hashed_replay_files_preserve_bytes_with_windows_checkout():
+    import subprocess
+    repository = ROOT.parents[1]
+    manifest = json.loads((ROOT / "SOURCE-MANIFEST.json").read_text())
+    paths = ["backend/organelle_scope/" + name for name in manifest["module_sha256"]]
+    paths += ["reproduction/ipol/" + name for name in manifest["inputs_and_expected_sha256"]]
+    for relative in paths:
+        current = (repository / relative).read_bytes()
+        checkout = subprocess.run(
+            ["git", "-c", "core.autocrlf=true", "hash-object", "--path=" + relative, "--stdin"],
+            input=current, cwd=repository, check=True, capture_output=True,
+        ).stdout.strip()
+        # --no-filters hashes literal bytes; equality proves checkout filters
+        # cannot silently normalize a different byte sequence before hashing.
+        raw = subprocess.run(
+            ["git", "hash-object", "--no-filters", "--stdin"],
+            input=current, cwd=repository, check=True, capture_output=True,
+        ).stdout.strip()
+        assert checkout == raw, relative
+        if not relative.endswith(".tif"):
+            attributes = subprocess.run(
+                ["git", "check-attr", "eol", "--", relative], cwd=repository,
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            assert attributes.endswith(": lf"), relative
